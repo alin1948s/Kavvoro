@@ -1,0 +1,32 @@
+.gradle/
+build/
+local.properties
+captures/
+capture-*.png
+capture-*.mp4
+*.iml
+.idea/
+app/build/
+.firebase/
+firebase-debug.log
+firebase-debug.*.log
+signing/
+
+# Firebase client configuration is environment-specific and stays local.
+/app/google-services.json
+
+# Locally generated distribution packages and verification captures
+release/
+*.aab
+*.apk
+/store-assets/*.zip
+/store-assets/raw/
+/store-assets/qa/
+/art/background-backups/
+/step-*.png
+/verify-*.png
+/verify-*.mp4
+
+# Python generator cache
+__pycache__/
+*.py[cod]
