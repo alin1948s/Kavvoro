@@ -31,7 +31,7 @@
 - Consumes: normalized pointer actions and primitive visibility facts.
 - Produces: `TutorialPointerAction`, `TutorialGateResult`, and `TutorialInputGate.onPointer`, `reset`, `actionPressed`, `acknowledgementKey`, and `shouldShow`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `TutorialInputGateTest.kt`:
 
@@ -98,7 +98,7 @@ class TutorialInputGateTest {
 }
 ```
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 ```powershell
 $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
@@ -107,7 +107,7 @@ $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 
 Expected: compilation fails because the three tutorial input types do not exist.
 
-- [ ] **Step 3: Implement the minimal state machine**
+- [x] **Step 3: Implement the minimal state machine**
 
 Create `TutorialInputGate.kt`:
 
@@ -166,7 +166,7 @@ class TutorialInputGate {
 }
 ```
 
-- [ ] **Step 4: Verify GREEN and the full JVM suite**
+- [x] **Step 4: Verify GREEN and the full JVM suite**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest --tests '*TutorialInputGateTest'
@@ -175,7 +175,7 @@ class TutorialInputGate {
 
 Expected: `BUILD SUCCESSFUL` twice with zero failed tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add -- app/src/main/java/com/moonsolstudios/kavvoro/ui/TutorialInputGate.kt app/src/test/java/com/moonsolstudios/kavvoro/ui/TutorialInputGateTest.kt
