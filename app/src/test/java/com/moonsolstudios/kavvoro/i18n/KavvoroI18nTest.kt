@@ -49,6 +49,25 @@ class KavvoroI18nTest {
     }
 
     @Test
+    fun gameplayStatusLabelsArePartOfTheStrictTutorialCatalog() {
+        val dynamicGameplayLabels = setOf(
+            "START",
+            "TAP TO PULL",
+            "FOCUS",
+            "POWER",
+            "HEAT",
+            "WIND GUARD",
+            "STORM"
+        )
+
+        assertTrue(TutorialCopy.fieldLabelKeys.containsAll(dynamicGameplayLabels))
+        dynamicGameplayLabels.forEach { key ->
+            assertTrue(TutorialCopy.hasExplicitTranslation(KavvoroLanguage.AR, key))
+            assertNotEquals(key, TutorialCopy.translation(KavvoroLanguage.AR, key))
+        }
+    }
+
+    @Test
     fun generatedTutorialTitlesAreExactlyTheStrictTitleInventory() {
         val generatedTitles = (1..10).flatMap { level ->
             listOf(

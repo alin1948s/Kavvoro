@@ -25,6 +25,13 @@ object TutorialCopy {
         "SLOW TAP",
         "TAP BURST",
         "POWER TAP",
+        "START",
+        "TAP TO PULL",
+        "FOCUS",
+        "POWER",
+        "HEAT",
+        "WIND GUARD",
+        "STORM",
         "BOOST",
         "CRASH",
         "AVOID",
@@ -242,6 +249,46 @@ object TutorialCopy {
             "Supermoc uruchomiona", "Süper güç tetiklendi", "Суперсила сработала", "Суперсила спрацювала",
             "تم تفعيل القوة الخارقة", "महाशक्ति सक्रिय हुई", "Kekuatan super terpicu", "Siêu năng lực đã kích hoạt",
             "スーパーパワー発動", "초능력 발동", "超级能力已触发"
+        ),
+
+        requiredRow(
+            "START", "PORNIRE", "INICIO", "DÉPART", "START", "INIZIO", "INÍCIO",
+            "START", "START", "BAŞLANGIÇ", "СТАРТ", "СТАРТ", "البداية", "शुरू",
+            "MULAI", "BẮT ĐẦU", "スタート", "시작", "起点"
+        ),
+        requiredRow(
+            "TAP TO PULL", "Atinge pentru a trage", "Toca para atraer", "Touche pour attirer",
+            "Tippen zum Ziehen", "Tocca per attirare", "Toca para puxar", "Tik om te trekken",
+            "Dotknij, aby przyciągnąć", "Çekmek için dokun", "Нажми, чтобы притянуть",
+            "Торкнися, щоб притягнути", "اضغط للسحب", "खींचने के लिए टैप करें",
+            "Ketuk untuk menarik", "Chạm để kéo", "タップして引く", "탭하여 당기기", "点击拉动"
+        ),
+        requiredRow(
+            "FOCUS", "Focalizare", "Enfoque", "Précision", "Fokus", "Concentrazione", "Foco",
+            "Focus", "Skupienie", "Odak", "Фокус", "Фокус", "تركيز", "फोकस",
+            "Fokus", "Tập trung", "フォーカス", "집중", "聚焦"
+        ),
+        requiredRow(
+            "POWER", "Putere", "Potencia", "Puissance", "Kraft", "Potenza", "Poder",
+            "Kracht", "Moc", "Güç", "Мощность", "Потужність", "قوة", "शक्ति",
+            "Daya", "Sức mạnh", "パワー", "파워", "能量"
+        ),
+        requiredRow(
+            "HEAT", "Căldură", "Calor", "Chaleur", "Hitze", "Calore", "Calor",
+            "Hitte", "Ciepło", "Isı", "Нагрев", "Нагрів", "حرارة", "ताप",
+            "Panas", "Nhiệt", "ヒート", "열", "热量"
+        ),
+        requiredRow(
+            "WIND GUARD", "Gardă de vânt", "Guardia de viento", "Garde-vent", "Windschutz",
+            "Guardia del vento", "Proteção contra o vento", "Windbescherming",
+            "Osłona przed wiatrem", "Rüzgâr koruması", "Защита от ветра", "Захист від вітру",
+            "حماية الرياح", "हवा सुरक्षा", "Pelindung angin", "Chắn gió", "ウィンドガード",
+            "바람 방어", "风力防护"
+        ),
+        requiredRow(
+            "STORM", "Furtună", "Tormenta", "Tempête", "Sturm", "Tempesta", "Tempestade",
+            "Storm", "Burza", "Fırtına", "Шторм", "Шторм", "عاصفة", "तूफ़ान",
+            "Badai", "Bão", "ストーム", "폭풍", "风暴"
         ),
 
         requiredRow(

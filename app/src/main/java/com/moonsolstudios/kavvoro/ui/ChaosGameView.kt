@@ -4948,8 +4948,8 @@ class ChaosGameView(
         val energy = (riftEnergy * 100f).roundToInt().coerceIn(0, 100)
         val holdMode = when {
             levelHasCurse(CurseType.FOCUS_FIELD) -> t("FOCUS").uppercase()
-            levelHasCurse(CurseType.POWER_HOLD) -> "POWER ${(min(1f, riftHoldSeconds / 0.9f) * 100).roundToInt()}%"
-            levelHasCurse(CurseType.OVERHEAT) -> "HEAT ${(min(1f, riftHoldSeconds / 1.0f) * 100).roundToInt()}%"
+            levelHasCurse(CurseType.POWER_HOLD) -> "${t("POWER").uppercase()} ${(min(1f, riftHoldSeconds / 0.9f) * 100).roundToInt()}%"
+            levelHasCurse(CurseType.OVERHEAT) -> "${t("HEAT").uppercase()} ${(min(1f, riftHoldSeconds / 1.0f) * 100).roundToInt()}%"
             levelHasCurse(CurseType.RIFT_WIND) -> t("WIND GUARD").uppercase()
             levelHasCurse(CurseType.PULSE_STORM) -> t("PULSE GUARD").uppercase()
             level.index <= 3 && simElapsed < 4.2f -> t("TAP TO PULL").uppercase()
