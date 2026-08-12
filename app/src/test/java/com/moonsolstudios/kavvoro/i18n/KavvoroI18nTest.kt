@@ -62,6 +62,23 @@ class KavvoroI18nTest {
 
     @Test
     fun tutorialSelectorsOnlyReturnCatalogKeys() {
+        assertEquals(
+            listOf(
+                "Tap to fire a short Rift tether.",
+                "The ball accelerates toward the tap point.",
+                "Chain clean taps to steer without wasting energy."
+            ),
+            TutorialCopy.lessonKeys(1, hasPortals = false)
+        )
+        assertEquals(
+            listOf(
+                "Wind pushes the ball sideways.",
+                "Overheat punishes tap spam.",
+                "Use short bursts for the tiny gate."
+            ),
+            TutorialCopy.lessonKeys(10, hasPortals = false)
+        )
+
         (1..10).forEach { level ->
             TutorialCopy.lessonKeys(level, hasPortals = false).forEach { key ->
                 assertTrue(key in TutorialCopy.lessonKeys)

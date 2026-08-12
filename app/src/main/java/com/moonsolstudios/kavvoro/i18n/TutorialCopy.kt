@@ -10,7 +10,13 @@ object TutorialCopy {
         "NO ADS IN TRAINING",
         "L10 UNLOCKS VORO GRAD",
         "TRAINING REWARD READY",
-        "START LEVEL"
+        "START LEVEL",
+        "RIFT ONLINE",
+        "BOOST FIELD",
+        "VORTEX FIELD",
+        "BOOST FIELD ONLINE",
+        "SUPERPOWER ONLINE",
+        "SUPERPOWER TRIGGERED"
     )
 
     val fieldLabelKeys = setOf(
@@ -198,6 +204,44 @@ object TutorialCopy {
             "Avvia livello", "Iniciar nível", "Level starten", "Rozpocznij poziom", "Seviyeyi başlat",
             "Начать уровень", "Почати рівень", "ابدأ المستوى", "लेवल शुरू करें", "Mulai level",
             "Bắt đầu cấp độ", "レベル開始", "레벨 시작", "开始关卡"
+        ),
+        requiredRow(
+            "RIFT ONLINE", "Rift activ", "Rift activo", "Rift activé", "Rift aktiv", "Rift attivo",
+            "Rift ativo", "Rift actief", "Rift aktywny", "Rift etkin", "Rift активен", "Rift активний",
+            "Rift نشط", "Rift सक्रिय", "Rift aktif", "Rift đang hoạt động", "Rift 起動", "Rift 활성", "Rift 已激活"
+        ),
+        requiredRow(
+            "BOOST FIELD", "Câmp de accelerare", "Campo de impulso", "Champ d'accélération", "Beschleunigungsfeld",
+            "Campo di accelerazione", "Campo de impulso", "Versnellingsveld", "Pole przyspieszenia",
+            "Hızlandırma alanı", "Поле ускорения", "Поле прискорення", "حقل تسريع", "त्वरण क्षेत्र",
+            "Medan percepatan", "Trường tăng tốc", "加速フィールド", "가속 필드", "加速力场"
+        ),
+        requiredRow(
+            "VORTEX FIELD", "Câmp vortex", "Campo de vórtice", "Champ vortex", "Wirbelfeld", "Campo vortice",
+            "Campo de vórtice", "Draaikolkveld", "Pole wiru", "Girdap alanı", "Вихревое поле", "Вихрове поле",
+            "حقل دوامة", "भंवर क्षेत्र", "Medan pusaran", "Trường xoáy", "渦フィールド", "소용돌이 필드", "涡旋力场"
+        ),
+        requiredRow(
+            "BOOST FIELD ONLINE", "Câmpul de accelerare este activ", "Campo de impulso activo",
+            "Champ d'accélération activé", "Beschleunigungsfeld aktiv", "Campo di accelerazione attivo",
+            "Campo de impulso ativo", "Versnellingsveld actief", "Pole przyspieszenia aktywne",
+            "Hızlandırma alanı etkin", "Поле ускорения активно", "Поле прискорення активне",
+            "حقل التسريع نشط", "त्वरण क्षेत्र सक्रिय", "Medan percepatan aktif", "Trường tăng tốc đã bật",
+            "加速フィールド起動", "가속 필드 활성", "加速力场已激活"
+        ),
+        requiredRow(
+            "SUPERPOWER ONLINE", "Superputere activă", "Superpoder activo", "Super-pouvoir activé",
+            "Superkraft aktiv", "Superpotere attivo", "Superpoder ativo", "Superkracht actief",
+            "Supermoc aktywna", "Süper güç etkin", "Суперсила активна", "Суперсила активна",
+            "القوة الخارقة نشطة", "महाशक्ति सक्रिय", "Kekuatan super aktif", "Siêu năng lực đã bật",
+            "スーパーパワー起動", "초능력 활성", "超级能力已激活"
+        ),
+        requiredRow(
+            "SUPERPOWER TRIGGERED", "Superputere declanșată", "Superpoder activado", "Super-pouvoir déclenché",
+            "Superkraft ausgelöst", "Superpotere attivato", "Superpoder ativado", "Superkracht geactiveerd",
+            "Supermoc uruchomiona", "Süper güç tetiklendi", "Суперсила сработала", "Суперсила спрацювала",
+            "تم تفعيل القوة الخارقة", "महाशक्ति सक्रिय हुई", "Kekuatan super terpicu", "Siêu năng lực đã kích hoạt",
+            "スーパーパワー発動", "초능력 발동", "超级能力已触发"
         ),
 
         requiredRow(
