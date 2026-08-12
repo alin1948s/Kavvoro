@@ -77,19 +77,6 @@ class TutorialInputGate {
         }
     }
 
-    fun onPointer(
-        action: TutorialPointerAction,
-        insideAction: Boolean
-    ): TutorialGateResult = onPointer(
-        action = action,
-        target = if (insideAction) {
-            TutorialTouchTarget.ACTION_BUTTON
-        } else {
-            TutorialTouchTarget.CARD
-        },
-        movedBeyondTapSlop = false
-    )
-
     fun reset() {
         initialTarget = null
         invalidated = false

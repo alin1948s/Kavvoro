@@ -19,6 +19,7 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.SurfaceHolder
 import android.view.SurfaceView
+import android.view.ViewConfiguration
 import android.util.Log
 import androidx.core.content.FileProvider
 import com.moonsolstudios.kavvoro.BuildConfig
@@ -285,6 +286,11 @@ class ChaosGameView(
     private var streak = prefs.getInt("streak_classic", prefs.getInt("clear_streak", 0))
     private var activeButton = ButtonId.NONE
     private val tutorialInputGate = TutorialInputGate()
+    private val tutorialCardBounds = RectF()
+    private val tutorialTouchSlop = ViewConfiguration.get(context).scaledTouchSlop.toFloat()
+    private var tutorialDownX = 0f
+    private var tutorialDownY = 0f
+    private var tutorialMovedBeyondSlop = false
     private var tutorialCardVisible = false
     private var activeMenuButton = MenuButton.NONE
     private var backgroundShader: LinearGradient? = null
@@ -521,8 +527,22 @@ class ChaosGameView(
     private fun handleTutorialTouch(event: MotionEvent): Boolean {
         if (!tutorialCardVisible) return false
         val action = when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> TutorialPointerAction.DOWN
-            MotionEvent.ACTION_MOVE -> TutorialPointerAction.MOVE
+            MotionEvent.ACTION_DOWN -> {
+                tutorialDownX = event.x
+                tutorialDownY = event.y
+                tutorialMovedBeyondSlop = false
+                TutorialPointerAction.DOWN
+            }
+
+            MotionEvent.ACTION_MOVE -> {
+                val dx = event.x - tutorialDownX
+                val dy = event.y - tutorialDownY
+                if (dx * dx + dy * dy > tutorialTouchSlop * tutorialTouchSlop) {
+                    tutorialMovedBeyondSlop = true
+                }
+                TutorialPointerAction.MOVE
+            }
+
             MotionEvent.ACTION_UP -> TutorialPointerAction.UP
             MotionEvent.ACTION_POINTER_DOWN,
             MotionEvent.ACTION_POINTER_UP -> TutorialPointerAction.MULTI_TOUCH
@@ -530,26 +550,57 @@ class ChaosGameView(
             else -> return true
         }
         val result = tutorialInputGate.onPointer(
-            action,
-            tutorialStartButton.contains(event.x, event.y)
+            action = action,
+            target = tutorialTouchTarget(event.x, event.y),
+            movedBeyondTapSlop = tutorialMovedBeyondSlop
         )
-        if (result.dismissed) dismissTutorialCard()
+
+        when (result.outcome) {
+            TutorialGateOutcome.NONE -> Unit
+            TutorialGateOutcome.DISMISS_ONLY -> dismissTutorialCard()
+            TutorialGateOutcome.DISMISS_AND_PLAY -> {
+                if (dismissTutorialCard()) startRiftControl(event.x, event.y)
+            }
+        }
+
+        if (action == TutorialPointerAction.UP ||
+            action == TutorialPointerAction.CANCEL ||
+            action == TutorialPointerAction.MULTI_TOUCH
+        ) {
+            resetTutorialGesture()
+        }
         return result.consumed
     }
 
-    private fun dismissTutorialCard() {
+    private fun tutorialTouchTarget(x: Float, y: Float): TutorialTouchTarget = when {
+        tutorialCardBounds.isEmpty -> TutorialTouchTarget.CARD
+        tutorialStartButton.contains(x, y) -> TutorialTouchTarget.ACTION_BUTTON
+        tutorialCardBounds.contains(x, y) -> TutorialTouchTarget.CARD
+        else -> TutorialTouchTarget.PLAYFIELD
+    }
+
+    private fun resetTutorialGesture() {
+        tutorialInputGate.reset()
+        tutorialDownX = 0f
+        tutorialDownY = 0f
+        tutorialMovedBeyondSlop = false
+    }
+
+    private fun dismissTutorialCard(): Boolean {
         if (!prefs.edit()
                 .putBoolean(tutorialAcknowledgementKey(), true)
                 .commit()
         ) {
-            return
+            return false
         }
         tutorialCardVisible = false
+        tutorialCardBounds.setEmpty()
         tutorialStartButton.setEmpty()
-        tutorialInputGate.reset()
+        resetTutorialGesture()
         stateElapsed = 0f
         performHapticFeedback(HapticFeedbackConstants.CONFIRM)
         audio.playEvent(SoundEvent.UI_TAP, selectedBallIndex())
+        return true
     }
 
     private fun handleMenuTouch(event: MotionEvent) {
@@ -1160,7 +1211,8 @@ class ChaosGameView(
         TutorialInputGate.acknowledgementKey(gameMode.name, level.index)
 
     private fun refreshTutorialCardVisibility() {
-        tutorialInputGate.reset()
+        resetTutorialGesture()
+        tutorialCardBounds.setEmpty()
         tutorialStartButton.setEmpty()
         tutorialCardVisible = TutorialInputGate.shouldShow(
             gameScreen = screen == Screen.GAME,
@@ -5798,6 +5850,7 @@ class ChaosGameView(
 
     private fun drawTutorialHint(canvas: Canvas) {
         if (!tutorialCardVisible) {
+            tutorialCardBounds.setEmpty()
             tutorialStartButton.setEmpty()
             return
         }
@@ -5808,24 +5861,27 @@ class ChaosGameView(
         val top = viewHeight - height - dp(34f)
         val accent = currentModeWarning()?.accent ?: level.accent
         val lessonLines = tutorialLessonLines() + tutorialObstacleLine()
-        scratch.set(left, top, left + width, top + height)
+        tutorialCardBounds.set(left, top, left + width, top + height)
         paint.style = Paint.Style.FILL
         paint.shader = null
         paint.color = 0xF407090F.toInt()
-        canvas.drawRoundRect(scratch, dp(8f), dp(8f), paint)
+        canvas.drawRoundRect(tutorialCardBounds, dp(8f), dp(8f), paint)
         paint.shader = LinearGradient(left, top, left + width, top + height, intArrayOf(withAlpha(accent, 54), 0x0007090F), null, Shader.TileMode.CLAMP)
-        canvas.drawRoundRect(scratch, dp(8f), dp(8f), paint)
+        canvas.drawRoundRect(tutorialCardBounds, dp(8f), dp(8f), paint)
         paint.shader = null
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = dp(1.2f)
         paint.color = withAlpha(accent, 190)
-        canvas.drawRoundRect(scratch, dp(8f), dp(8f), paint)
+        canvas.drawRoundRect(tutorialCardBounds, dp(8f), dp(8f), paint)
 
         val iconSize = dp(42f)
         scratch.set(left + dp(11f), top + dp(16f), left + dp(11f) + iconSize, top + dp(16f) + iconSize)
         drawWorldAsset(canvas, tutorialIconKey(), scratch, 235)
 
-        textPaint.textAlign = Paint.Align.LEFT
+        val isArabic = KavvoroI18n.active(context) == KavvoroLanguage.AR
+        val textX = if (isArabic) tutorialCardBounds.right - dp(14f) else left + dp(62f)
+        val textMaxWidth = width - dp(76f)
+        textPaint.textAlign = if (isArabic) Paint.Align.RIGHT else Paint.Align.LEFT
         textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
         textPaint.textSize = dp(10f)
         textPaint.color = accent
@@ -5834,16 +5890,16 @@ class ChaosGameView(
         } else {
             "${t("RIFT MODULE").uppercase()} L${level.index.toString().padStart(2, '0')}  /  ${t("PORTAL").uppercase()}"
         }
-        canvas.drawText(tutorialHeader, left + dp(62f), top + dp(21f), textPaint)
+        drawFittedText(canvas, tutorialHeader, textX, top + dp(21f), textMaxWidth, 10f, 7.2f)
 
         textPaint.textSize = dp(11f)
         textPaint.color = 0xEFFFFFFF.toInt()
         lessonLines.take(4).forEachIndexed { index, line ->
-            canvas.drawText(fitText(line, width - dp(76f)), left + dp(62f), top + dp(40f + index * 15f), textPaint)
+            canvas.drawText(fitText(line, textMaxWidth), textX, top + dp(40f + index * 15f), textPaint)
         }
 
         paint.style = Paint.Style.FILL
-        textPaint.textAlign = Paint.Align.LEFT
+        textPaint.textAlign = if (isArabic) Paint.Align.RIGHT else Paint.Align.LEFT
         textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
         textPaint.textSize = dp(8.2f)
         textPaint.color = withAlpha(0xFFFFCF4A.toInt(), 225)
@@ -5852,16 +5908,29 @@ class ChaosGameView(
         } else {
             t("TRAINING REWARD READY").uppercase()
         }
-        canvas.drawText(fitText(footer, width - dp(76f)), left + dp(62f), top + dp(103f), textPaint)
+        canvas.drawText(fitText(footer, textMaxWidth), textX, top + dp(103f), textPaint)
 
+        val actionBounds = TutorialCardLayout.centeredHorizontalBounds(
+            cardLeft = tutorialCardBounds.left,
+            cardRight = tutorialCardBounds.right,
+            padding = dp(14f)
+        )
         paint.style = Paint.Style.FILL
         paint.color = 0x22FFFFFF
-        canvas.drawRoundRect(left + dp(62f), top + dp(116f), left + width - dp(14f), top + dp(117.5f), dp(1f), dp(1f), paint)
+        canvas.drawRoundRect(
+            actionBounds.left,
+            top + dp(116f),
+            actionBounds.right,
+            top + dp(117.5f),
+            dp(1f),
+            dp(1f),
+            paint
+        )
 
         tutorialStartButton.set(
-            left + dp(62f),
+            actionBounds.left,
             top + dp(126f),
-            left + width - dp(14f),
+            actionBounds.right,
             top + dp(170f)
         )
         drawTutorialStartButton(canvas, accent)
@@ -5894,13 +5963,15 @@ class ChaosGameView(
             "sans",
             android.graphics.Typeface.BOLD
         )
-        textPaint.textSize = dp(12f)
         textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(
+        drawFittedText(
+            canvas,
             t("START LEVEL").uppercase(),
             tutorialStartButton.centerX(),
             tutorialStartButton.centerY() + dp(4f),
-            textPaint
+            tutorialStartButton.width() - dp(20f),
+            12f,
+            8f
         )
     }
 
