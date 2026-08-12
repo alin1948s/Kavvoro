@@ -1,5 +1,8 @@
 package com.moonsolstudios.kavvoro.i18n
 
+import com.moonsolstudios.kavvoro.engine.BallPower
+import com.moonsolstudios.kavvoro.engine.CurseType
+
 object TutorialCopy {
     val chromeKeys = setOf(
         "TIME",
@@ -112,8 +115,55 @@ object TutorialCopy {
         "Obstacle: screen edges and timer can still end the run."
     )
 
+    val curseRibbonKeys = setOf(
+        "WIND GUARD",
+        "RIFT DRAIN",
+        "HEAVY CORE",
+        "MOON GLIDE",
+        "FOCUS FIELD",
+        "POWER HOLD",
+        "PULSE GUARD",
+        "TINY GATE",
+        "OVERHEAT"
+    )
+
+    val ballPowerRibbonKeys = setOf(
+        "PRISM DENIAL",
+        "VOID PHASE",
+        "CHROME REBOUND",
+        "PLASMA SURGE",
+        "PHASE LITE",
+        "REBOUND LITE",
+        "SURGE LITE"
+    )
+
+    val ribbonKeys: Set<String> = curseRibbonKeys + ballPowerRibbonKeys
+
     val renderedKeyInventory: Set<String> =
-        chromeKeys + fieldLabelKeys + levelTitleKeys + lessonKeys + obstacleKeys
+        chromeKeys + fieldLabelKeys + levelTitleKeys + lessonKeys + obstacleKeys + ribbonKeys
+
+    fun curseRibbonKey(type: CurseType): String = when (type) {
+        CurseType.RIFT_WIND -> "WIND GUARD"
+        CurseType.RIFT_DRAIN -> "RIFT DRAIN"
+        CurseType.HEAVY_CORE -> "HEAVY CORE"
+        CurseType.MOON_GLIDE -> "MOON GLIDE"
+        CurseType.FOCUS_FIELD -> "FOCUS FIELD"
+        CurseType.POWER_HOLD -> "POWER HOLD"
+        CurseType.PULSE_STORM -> "PULSE GUARD"
+        CurseType.TINY_GATE -> "TINY GATE"
+        CurseType.OVERHEAT -> "OVERHEAT"
+    }
+
+    fun ballPowerRibbonKey(power: BallPower): String = when (power) {
+        BallPower.NONE -> error("BallPower.NONE has no HUD ribbon")
+        BallPower.PRISM_SHIELD -> "PRISM DENIAL"
+        BallPower.VOID_PHASE -> "VOID PHASE"
+        BallPower.CHROME_RICOCHET -> "CHROME REBOUND"
+        BallPower.PLASMA_SURGE -> "PLASMA SURGE"
+        BallPower.MINOR_PHASE -> "PHASE LITE"
+        BallPower.MINOR_RICOCHET -> "REBOUND LITE"
+        BallPower.MINOR_SURGE -> "SURGE LITE"
+    }
 
     fun lessonKeys(levelIndex: Int, hasPortals: Boolean): List<String> {
         if (hasPortals) return portalLessonKeys.toList()
@@ -289,6 +339,84 @@ object TutorialCopy {
             "STORM", "Furtună", "Tormenta", "Tempête", "Sturm", "Tempesta", "Tempestade",
             "Storm", "Burza", "Fırtına", "Шторм", "Шторм", "عاصفة", "तूफ़ान",
             "Badai", "Bão", "ストーム", "폭풍", "风暴"
+        ),
+        requiredRow(
+            "HEAVY CORE", "Nucleu greu", "Núcleo pesado", "Noyau lourd", "Schwerer Kern",
+            "Nucleo pesante", "Núcleo pesado", "Zware kern", "Ciężki rdzeń", "Ağır çekirdek",
+            "Тяжёлое ядро", "Важке ядро", "نواة ثقيلة", "भारी कोर", "Inti berat", "Lõi nặng",
+            "ヘビーコア", "무거운 코어", "重型核心"
+        ),
+        requiredRow(
+            "MOON GLIDE", "Planare lunară", "Planeo lunar", "Glisse lunaire", "Mondgleiten",
+            "Planata lunare", "Planar lunar", "Maanglijvlucht", "Księżycowy ślizg", "Ay süzülüşü",
+            "Лунное скольжение", "Місячне ковзання", "انزلاق قمري", "चंद्र ग्लाइड", "Luncur bulan",
+            "Lướt trăng", "ムーングライド", "문 글라이드", "月影滑行"
+        ),
+        requiredRow(
+            "FOCUS FIELD", "Câmp de focalizare", "Campo de enfoque", "Champ de concentration", "Fokusfeld",
+            "Campo di concentrazione", "Campo de foco", "Focusveld", "Pole skupienia", "Odak alanı",
+            "Поле фокуса", "Поле фокуса", "حقل التركيز", "फोकस क्षेत्र", "Medan fokus",
+            "Trường tập trung", "フォーカスフィールド", "집중 필드", "聚焦力场"
+        ),
+        requiredRow(
+            "POWER HOLD", "Încărcare de putere", "Carga de poder", "Charge de puissance", "Kraftladung",
+            "Carica di potenza", "Carga de poder", "Krachtlading", "Ładowanie mocy", "Güç yükleme",
+            "Заряд силы", "Заряд сили", "شحن القوة", "शक्ति चार्ज", "Muatan daya", "Tích sức mạnh",
+            "パワーチャージ", "파워 충전", "力量蓄积"
+        ),
+        requiredRow(
+            "TINY GATE", "Poartă mică", "Puerta pequeña", "Petite porte", "Kleines Tor",
+            "Porta piccola", "Porta pequena", "Kleine poort", "Mała brama", "Küçük geçit",
+            "Малые ворота", "Малі ворота", "بوابة صغيرة", "छोटा द्वार", "Gerbang kecil",
+            "Cổng nhỏ", "タイニーゲート", "작은 게이트", "微型门"
+        ),
+        requiredRow(
+            "OVERHEAT", "Supraîncălzire", "Sobrecalentamiento", "Surchauffe", "Überhitzung",
+            "Surriscaldamento", "Sobreaquecimento", "Oververhitting", "Przegrzanie", "Aşırı ısınma",
+            "Перегрев", "Перегрів", "ارتفاع الحرارة", "अति ताप", "Panas berlebih", "Quá nhiệt",
+            "オーバーヒート", "과열", "过热"
+        ),
+        requiredRow(
+            "PRISM DENIAL", "Scut prismatic", "Escudo prismático", "Bouclier prismatique", "Prismaschild",
+            "Scudo prismatico", "Escudo prismático", "Prismaschild", "Tarcza pryzmatyczna", "Prizma kalkanı",
+            "Призменный щит", "Призмовий щит", "درع المنشور", "प्रिज़्म कवच", "Perisai prisma",
+            "Khiên lăng kính", "プリズムシールド", "프리즘 실드", "棱镜护盾"
+        ),
+        requiredRow(
+            "VOID PHASE", "Fază în vid", "Fase del vacío", "Phase du vide", "Leerenphase",
+            "Fase del vuoto", "Fase do vazio", "Leegtefase", "Faza pustki", "Boşluk fazı",
+            "Фаза пустоты", "Фаза порожнечі", "طور الفراغ", "शून्य चरण", "Fase kehampaan",
+            "Pha hư không", "ヴォイドフェーズ", "보이드 페이즈", "虚空相位"
+        ),
+        requiredRow(
+            "CHROME REBOUND", "Ricochet cromat", "Rebote cromado", "Rebond chromé", "Chromabprall",
+            "Rimbalzo cromato", "Ricochete cromado", "Chroomstuit", "Chromowane odbicie", "Krom sekme",
+            "Хромированный отскок", "Хромований відскок", "ارتداد كرومي", "क्रोम उछाल", "Pantulan krom",
+            "Nảy crôm", "クロームリバウンド", "크롬 리바운드", "铬合金反弹"
+        ),
+        requiredRow(
+            "PLASMA SURGE", "Impuls de plasmă", "Impulso de plasma", "Poussée de plasma", "Plasmaschub",
+            "Impulso al plasma", "Impulso de plasma", "Plasmastoot", "Impuls plazmy", "Plazma darbesi",
+            "Импульс плазмы", "Імпульс плазми", "اندفاع البلازما", "प्लाज़्मा आवेग", "Lonjakan plasma",
+            "Xung plasma", "プラズマサージ", "플라즈마 서지", "等离子涌动"
+        ),
+        requiredRow(
+            "PHASE LITE", "Fază ușoară", "Fase ligera", "Phase légère", "Leichte Phase",
+            "Fase leggera", "Fase leve", "Lichte fase", "Lekka faza", "Hafif faz",
+            "Лёгкая фаза", "Легка фаза", "طور خفيف", "हल्का चरण", "Fase ringan",
+            "Pha nhẹ", "ライトフェーズ", "라이트 페이즈", "轻型相位"
+        ),
+        requiredRow(
+            "REBOUND LITE", "Ricochet ușor", "Rebote ligero", "Rebond léger", "Leichter Abprall",
+            "Rimbalzo leggero", "Ricochete leve", "Lichte stuit", "Lekkie odbicie", "Hafif sekme",
+            "Лёгкий отскок", "Легкий відскок", "ارتداد خفيف", "हल्का उछाल", "Pantulan ringan",
+            "Nảy nhẹ", "ライトリバウンド", "라이트 리바운드", "轻型反弹"
+        ),
+        requiredRow(
+            "SURGE LITE", "Impuls ușor", "Impulso ligero", "Poussée légère", "Leichter Schub",
+            "Impulso leggero", "Impulso leve", "Lichte stoot", "Lekki impuls", "Hafif darbe",
+            "Лёгкий импульс", "Легкий імпульс", "اندفاع خفيف", "हल्का आवेग", "Lonjakan ringan",
+            "Xung nhẹ", "ライトサージ", "라이트 서지", "轻型涌动"
         ),
 
         requiredRow(

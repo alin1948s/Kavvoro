@@ -1,6 +1,8 @@
 package com.moonsolstudios.kavvoro.i18n
 
 import com.moonsolstudios.kavvoro.engine.LevelDirector
+import com.moonsolstudios.kavvoro.engine.BallPower
+import com.moonsolstudios.kavvoro.engine.CurseType
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -123,6 +125,24 @@ class KavvoroI18nTest {
 
         selectedKeys.forEach { key ->
             assertTrue(key in TutorialCopy.requiredKeys)
+        }
+    }
+
+    @Test
+    fun actualCurseAndPowerRibbonSelectorsAreStrictlyLocalized() {
+        val selectedCurseKeys = CurseType.entries
+            .map(TutorialCopy::curseRibbonKey)
+            .toSet()
+        val selectedPowerKeys = BallPower.entries
+            .filterNot { it == BallPower.NONE }
+            .map(TutorialCopy::ballPowerRibbonKey)
+            .toSet()
+
+        assertEquals(TutorialCopy.curseRibbonKeys, selectedCurseKeys)
+        assertEquals(TutorialCopy.ballPowerRibbonKeys, selectedPowerKeys)
+        assertTrue(TutorialCopy.ribbonKeys.all { it in TutorialCopy.requiredKeys })
+        TutorialCopy.ribbonKeys.forEach { key ->
+            assertNotEquals(key, TutorialCopy.translation(KavvoroLanguage.AR, key))
         }
     }
 }

@@ -536,15 +536,32 @@ class ChaosGameView(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                val dx = event.x - tutorialDownX
-                val dy = event.y - tutorialDownY
-                if (dx * dx + dy * dy > tutorialTouchSlop * tutorialTouchSlop) {
+                if (TutorialGestureSlop.exceeded(
+                        tutorialDownX,
+                        tutorialDownY,
+                        event.x,
+                        event.y,
+                        tutorialTouchSlop
+                    )
+                ) {
                     tutorialMovedBeyondSlop = true
                 }
                 TutorialPointerAction.MOVE
             }
 
-            MotionEvent.ACTION_UP -> TutorialPointerAction.UP
+            MotionEvent.ACTION_UP -> {
+                if (TutorialGestureSlop.exceeded(
+                        tutorialDownX,
+                        tutorialDownY,
+                        event.x,
+                        event.y,
+                        tutorialTouchSlop
+                    )
+                ) {
+                    tutorialMovedBeyondSlop = true
+                }
+                TutorialPointerAction.UP
+            }
             MotionEvent.ACTION_POINTER_DOWN,
             MotionEvent.ACTION_POINTER_UP -> TutorialPointerAction.MULTI_TOUCH
             MotionEvent.ACTION_CANCEL -> TutorialPointerAction.CANCEL
@@ -3673,13 +3690,7 @@ class ChaosGameView(
 
     private fun ballPowerName(power: BallPower): String = when (power) {
         BallPower.NONE -> t("NO POWER")
-        BallPower.PRISM_SHIELD -> t("PRISM DENIAL")
-        BallPower.VOID_PHASE -> t("VOID PHASE")
-        BallPower.CHROME_RICOCHET -> t("CHROME REBOUND")
-        BallPower.PLASMA_SURGE -> t("PLASMA SURGE")
-        BallPower.MINOR_PHASE -> t("PHASE LITE")
-        BallPower.MINOR_RICOCHET -> t("REBOUND LITE")
-        BallPower.MINOR_SURGE -> t("SURGE LITE")
+        else -> t(TutorialCopy.ballPowerRibbonKey(power))
     }.uppercase()
 
     private fun ballPowerDescription(power: BallPower): String = when (power) {
@@ -5465,7 +5476,9 @@ class ChaosGameView(
         val maxRight = left + width
         val chips = mutableListOf<Triple<String, Int, Boolean>>()
         if (power != BallPower.NONE) chips += Triple(ballPowerName(power), selectedBallSkin().lineColor, true)
-        chips += level.curses.map { Triple(it.name.uppercase(), it.accent, false) }
+        chips += level.curses.map {
+            Triple(t(TutorialCopy.curseRibbonKey(it.type)).uppercase(), it.accent, false)
+        }
         if (chips.isEmpty()) return
         val visible = chips.take(2)
         visible.forEach { (label, accent, powered) ->

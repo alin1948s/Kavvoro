@@ -28,6 +28,20 @@ data class TutorialGateResult(
         get() = outcome != TutorialGateOutcome.NONE
 }
 
+object TutorialGestureSlop {
+    fun exceeded(
+        downX: Float,
+        downY: Float,
+        currentX: Float,
+        currentY: Float,
+        touchSlop: Float
+    ): Boolean {
+        val dx = currentX - downX
+        val dy = currentY - downY
+        return dx * dx + dy * dy > touchSlop * touchSlop
+    }
+}
+
 class TutorialInputGate {
     private var initialTarget: TutorialTouchTarget? = null
     private var invalidated = false

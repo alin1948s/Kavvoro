@@ -94,6 +94,34 @@ class TutorialInputGateTest {
     }
 
     @Test
+    fun distantUpWithoutMoveIsNotAPlayfieldTap() {
+        val gate = TutorialInputGate()
+        gate.onPointer(
+            TutorialPointerAction.DOWN,
+            TutorialTouchTarget.PLAYFIELD,
+            movedBeyondTapSlop = false
+        )
+
+        val movedBeyondSlop = TutorialGestureSlop.exceeded(
+            downX = 10f,
+            downY = 20f,
+            currentX = 110f,
+            currentY = 20f,
+            touchSlop = 8f
+        )
+
+        assertTrue(movedBeyondSlop)
+        assertEquals(
+            TutorialGateOutcome.NONE,
+            gate.onPointer(
+                TutorialPointerAction.UP,
+                TutorialTouchTarget.PLAYFIELD,
+                movedBeyondTapSlop = movedBeyondSlop
+            ).outcome
+        )
+    }
+
+    @Test
     fun crossingTouchTargetsCancelsTheGesture() {
         val gate = TutorialInputGate()
 
