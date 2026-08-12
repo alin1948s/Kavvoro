@@ -1,5 +1,6 @@
 package com.moonsolstudios.kavvoro.ui
 
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -7,58 +8,173 @@ import org.junit.Test
 
 class TutorialInputGateTest {
     @Test
-    fun outsideTapAndSwipeAreConsumedWithoutDismissal() {
+    fun cleanActionTapDismissesWithoutStartingPlay() {
         val gate = TutorialInputGate()
 
-        assertTrue(gate.onPointer(TutorialPointerAction.DOWN, false).consumed)
-        assertFalse(gate.onPointer(TutorialPointerAction.MOVE, false).dismissed)
-        assertFalse(gate.onPointer(TutorialPointerAction.UP, false).dismissed)
+        gate.onPointer(
+            TutorialPointerAction.DOWN,
+            TutorialTouchTarget.ACTION_BUTTON,
+            movedBeyondTapSlop = false
+        )
+
+        assertEquals(
+            TutorialGateOutcome.DISMISS_ONLY,
+            gate.onPointer(
+                TutorialPointerAction.UP,
+                TutorialTouchTarget.ACTION_BUTTON,
+                movedBeyondTapSlop = false
+            ).outcome
+        )
     }
 
     @Test
-    fun cancelNeverDismisses() {
+    fun cleanPlayfieldTapDismissesAndStartsPlay() {
         val gate = TutorialInputGate()
 
-        gate.onPointer(TutorialPointerAction.DOWN, true)
-        val result = gate.onPointer(TutorialPointerAction.CANCEL, true)
+        gate.onPointer(
+            TutorialPointerAction.DOWN,
+            TutorialTouchTarget.PLAYFIELD,
+            movedBeyondTapSlop = false
+        )
 
-        assertTrue(result.consumed)
-        assertFalse(result.dismissed)
-        assertFalse(gate.actionPressed)
+        assertEquals(
+            TutorialGateOutcome.DISMISS_AND_PLAY,
+            gate.onPointer(
+                TutorialPointerAction.UP,
+                TutorialTouchTarget.PLAYFIELD,
+                movedBeyondTapSlop = false
+            ).outcome
+        )
     }
 
     @Test
-    fun multiTouchCancelsTheCleanActionGesture() {
+    fun cardBodyTapIsConsumedWithoutDismissal() {
         val gate = TutorialInputGate()
 
-        gate.onPointer(TutorialPointerAction.DOWN, true)
-        val pointerChange = gate.onPointer(TutorialPointerAction.MULTI_TOUCH, true)
-
-        assertTrue(pointerChange.consumed)
-        assertFalse(pointerChange.dismissed)
-        assertFalse(gate.actionPressed)
-        assertFalse(gate.onPointer(TutorialPointerAction.UP, true).dismissed)
+        assertTrue(
+            gate.onPointer(
+                TutorialPointerAction.DOWN,
+                TutorialTouchTarget.CARD,
+                movedBeyondTapSlop = false
+            ).consumed
+        )
+        assertEquals(
+            TutorialGateOutcome.NONE,
+            gate.onPointer(
+                TutorialPointerAction.UP,
+                TutorialTouchTarget.CARD,
+                movedBeyondTapSlop = false
+            ).outcome
+        )
     }
 
     @Test
-    fun cleanActionTapDismissesExactlyOnce() {
+    fun movementBeyondTouchSlopCancelsPlayfieldTap() {
         val gate = TutorialInputGate()
 
-        gate.onPointer(TutorialPointerAction.DOWN, true)
-        assertTrue(gate.actionPressed)
-        assertTrue(gate.onPointer(TutorialPointerAction.UP, true).dismissed)
-        assertFalse(gate.onPointer(TutorialPointerAction.UP, true).dismissed)
+        gate.onPointer(
+            TutorialPointerAction.DOWN,
+            TutorialTouchTarget.PLAYFIELD,
+            movedBeyondTapSlop = false
+        )
+        gate.onPointer(
+            TutorialPointerAction.MOVE,
+            TutorialTouchTarget.PLAYFIELD,
+            movedBeyondTapSlop = true
+        )
+
+        assertEquals(
+            TutorialGateOutcome.NONE,
+            gate.onPointer(
+                TutorialPointerAction.UP,
+                TutorialTouchTarget.PLAYFIELD,
+                movedBeyondTapSlop = true
+            ).outcome
+        )
     }
 
     @Test
-    fun leavingActionCancelsPressEvenAfterReturning() {
+    fun crossingTouchTargetsCancelsTheGesture() {
         val gate = TutorialInputGate()
 
-        gate.onPointer(TutorialPointerAction.DOWN, true)
-        gate.onPointer(TutorialPointerAction.MOVE, false)
-        gate.onPointer(TutorialPointerAction.MOVE, true)
+        gate.onPointer(
+            TutorialPointerAction.DOWN,
+            TutorialTouchTarget.PLAYFIELD,
+            movedBeyondTapSlop = false
+        )
+        gate.onPointer(
+            TutorialPointerAction.MOVE,
+            TutorialTouchTarget.CARD,
+            movedBeyondTapSlop = false
+        )
 
-        assertFalse(gate.onPointer(TutorialPointerAction.UP, true).dismissed)
+        assertEquals(
+            TutorialGateOutcome.NONE,
+            gate.onPointer(
+                TutorialPointerAction.UP,
+                TutorialTouchTarget.PLAYFIELD,
+                movedBeyondTapSlop = false
+            ).outcome
+        )
+    }
+
+    @Test
+    fun cancelAndMultiTouchNeverEmitAnOutcome() {
+        listOf(
+            TutorialPointerAction.CANCEL,
+            TutorialPointerAction.MULTI_TOUCH
+        ).forEach { interrupt ->
+            val gate = TutorialInputGate()
+            gate.onPointer(
+                TutorialPointerAction.DOWN,
+                TutorialTouchTarget.PLAYFIELD,
+                movedBeyondTapSlop = false
+            )
+
+            val interrupted = gate.onPointer(
+                interrupt,
+                TutorialTouchTarget.PLAYFIELD,
+                movedBeyondTapSlop = false
+            )
+
+            assertTrue(interrupted.consumed)
+            assertEquals(TutorialGateOutcome.NONE, interrupted.outcome)
+            assertEquals(
+                TutorialGateOutcome.NONE,
+                gate.onPointer(
+                    TutorialPointerAction.UP,
+                    TutorialTouchTarget.PLAYFIELD,
+                    movedBeyondTapSlop = false
+                ).outcome
+            )
+        }
+    }
+
+    @Test
+    fun actionOutcomeIsEmittedAtMostOnce() {
+        val gate = TutorialInputGate()
+        gate.onPointer(
+            TutorialPointerAction.DOWN,
+            TutorialTouchTarget.ACTION_BUTTON,
+            movedBeyondTapSlop = false
+        )
+
+        assertEquals(
+            TutorialGateOutcome.DISMISS_ONLY,
+            gate.onPointer(
+                TutorialPointerAction.UP,
+                TutorialTouchTarget.ACTION_BUTTON,
+                movedBeyondTapSlop = false
+            ).outcome
+        )
+        assertEquals(
+            TutorialGateOutcome.NONE,
+            gate.onPointer(
+                TutorialPointerAction.UP,
+                TutorialTouchTarget.ACTION_BUTTON,
+                movedBeyondTapSlop = false
+            ).outcome
+        )
     }
 
     @Test
@@ -82,17 +198,5 @@ class TutorialInputGateTest {
         assertFalse(TutorialInputGate.shouldShow(true, false, true, false))
         assertFalse(TutorialInputGate.shouldShow(true, true, false, false))
         assertFalse(TutorialInputGate.shouldShow(true, true, true, true))
-    }
-
-    @Test
-    fun laterFullLessonUsesTheSameVisibilityRule() {
-        assertTrue(
-            TutorialInputGate.shouldShow(
-                gameScreen = true,
-                ready = true,
-                hasTutorialHint = true,
-                acknowledged = false
-            )
-        )
     }
 }

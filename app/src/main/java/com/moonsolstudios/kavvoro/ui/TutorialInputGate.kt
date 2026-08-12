@@ -8,49 +8,91 @@ enum class TutorialPointerAction {
     CANCEL
 }
 
+enum class TutorialTouchTarget {
+    ACTION_BUTTON,
+    CARD,
+    PLAYFIELD
+}
+
+enum class TutorialGateOutcome {
+    NONE,
+    DISMISS_ONLY,
+    DISMISS_AND_PLAY
+}
+
 data class TutorialGateResult(
-    val consumed: Boolean,
+    val consumed: Boolean = true,
+    val outcome: TutorialGateOutcome = TutorialGateOutcome.NONE
+) {
     val dismissed: Boolean
-)
+        get() = outcome != TutorialGateOutcome.NONE
+}
 
 class TutorialInputGate {
-    private var beganInsideAction = false
-    private var leftAction = false
+    private var initialTarget: TutorialTouchTarget? = null
+    private var invalidated = false
 
     val actionPressed: Boolean
-        get() = beganInsideAction && !leftAction
+        get() = initialTarget == TutorialTouchTarget.ACTION_BUTTON && !invalidated
 
     fun onPointer(
         action: TutorialPointerAction,
-        insideAction: Boolean
+        target: TutorialTouchTarget,
+        movedBeyondTapSlop: Boolean
     ): TutorialGateResult = when (action) {
         TutorialPointerAction.DOWN -> {
-            beganInsideAction = insideAction
-            leftAction = false
-            TutorialGateResult(consumed = true, dismissed = false)
+            initialTarget = target
+            invalidated = movedBeyondTapSlop
+            TutorialGateResult()
         }
 
         TutorialPointerAction.MOVE -> {
-            if (beganInsideAction && !insideAction) leftAction = true
-            TutorialGateResult(consumed = true, dismissed = false)
+            if (movedBeyondTapSlop || target != initialTarget) invalidated = true
+            TutorialGateResult()
         }
 
         TutorialPointerAction.UP -> {
-            val dismissed = beganInsideAction && insideAction && !leftAction
+            val start = initialTarget
+            val clean = start != null &&
+                !invalidated &&
+                !movedBeyondTapSlop &&
+                target == start
+            val outcome = when {
+                clean && start == TutorialTouchTarget.ACTION_BUTTON ->
+                    TutorialGateOutcome.DISMISS_ONLY
+
+                clean && start == TutorialTouchTarget.PLAYFIELD ->
+                    TutorialGateOutcome.DISMISS_AND_PLAY
+
+                else -> TutorialGateOutcome.NONE
+            }
             reset()
-            TutorialGateResult(consumed = true, dismissed = dismissed)
+            TutorialGateResult(outcome = outcome)
         }
 
         TutorialPointerAction.MULTI_TOUCH,
         TutorialPointerAction.CANCEL -> {
             reset()
-            TutorialGateResult(consumed = true, dismissed = false)
+            TutorialGateResult()
         }
     }
 
+    fun onPointer(
+        action: TutorialPointerAction,
+        insideAction: Boolean
+    ): TutorialGateResult = onPointer(
+        action = action,
+        target = if (insideAction) {
+            TutorialTouchTarget.ACTION_BUTTON
+        } else {
+            TutorialTouchTarget.CARD
+        },
+        movedBeyondTapSlop = false
+    )
+
     fun reset() {
-        beganInsideAction = false
-        leftAction = false
+        initialTarget = null
+        invalidated = false
     }
 
     companion object {
