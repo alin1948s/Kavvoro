@@ -28,6 +28,19 @@ class TutorialInputGateTest {
     }
 
     @Test
+    fun multiTouchCancelsTheCleanActionGesture() {
+        val gate = TutorialInputGate()
+
+        gate.onPointer(TutorialPointerAction.DOWN, true)
+        val pointerChange = gate.onPointer(TutorialPointerAction.MULTI_TOUCH, true)
+
+        assertTrue(pointerChange.consumed)
+        assertFalse(pointerChange.dismissed)
+        assertFalse(gate.actionPressed)
+        assertFalse(gate.onPointer(TutorialPointerAction.UP, true).dismissed)
+    }
+
+    @Test
     fun cleanActionTapDismissesExactlyOnce() {
         val gate = TutorialInputGate()
 

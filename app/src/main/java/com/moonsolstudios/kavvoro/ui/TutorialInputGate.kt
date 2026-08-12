@@ -4,6 +4,7 @@ enum class TutorialPointerAction {
     DOWN,
     MOVE,
     UP,
+    MULTI_TOUCH,
     CANCEL
 }
 
@@ -40,6 +41,7 @@ class TutorialInputGate {
             TutorialGateResult(consumed = true, dismissed = dismissed)
         }
 
+        TutorialPointerAction.MULTI_TOUCH,
         TutorialPointerAction.CANCEL -> {
             reset()
             TutorialGateResult(consumed = true, dismissed = false)

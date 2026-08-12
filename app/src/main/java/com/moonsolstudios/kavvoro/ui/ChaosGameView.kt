@@ -494,6 +494,11 @@ class ChaosGameView(
                         }
                     }
 
+                    MotionEvent.ACTION_POINTER_DOWN,
+                    MotionEvent.ACTION_POINTER_UP -> {
+                        handleTutorialTouch(event)
+                    }
+
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                         val releasedButton = activeButton
                         activeButton = ButtonId.NONE
@@ -519,6 +524,8 @@ class ChaosGameView(
             MotionEvent.ACTION_DOWN -> TutorialPointerAction.DOWN
             MotionEvent.ACTION_MOVE -> TutorialPointerAction.MOVE
             MotionEvent.ACTION_UP -> TutorialPointerAction.UP
+            MotionEvent.ACTION_POINTER_DOWN,
+            MotionEvent.ACTION_POINTER_UP -> TutorialPointerAction.MULTI_TOUCH
             MotionEvent.ACTION_CANCEL -> TutorialPointerAction.CANCEL
             else -> return true
         }
