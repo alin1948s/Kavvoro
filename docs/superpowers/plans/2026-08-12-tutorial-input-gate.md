@@ -478,7 +478,7 @@ git commit -m "Block gameplay behind training lessons"
 - Consumes: the complete feature.
 - Produces: device evidence, verified APK, clean `main`, and synchronized `origin/main`.
 
-- [ ] **Step 1: Install the ignored Firebase configuration**
+- [x] **Step 1: Install the ignored Firebase configuration**
 
 ```powershell
 $firebase = Get-Content -Raw 'C:\Users\Alin\Downloads\google-services.json' | ConvertFrom-Json
@@ -492,7 +492,7 @@ git check-ignore 'app/google-services.json'
 
 Expected: `app/google-services.json` is ignored and absent from `git status`.
 
-- [ ] **Step 2: Run a clean build**
+- [x] **Step 2: Run a clean build**
 
 ```powershell
 $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
@@ -501,7 +501,7 @@ $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
 
 Expected: `BUILD SUCCESSFUL`; APK at `app/build/outputs/apk/debug/app-debug.apk`.
 
-- [ ] **Step 3: Install and verify the reported flow**
+- [x] **Step 3: Install and verify the reported flow**
 
 ```powershell
 $adb='C:\Users\Alin\AppData\Local\Android\Sdk\platform-tools\adb.exe'
@@ -522,7 +522,7 @@ At an unacknowledged training level, verify and capture screenshots for:
 7. the corresponding lesson in the other mode still appears;
 8. Romanian and Arabic labels fit and remain centered.
 
-- [ ] **Step 4: Run final verification**
+- [x] **Step 4: Run final verification**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest assembleDebug
@@ -532,7 +532,7 @@ git status --short --branch
 
 Expected: tests/build pass; diff check is empty; only plan checkbox tracking may remain.
 
-- [ ] **Step 5: Complete tracking, commit, and push `main`**
+- [x] **Step 5: Complete tracking, commit, and push `main`**
 
 Mark completed checkboxes in this file, then run:
 
