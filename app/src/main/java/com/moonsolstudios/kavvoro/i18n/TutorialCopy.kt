@@ -102,6 +102,43 @@ object TutorialCopy {
     val renderedKeyInventory: Set<String> =
         chromeKeys + fieldLabelKeys + levelTitleKeys + lessonKeys + obstacleKeys
 
+    fun lessonKeys(levelIndex: Int, hasPortals: Boolean): List<String> {
+        if (hasPortals) return portalLessonKeys.toList()
+        val orderedLessons = lessonKeys
+            .filterNot { it in portalLessonKeys }
+            .toList()
+        val start = (levelIndex.coerceIn(1, 10) - 1) * LESSON_LINES_PER_LEVEL
+        return orderedLessons.subList(start, start + LESSON_LINES_PER_LEVEL)
+    }
+
+    fun obstacleKey(
+        hasPortals: Boolean,
+        hasHazards: Boolean,
+        hasTinyGate: Boolean,
+        hasPulseZones: Boolean,
+        hasBlocks: Boolean
+    ): String = when {
+        hasPortals -> "Obstacle: portals change position and speed instantly."
+        hasHazards -> "Obstacle: pink crash nodes instantly fail the run."
+        hasTinyGate -> "Obstacle: tiny gate makes the exit much smaller."
+        hasPulseZones -> "Obstacle: platforms bounce you; pulse fields bend speed."
+        hasBlocks -> "Obstacle: platforms bounce and redirect the ball."
+        else -> "Obstacle: screen edges and timer can still end the run."
+    }
+
+    fun actionLabelKey(
+        hasOverheat: Boolean,
+        hasPowerTap: Boolean,
+        hasFocusField: Boolean,
+        hasRiftDrain: Boolean
+    ): String = when {
+        hasOverheat -> "TAP BURST"
+        hasPowerTap -> "POWER TAP"
+        hasFocusField -> "SLOW TAP"
+        hasRiftDrain -> "SHORT TAP"
+        else -> "TAP"
+    }
+
     private val rows = mapOf(
         requiredRow(
             "TIME", "Timp", "Tiempo", "Temps", "Zeit", "Tempo", "Tempo",
@@ -858,4 +895,6 @@ object TutorialCopy {
         KavvoroLanguage.KO to ko,
         KavvoroLanguage.ZH to zh
     )
+
+    private const val LESSON_LINES_PER_LEVEL = 3
 }

@@ -1,5 +1,6 @@
 package com.moonsolstudios.kavvoro.i18n
 
+import com.moonsolstudios.kavvoro.engine.LevelDirector
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -37,5 +38,55 @@ class KavvoroI18nTest {
                 "Pink crash nodes end the run."
             )
         )
+    }
+
+    @Test
+    fun strictCatalogExactlyCoversTheRenderedTutorialInventory() {
+        assertEquals(
+            TutorialCopy.renderedKeyInventory,
+            TutorialCopy.requiredKeys
+        )
+    }
+
+    @Test
+    fun generatedTutorialTitlesAreExactlyTheStrictTitleInventory() {
+        val generatedTitles = (1..10).flatMap { level ->
+            listOf(
+                LevelDirector.createClassic(level, 20f, 1234L).title.uppercase(),
+                LevelDirector.createChaos(level, 20f, 1234L).title.uppercase()
+            )
+        }.toSet()
+
+        assertEquals(TutorialCopy.levelTitleKeys, generatedTitles)
+    }
+
+    @Test
+    fun tutorialSelectorsOnlyReturnCatalogKeys() {
+        (1..10).forEach { level ->
+            TutorialCopy.lessonKeys(level, hasPortals = false).forEach { key ->
+                assertTrue(key in TutorialCopy.lessonKeys)
+            }
+        }
+        TutorialCopy.lessonKeys(1, hasPortals = true).forEach { key ->
+            assertTrue(key in TutorialCopy.portalLessonKeys)
+        }
+
+        val selectedKeys = setOf(
+            TutorialCopy.actionLabelKey(false, false, false, false),
+            TutorialCopy.actionLabelKey(true, false, false, false),
+            TutorialCopy.actionLabelKey(false, true, false, false),
+            TutorialCopy.actionLabelKey(false, false, true, false),
+            TutorialCopy.actionLabelKey(false, false, false, true),
+            TutorialCopy.obstacleKey(true, false, false, false, false),
+            TutorialCopy.obstacleKey(false, true, false, false, false),
+            TutorialCopy.obstacleKey(false, false, true, false, false),
+            TutorialCopy.obstacleKey(false, false, false, true, false),
+            TutorialCopy.obstacleKey(false, false, false, false, true),
+            TutorialCopy.obstacleKey(false, false, false, false, false)
+        )
+
+        selectedKeys.forEach { key ->
+            assertTrue(key in TutorialCopy.requiredKeys)
+        }
     }
 }

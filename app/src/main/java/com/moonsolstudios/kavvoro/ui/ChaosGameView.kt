@@ -45,6 +45,7 @@ import com.moonsolstudios.kavvoro.engine.RunScore
 import com.moonsolstudios.kavvoro.engine.STAGE_WIDTH
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.i18n.KavvoroLanguage
+import com.moonsolstudios.kavvoro.i18n.TutorialCopy
 import com.moonsolstudios.kavvoro.share.ReplaySharePayload
 import com.moonsolstudios.kavvoro.share.ReplayVideoExporter
 import java.io.File
@@ -4780,13 +4781,14 @@ class ChaosGameView(
     }
 
     private fun tutorialActionLabel(): String {
-        return when {
-            levelHasCurse(CurseType.OVERHEAT) -> t("TAP BURST").uppercase()
-            levelHasCurse(CurseType.POWER_HOLD) -> t("POWER TAP").uppercase()
-            levelHasCurse(CurseType.FOCUS_FIELD) -> t("SLOW TAP").uppercase()
-            levelHasCurse(CurseType.RIFT_DRAIN) -> t("SHORT TAP").uppercase()
-            else -> t("TAP").uppercase()
-        }
+        return t(
+            TutorialCopy.actionLabelKey(
+                hasOverheat = levelHasCurse(CurseType.OVERHEAT),
+                hasPowerTap = levelHasCurse(CurseType.POWER_HOLD),
+                hasFocusField = levelHasCurse(CurseType.FOCUS_FIELD),
+                hasRiftDrain = levelHasCurse(CurseType.RIFT_DRAIN)
+            )
+        ).uppercase()
     }
 
     private fun drawCoachHalo(canvas: Canvas, cx: Float, cy: Float, radius: Float, accent: Int, alpha: Float) {
@@ -5976,85 +5978,22 @@ class ChaosGameView(
     }
 
     private fun tutorialLessonLines(): List<String> {
-        if (level.portals.isNotEmpty()) {
-            return listOf(
-                "Portal IN teleports the ball to OUT.",
-                "The exit launches with extra speed toward goal.",
-                "Aim before entering; it has a short cooldown."
-            ).map(::t)
-        }
-        return when (level.index.coerceIn(1, 10)) {
-            1 -> listOf(
-                "Tap to fire a short Rift tether.",
-                "The ball accelerates toward the tap point.",
-                "Chain clean taps to steer without wasting energy."
-            )
-
-            2 -> listOf(
-                "Pulse zones are not decoration.",
-                "They push and swirl the ball inside the circle.",
-                "BOOST means the field is affecting you."
-            )
-
-            3 -> listOf(
-                "Tap behind the ball to brake.",
-                "Wait between taps to coast and save rift energy.",
-                "Less rift used gives more HYPE."
-            )
-
-            4 -> listOf(
-                "Pink crash nodes end the run.",
-                "Short tap bursts dodge better than panic spam.",
-                "Clean dodges keep your streak alive."
-            )
-
-            5 -> listOf(
-                "CHAIN is your live combo.",
-                "It grows during fast rift control or boost fields.",
-                "Max chain adds big HYPE at finish."
-            )
-
-            6 -> listOf(
-                "Rift energy is limited.",
-                "Rift Drain spends energy faster during tap bursts.",
-                "Pause between taps to recharge."
-            )
-
-            7 -> listOf(
-                "Pulse Storm makes fields stronger.",
-                "Tap through the pulse when it gets wild.",
-                "Use the storm for speed, not panic."
-            )
-
-            8 -> listOf(
-                "Focus Field slows the ball during tap bursts.",
-                "Heavy Core pulls down harder.",
-                "Use precision taps to fight gravity."
-            )
-
-            9 -> listOf(
-                "Power Tap charges a stronger pull.",
-                "Moon Glide keeps momentum after release.",
-                "Tap, glide, then coast into the exit."
-            )
-
-            else -> listOf(
-                "Wind pushes the ball sideways.",
-                "Overheat punishes tap spam.",
-                "Use short bursts for the tiny gate."
-            )
-        }.map(::t)
+        return TutorialCopy.lessonKeys(
+            levelIndex = level.index,
+            hasPortals = level.portals.isNotEmpty()
+        ).map(::t)
     }
 
     private fun tutorialObstacleLine(): String {
-        return when {
-            level.portals.isNotEmpty() -> t("Obstacle: portals change position and speed instantly.")
-            level.hazards.isNotEmpty() -> t("Obstacle: pink crash nodes instantly fail the run.")
-            levelHasCurse(CurseType.TINY_GATE) -> t("Obstacle: tiny gate makes the exit much smaller.")
-            level.pulseZones.isNotEmpty() -> t("Obstacle: platforms bounce you; pulse fields bend speed.")
-            level.blocks.isNotEmpty() -> t("Obstacle: platforms bounce and redirect the ball.")
-            else -> t("Obstacle: screen edges and timer can still end the run.")
-        }
+        return t(
+            TutorialCopy.obstacleKey(
+                hasPortals = level.portals.isNotEmpty(),
+                hasHazards = level.hazards.isNotEmpty(),
+                hasTinyGate = levelHasCurse(CurseType.TINY_GATE),
+                hasPulseZones = level.pulseZones.isNotEmpty(),
+                hasBlocks = level.blocks.isNotEmpty()
+            )
+        )
     }
 
     private fun tutorialIconKey(): String {
