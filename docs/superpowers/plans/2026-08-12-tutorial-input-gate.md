@@ -194,7 +194,7 @@ git commit -m "Add deterministic tutorial input gate"
 - Consumes: `KavvoroI18n.t(KavvoroLanguage, String)`.
 - Produces: a translated `START LEVEL` value for every supported language.
 
-- [ ] **Step 1: Write the failing coverage test**
+- [x] **Step 1: Write the failing coverage test**
 
 ```kotlin
 package com.moonsolstudios.kavvoro.i18n
@@ -216,7 +216,7 @@ class KavvoroI18nTest {
 }
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest --tests '*KavvoroI18nTest'
@@ -224,7 +224,7 @@ class KavvoroI18nTest {
 
 Expected: failure for Romanian because the value is still `START LEVEL`.
 
-- [ ] **Step 3: Add all translations beside the existing `START` row**
+- [x] **Step 3: Add all translations beside the existing `START` row**
 
 ```kotlin
 row(
@@ -236,7 +236,7 @@ row(
 ),
 ```
 
-- [ ] **Step 4: Verify GREEN and all JVM tests**
+- [x] **Step 4: Verify GREEN and all JVM tests**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest --tests '*KavvoroI18nTest'
@@ -245,7 +245,7 @@ row(
 
 Expected: `BUILD SUCCESSFUL` twice with zero failed tests.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```powershell
 git add -- app/src/main/java/com/moonsolstudios/kavvoro/i18n/KavvoroI18n.kt app/src/test/java/com/moonsolstudios/kavvoro/i18n/KavvoroI18nTest.kt
