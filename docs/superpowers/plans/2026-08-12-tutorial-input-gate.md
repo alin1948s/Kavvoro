@@ -264,7 +264,7 @@ git commit -m "Localize tutorial start action"
 - Consumes: all `TutorialInputGate` interfaces and localized `START LEVEL`.
 - Produces: safe touch routing, persistent dismissal, a single real action, and no decorative chips.
 
-- [ ] **Step 1: Add and run a policy regression for later lessons**
+- [x] **Step 1: Add and run a policy regression for later lessons**
 
 Add to `TutorialInputGateTest.kt`:
 
@@ -288,7 +288,7 @@ Run:
 
 Expected: PASS, proving integration must depend on `hasTutorialHint`, not `level <= 10`.
 
-- [ ] **Step 2: Add view state and visibility helpers**
+- [x] **Step 2: Add view state and visibility helpers**
 
 Add fields near the existing input state and rectangles:
 
@@ -316,7 +316,7 @@ private fun refreshTutorialCardVisibility() {
 }
 ```
 
-- [ ] **Step 3: Consume tutorial pointer sequences before Rift control**
+- [x] **Step 3: Consume tutorial pointer sequences before Rift control**
 
 Add:
 
@@ -388,7 +388,7 @@ when (event.actionMasked) {
 }
 ```
 
-- [ ] **Step 4: Replace chips with the real action**
+- [x] **Step 4: Replace chips with the real action**
 
 At the start of `drawTutorialHint`:
 
@@ -450,7 +450,7 @@ private fun drawTutorialStartButton(canvas: Canvas, accent: Int) {
 }
 ```
 
-- [ ] **Step 5: Compile, test, inspect, and commit**
+- [x] **Step 5: Compile, test, inspect, and commit**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest compileDebugKotlin

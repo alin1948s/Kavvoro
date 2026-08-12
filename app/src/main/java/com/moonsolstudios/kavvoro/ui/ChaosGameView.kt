@@ -284,6 +284,8 @@ class ChaosGameView(
     private var lastHypeScore = 0
     private var streak = prefs.getInt("streak_classic", prefs.getInt("clear_streak", 0))
     private var activeButton = ButtonId.NONE
+    private val tutorialInputGate = TutorialInputGate()
+    private var tutorialCardVisible = false
     private var activeMenuButton = MenuButton.NONE
     private var backgroundShader: LinearGradient? = null
     private var pendingAdAction = AdAction.NONE
@@ -350,6 +352,7 @@ class ChaosGameView(
     private val resultRetryButton = RectF()
     private val resultShareButton = RectF()
     private val adButton = RectF()
+    private val tutorialStartButton = RectF()
 
     init {
         holder.addCallback(this)
@@ -475,13 +478,18 @@ class ChaosGameView(
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
                         activeButton = buttonAt(event.x, event.y)
-                        if (activeButton == ButtonId.NONE) {
+                        if (activeButton == ButtonId.NONE &&
+                            !handleTutorialTouch(event)
+                        ) {
                             startRiftControl(event.x, event.y)
                         }
                     }
 
                     MotionEvent.ACTION_MOVE -> {
-                        if (activeButton == ButtonId.NONE && riftTapReleaseTimer <= 0f) {
+                        if (activeButton == ButtonId.NONE &&
+                            !handleTutorialTouch(event) &&
+                            riftTapReleaseTimer <= 0f
+                        ) {
                             moveRiftControl(event.x, event.y)
                         }
                     }
@@ -491,7 +499,10 @@ class ChaosGameView(
                         activeButton = ButtonId.NONE
                         if (releasedButton != ButtonId.NONE && buttonAt(event.x, event.y) == releasedButton) {
                             pendingAction = handleButton(releasedButton)
-                        } else if (event.actionMasked == MotionEvent.ACTION_CANCEL || riftTapReleaseTimer <= 0f) {
+                        } else if (!handleTutorialTouch(event) &&
+                            (event.actionMasked == MotionEvent.ACTION_CANCEL ||
+                                riftTapReleaseTimer <= 0f)
+                        ) {
                             releaseRiftControl()
                         }
                     }
@@ -500,6 +511,38 @@ class ChaosGameView(
         }
         pendingAction?.invoke()
         return true
+    }
+
+    private fun handleTutorialTouch(event: MotionEvent): Boolean {
+        if (!tutorialCardVisible) return false
+        val action = when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> TutorialPointerAction.DOWN
+            MotionEvent.ACTION_MOVE -> TutorialPointerAction.MOVE
+            MotionEvent.ACTION_UP -> TutorialPointerAction.UP
+            MotionEvent.ACTION_CANCEL -> TutorialPointerAction.CANCEL
+            else -> return true
+        }
+        val result = tutorialInputGate.onPointer(
+            action,
+            tutorialStartButton.contains(event.x, event.y)
+        )
+        if (result.dismissed) dismissTutorialCard()
+        return result.consumed
+    }
+
+    private fun dismissTutorialCard() {
+        if (!prefs.edit()
+                .putBoolean(tutorialAcknowledgementKey(), true)
+                .commit()
+        ) {
+            return
+        }
+        tutorialCardVisible = false
+        tutorialStartButton.setEmpty()
+        tutorialInputGate.reset()
+        stateElapsed = 0f
+        performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        audio.playEvent(SoundEvent.UI_TAP, selectedBallIndex())
     }
 
     private fun handleMenuTouch(event: MotionEvent) {
@@ -1103,6 +1146,21 @@ class ChaosGameView(
         replayFrames = emptyList()
         replay.clear()
         lastScore = null
+        refreshTutorialCardVisibility()
+    }
+
+    private fun tutorialAcknowledgementKey(): String =
+        TutorialInputGate.acknowledgementKey(gameMode.name, level.index)
+
+    private fun refreshTutorialCardVisibility() {
+        tutorialInputGate.reset()
+        tutorialStartButton.setEmpty()
+        tutorialCardVisible = TutorialInputGate.shouldShow(
+            gameScreen = screen == Screen.GAME,
+            ready = state == GameState.READY,
+            hasTutorialHint = level.tutorialHint.isNotBlank(),
+            acknowledged = prefs.getBoolean(tutorialAcknowledgementKey(), false)
+        )
     }
 
     private fun startRun(mode: GameMode, continueProgress: Boolean) {
@@ -5732,11 +5790,13 @@ class ChaosGameView(
     }
 
     private fun drawTutorialHint(canvas: Canvas) {
-        if (level.tutorialHint.isBlank()) return
-        if (state != GameState.READY) return
+        if (!tutorialCardVisible) {
+            tutorialStartButton.setEmpty()
+            return
+        }
 
         val width = min(viewWidth - dp(36f), dp(430f))
-        val height = dp(154f)
+        val height = dp(184f)
         val left = viewWidth * 0.5f - width * 0.5f
         val top = viewHeight - height - dp(34f)
         val accent = currentModeWarning()?.accent ?: level.accent
@@ -5791,21 +5851,50 @@ class ChaosGameView(
         paint.color = 0x22FFFFFF
         canvas.drawRoundRect(left + dp(62f), top + dp(116f), left + width - dp(14f), top + dp(117.5f), dp(1f), dp(1f), paint)
 
-        val chips = tutorialChipLabels()
-        val chipTop = top + dp(126f)
-        var chipLeft = left + dp(62f)
-        chips.forEachIndexed { index, chip ->
-            val chipWidth = max(dp(48f), textPaint.measureText(chip) + dp(18f))
-            scratch.set(chipLeft, chipTop, chipLeft + chipWidth, chipTop + dp(17f))
-            paint.style = Paint.Style.FILL
-            paint.color = withAlpha(if (index == 0) accent else 0xFFFFFFFF.toInt(), if (index == 0) 68 else 25)
-            canvas.drawRoundRect(scratch, dp(6f), dp(6f), paint)
-            textPaint.textAlign = Paint.Align.CENTER
-            textPaint.textSize = dp(8f)
-            textPaint.color = withAlpha(0xFFFFFFFF.toInt(), 215)
-            canvas.drawText(chip, scratch.centerX(), scratch.centerY() + dp(3f), textPaint)
-            chipLeft += chipWidth + dp(6f)
-        }
+        tutorialStartButton.set(
+            left + dp(62f),
+            top + dp(126f),
+            left + width - dp(14f),
+            top + dp(170f)
+        )
+        drawTutorialStartButton(canvas, accent)
+    }
+
+    private fun drawTutorialStartButton(canvas: Canvas, accent: Int) {
+        val active = tutorialInputGate.actionPressed
+        paint.style = Paint.Style.FILL
+        paint.shader = LinearGradient(
+            tutorialStartButton.left,
+            tutorialStartButton.top,
+            tutorialStartButton.right,
+            tutorialStartButton.bottom,
+            intArrayOf(
+                withAlpha(accent, if (active) 255 else 232),
+                withAlpha(accent, if (active) 180 else 132)
+            ),
+            null,
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawRoundRect(tutorialStartButton, dp(7f), dp(7f), paint)
+        paint.shader = null
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = dp(if (active) 1.8f else 1.1f)
+        paint.color = withAlpha(0xFFFFFFFF.toInt(), if (active) 235 else 175)
+        canvas.drawRoundRect(tutorialStartButton, dp(7f), dp(7f), paint)
+
+        textPaint.textAlign = Paint.Align.CENTER
+        textPaint.typeface = android.graphics.Typeface.create(
+            "sans",
+            android.graphics.Typeface.BOLD
+        )
+        textPaint.textSize = dp(12f)
+        textPaint.color = 0xFFF7F4FF.toInt()
+        canvas.drawText(
+            t("START LEVEL").uppercase(),
+            tutorialStartButton.centerX(),
+            tutorialStartButton.centerY() + dp(4f),
+            textPaint
+        )
     }
 
     private fun tutorialLessonLines(): List<String> {
@@ -5900,18 +5989,6 @@ class ChaosGameView(
             levelHasCurse(CurseType.FOCUS_FIELD) -> "boost_recharge"
             else -> "boost_rift_pull"
         }
-    }
-
-    private fun tutorialChipLabels(): List<String> {
-        val chips = mutableListOf(tutorialActionLabel())
-        if (level.portals.isNotEmpty()) chips += t("PORTAL").uppercase()
-        if (level.blocks.isNotEmpty()) chips += t("WALL").uppercase()
-        if (level.pulseZones.isNotEmpty()) chips += t("BOOST").uppercase()
-        if (level.hazards.isNotEmpty()) chips += t("CRASH").uppercase()
-        if (levelHasCurse(CurseType.TINY_GATE)) chips += t("TINY EXIT").uppercase()
-        if (levelHasCurse(CurseType.MOON_GLIDE)) chips += t("GLIDE").uppercase()
-        if (chips.size < 3) chips += t("EXIT").uppercase()
-        return chips.take(3)
     }
 
     private fun drawTwoLineText(canvas: Canvas, text: String, x: Float, y: Float, maxWidth: Float) {

@@ -70,4 +70,16 @@ class TutorialInputGateTest {
         assertFalse(TutorialInputGate.shouldShow(true, true, false, false))
         assertFalse(TutorialInputGate.shouldShow(true, true, true, true))
     }
+
+    @Test
+    fun laterFullLessonUsesTheSameVisibilityRule() {
+        assertTrue(
+            TutorialInputGate.shouldShow(
+                gameScreen = true,
+                ready = true,
+                hasTutorialHint = true,
+                acknowledged = false
+            )
+        )
+    }
 }
