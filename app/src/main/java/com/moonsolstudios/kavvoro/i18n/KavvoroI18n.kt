@@ -88,6 +88,7 @@ object KavvoroI18n {
     }
 
     fun t(language: KavvoroLanguage, english: String): String {
+        TutorialCopy.translation(language, english)?.let { return it }
         copyOverrides[english]?.get(language)?.let { return it }
         if (language == KavvoroLanguage.EN || language == KavvoroLanguage.SYSTEM) {
             return copyOverrides[english]?.get(KavvoroLanguage.EN) ?: english
