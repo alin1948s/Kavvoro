@@ -18,7 +18,7 @@
 - Persist acknowledgement synchronously before either dismissal outcome; persistence failure keeps the card and input lock active.
 - Keep existing `tutorial_ack_<mode>_<level>` keys and mode separation.
 - Center the button and divider using equal card-relative margins.
-- Provide explicit tutorial-screen translations for English plus all 19 non-system languages.
+- Provide explicit tutorial-screen translations for all 19 supported languages (English plus 18 others).
 - Keep Kavvoro, Rift, HYPE, Voro Grad, Classic, Chaos, BOOST, IN, and OUT as product/game tokens where natural.
 - Never commit `app/google-services.json`, signing files, APKs, AABs, emulator data, or screenshots.
 
@@ -34,7 +34,7 @@
 - Consumes: normalized pointer actions, normalized touch targets, and a Boolean touch-slop signal.
 - Produces: `TutorialTouchTarget`, `TutorialGateOutcome`, and `TutorialGateResult.outcome`; `TutorialInputGate.onPointer(action, target, movedBeyondTapSlop)`.
 
-- [ ] **Step 1: Replace the button-only tests with failing target/outcome tests**
+- [x] **Step 1: Replace the button-only tests with failing target/outcome tests**
 
 Add these public types to the test contract:
 
@@ -100,7 +100,7 @@ fun cancelAndMultiTouchNeverEmitAnOutcome() {
 
 Retain the acknowledgement and visibility tests.
 
-- [ ] **Step 2: Run the focused test and verify RED**
+- [x] **Step 2: Run the focused test and verify RED**
 
 ```powershell
 $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
@@ -110,7 +110,7 @@ $env:ANDROID_HOME='C:\Users\Alin\AppData\Local\Android\Sdk'
 
 Expected: compilation fails because `TutorialTouchTarget`, `TutorialGateOutcome`, and the new `onPointer` signature do not exist.
 
-- [ ] **Step 3: Implement the minimal target-aware state machine**
+- [x] **Step 3: Implement the minimal target-aware state machine**
 
 Use this shape in `TutorialInputGate.kt`:
 
@@ -171,7 +171,7 @@ class TutorialInputGate {
 }
 ```
 
-- [ ] **Step 4: Verify the focused and full JVM suites**
+- [x] **Step 4: Verify the focused and full JVM suites**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest --tests '*TutorialInputGateTest'
@@ -180,7 +180,7 @@ class TutorialInputGate {
 
 Expected: both commands report `BUILD SUCCESSFUL` with zero failures.
 
-- [ ] **Step 5: Commit the pure input contract**
+- [x] **Step 5: Commit the pure input contract**
 
 ```powershell
 git add -- app/src/main/java/com/moonsolstudios/kavvoro/ui/TutorialInputGate.kt app/src/test/java/com/moonsolstudios/kavvoro/ui/TutorialInputGateTest.kt
@@ -200,7 +200,7 @@ git commit -m "Model direct-play tutorial taps"
 - Consumes: Task 1 `TutorialInputGate.onPointer` and `TutorialGateOutcome`.
 - Produces: `TutorialCardLayout.centeredHorizontalBounds(cardLeft, cardRight, padding)`; safe explicit outside-tap startup; shared `tutorialCardBounds` and centered button geometry.
 
-- [ ] **Step 1: Write a failing geometry regression**
+- [x] **Step 1: Write a failing geometry regression**
 
 Create `TutorialCardLayoutTest.kt`:
 
@@ -216,7 +216,7 @@ class TutorialCardLayoutTest {
 }
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest --tests '*TutorialCardLayoutTest'
@@ -224,7 +224,7 @@ class TutorialCardLayoutTest {
 
 Expected: compilation fails because `TutorialCardLayout` does not exist.
 
-- [ ] **Step 3: Implement the pure horizontal layout helper**
+- [x] **Step 3: Implement the pure horizontal layout helper**
 
 Create `TutorialCardLayout.kt`:
 
@@ -248,7 +248,7 @@ object TutorialCardLayout {
 }
 ```
 
-- [ ] **Step 4: Add Android gesture state and shared hit rectangles**
+- [x] **Step 4: Add Android gesture state and shared hit rectangles**
 
 In `ChaosGameView`:
 
@@ -274,7 +274,7 @@ private fun tutorialTouchTarget(x: Float, y: Float): TutorialTouchTarget = when 
 
 If the card bounds have not been laid out yet, consume the event as `CARD` rather than allowing startup.
 
-- [ ] **Step 5: Make outcomes explicit and persistence authoritative**
+- [x] **Step 5: Make outcomes explicit and persistence authoritative**
 
 Change dismissal to return success:
 
@@ -309,7 +309,7 @@ when (result.outcome) {
 
 All tutorial events return consumed. No tutorial outcome falls through to the surrounding `startRiftControl`, `moveRiftControl`, or `releaseRiftControl` branches.
 
-- [ ] **Step 6: Center the divider and action using shared card geometry**
+- [x] **Step 6: Center the divider and action using shared card geometry**
 
 In `drawTutorialHint`, store the card rectangle in `tutorialCardBounds`. Use `TutorialCardLayout.centeredHorizontalBounds(left, left + width, dp(14f))` for both divider and action:
 
@@ -332,11 +332,11 @@ tutorialStartButton.set(
 
 Fit the translated action label with `drawFittedText` using the button center and `tutorialStartButton.width() - dp(20f)`.
 
-- [ ] **Step 7: Add Arabic alignment inside the card**
+- [x] **Step 7: Add Arabic alignment inside the card**
 
 Use `KavvoroI18n.active(context) == KavvoroLanguage.AR` to choose `Paint.Align.RIGHT`. Keep the same maximum width and draw header/body/footer at `tutorialCardBounds.right - dp(14f)` in Arabic, and at `left + dp(62f)` in other languages. The centered action label remains unchanged.
 
-- [ ] **Step 8: Compile, run tests, inspect the diff, and commit**
+- [x] **Step 8: Compile, run tests, inspect the diff, and commit**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest compileDebugKotlin
@@ -364,7 +364,7 @@ git commit -m "Start play from clean tutorial taps"
 - Consumes: `KavvoroLanguage`.
 - Produces: `TutorialCopy.translation(language, key)`, `TutorialCopy.hasExplicitTranslation(language, key)`, and `TutorialCopy.requiredKeys`.
 
-- [ ] **Step 1: Add failing strict-coverage tests**
+- [x] **Step 1: Add failing strict-coverage tests**
 
 Replace the single `START LEVEL` test with:
 
@@ -400,7 +400,7 @@ fun tutorialLookupUsesTheStrictCatalogBeforeLegacyOverrides() {
 }
 ```
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest --tests '*KavvoroI18nTest'
@@ -408,9 +408,9 @@ fun tutorialLookupUsesTheStrictCatalogBeforeLegacyOverrides() {
 
 Expected: compilation fails because `TutorialCopy` does not exist.
 
-- [ ] **Step 3: Create a required-row API with no default languages**
+- [x] **Step 3: Create a required-row API with no default languages**
 
-In `TutorialCopy.kt`, define a helper whose 20 values are mandatory:
+In `TutorialCopy.kt`, define a helper whose 19 values are mandatory:
 
 ```kotlin
 private fun requiredRow(
@@ -438,7 +438,7 @@ private fun requiredRow(
 
 Store English explicitly in the returned map. Resolve `SYSTEM` to English for direct tests, but exclude `SYSTEM` from explicit-coverage requirements.
 
-- [ ] **Step 4: Populate the exact tutorial key inventory**
+- [x] **Step 4: Populate the exact tutorial key inventory**
 
 Create explicit required rows for these groups; no row may use English defaults for another language:
 
@@ -507,7 +507,7 @@ Obstacle: screen edges and timer can still end the run.
 
 Translations must be natural, concise mobile UI copy in every supported language. Preserve only the approved game tokens from Global Constraints; translate surrounding grammar and every instructional verb.
 
-- [ ] **Step 5: Route tutorial lookup before legacy fallback**
+- [x] **Step 5: Route tutorial lookup before legacy fallback**
 
 At the start of `KavvoroI18n.t(language, english)`:
 
@@ -517,7 +517,7 @@ TutorialCopy.translation(language, english)?.let { return it }
 
 Then retain existing `copyOverrides` and `phrases` behavior for non-tutorial strings.
 
-- [ ] **Step 6: Verify focused and full coverage, then commit**
+- [x] **Step 6: Verify focused and full coverage, then commit**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest --tests '*KavvoroI18nTest'
@@ -525,7 +525,7 @@ Then retain existing `copyOverrides` and `phrases` behavior for non-tutorial str
 git diff --check
 ```
 
-Expected: every required key has 20 explicit nonblank values and both commands succeed.
+Expected: every required key has 19 explicit nonblank values and both commands succeed.
 
 ```powershell
 git add -- app/src/main/java/com/moonsolstudios/kavvoro/i18n/TutorialCopy.kt app/src/main/java/com/moonsolstudios/kavvoro/i18n/KavvoroI18n.kt app/src/test/java/com/moonsolstudios/kavvoro/i18n/KavvoroI18nTest.kt
@@ -545,7 +545,7 @@ git commit -m "Translate the complete tutorial screen"
 - Consumes: `TutorialCopy.requiredKeys` and all string selectors used by `ChaosGameView`.
 - Produces: `TutorialCopy.renderedKeyInventory` and an automated equality test against `requiredKeys`.
 
-- [ ] **Step 1: Add a failing inventory equality test**
+- [x] **Step 1: Add a failing inventory equality test**
 
 ```kotlin
 @Test
@@ -559,7 +559,7 @@ fun strictCatalogExactlyCoversTheRenderedTutorialInventory() {
 
 Define `renderedKeyInventory` as the union of named public sets: `chromeKeys`, `fieldLabelKeys`, `levelTitleKeys`, `lessonKeys`, and `obstacleKeys`. The map rows must derive `requiredKeys` from their keys. This catches a selector key added without a row and a stale row no longer used by the tutorial.
 
-- [ ] **Step 2: Run and verify RED**
+- [x] **Step 2: Run and verify RED**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest --tests '*KavvoroI18nTest.strictCatalogExactlyCoversTheRenderedTutorialInventory'
@@ -567,13 +567,13 @@ Define `renderedKeyInventory` as the union of named public sets: `chromeKeys`, `
 
 Expected: compilation fails until the public inventory sets exist.
 
-- [ ] **Step 3: Centralize selector keys without changing lesson selection**
+- [x] **Step 3: Centralize selector keys without changing lesson selection**
 
 Expose the five immutable key sets from `TutorialCopy`, use their exact strings in the existing `tutorialLessonLines`, `tutorialObstacleLine`, title renderer, action label, footer, HUD, and coach-label code, and keep all calls passing through `t(key)`.
 
 Do not change level mechanics, level-to-lesson mapping, obstacle priority, or the selected icon.
 
-- [ ] **Step 4: Run full automated verification and commit**
+- [x] **Step 4: Run full automated verification and commit**
 
 ```powershell
 .\gradlew.bat testDebugUnitTest compileDebugKotlin
@@ -601,7 +601,7 @@ git commit -m "Enforce tutorial translation coverage"
 - Consumes: the complete feature.
 - Produces: verified APK, clean `main`, independent review, and synchronized `origin/main`.
 
-- [ ] **Step 1: Verify Firebase config remains valid and ignored**
+- [x] **Step 1: Verify Firebase config remains valid and ignored**
 
 ```powershell
 $firebase = Get-Content -Raw 'C:\Users\Alin\Downloads\google-services.json' | ConvertFrom-Json
@@ -615,7 +615,7 @@ git check-ignore -v app/google-services.json
 
 Expected: `.gitignore` owns `app/google-services.json`, and it is absent from `git status`.
 
-- [ ] **Step 2: Run a clean build**
+- [x] **Step 2: Run a clean build**
 
 ```powershell
 $env:JAVA_HOME='C:\Program Files\Android\Android Studio\jbr'
@@ -625,7 +625,7 @@ $env:ANDROID_HOME='C:\Users\Alin\AppData\Local\Android\Sdk'
 
 Expected: `BUILD SUCCESSFUL`; APK exists at `app/build/outputs/apk/debug/app-debug.apk`.
 
-- [ ] **Step 3: Install and verify the touch matrix on the emulator**
+- [x] **Step 3: Install and verify the touch matrix on the emulator**
 
 ```powershell
 $adb='C:\Users\Alin\AppData\Local\Android\Sdk\platform-tools\adb.exe'
@@ -646,7 +646,7 @@ At fresh unacknowledged lessons, verify with screenshots and timer/ball position
 7. retry does not reopen an acknowledged card;
 8. Classic acknowledgement does not suppress the same Chaos lesson.
 
-- [ ] **Step 4: Verify representative scripts and centered layout**
+- [x] **Step 4: Verify representative scripts and centered layout**
 
 Inspect English, Romanian, German, Arabic, Hindi, Japanese, and Chinese. For each:
 
@@ -657,11 +657,11 @@ Inspect English, Romanian, German, Arabic, Hindi, Japanese, and Chinese. For eac
 - Arabic body copy is right-aligned and the action stays centered;
 - coach labels and tutorial titles use the selected language.
 
-- [ ] **Step 5: Request independent code review and resolve findings**
+- [x] **Step 5: Request independent code review and resolve findings**
 
 Review the complete range from the pre-feature base through `HEAD` against `docs/superpowers/specs/2026-08-12-tutorial-direct-play-localization-design.md`. Fix every Critical or Important issue, rerun focused tests for any fix, and request a concise re-review before publication.
 
-- [ ] **Step 6: Run fresh final verification**
+- [x] **Step 6: Run fresh final verification**
 
 ```powershell
 .\gradlew.bat clean testDebugUnitTest assembleDebug
@@ -671,7 +671,7 @@ git status --short --branch
 
 Expected: build succeeds, zero failed tests, no whitespace errors, and only this plan's checkbox tracking may remain.
 
-- [ ] **Step 7: Complete tracking, commit, and push direct to `main`**
+- [x] **Step 7: Complete tracking, commit, and push direct to `main`**
 
 Mark all completed checkboxes, then:
 
@@ -687,4 +687,3 @@ git status --short --branch
 ```
 
 Before push, expected divergence is `0 <positive>`. After push, expected divergence is `0 0` and status is `main...origin/main` with no changed files.
-
