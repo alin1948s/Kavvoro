@@ -5896,7 +5896,17 @@ class ChaosGameView(
 
         textPaint.textSize = dp(11f)
         textPaint.color = 0xEFFFFFFF.toInt()
-        lessonLines.take(4).forEachIndexed { index, line ->
+        val visibleLessonLines = lessonLines.take(4)
+        val widestLessonLine = visibleLessonLines.maxOfOrNull(textPaint::measureText) ?: 0f
+        textPaint.textSize = dp(
+            TutorialCardLayout.fittedTextSize(
+                startSize = 11f,
+                minSize = 7.2f,
+                maxWidth = textMaxWidth,
+                maxMeasuredWidth = widestLessonLine
+            )
+        )
+        visibleLessonLines.forEachIndexed { index, line ->
             canvas.drawText(fitText(line, textMaxWidth), textX, top + dp(40f + index * 15f), textPaint)
         }
 
