@@ -31,6 +31,16 @@ The app currently integrates:
 - Child and teen profiles use age-restricted ad treatment.
 - Privacy options button opens the UMP privacy form only when required.
 - Purchases can be restored from Collection.
+- Leaderboard submissions now pass a local guard that rejects incomplete runs,
+  non-positive scores, and values above locally completed progress. This is
+  client-side sanity protection only; it is not server-side anti-cheat.
+
+## Play Games Leaderboard Action
+
+Before enabling competitive leaderboards, configure tamper protection in Play
+Console for the new boards. Full Play Integrity/backend validation is deferred
+until leaderboard competition becomes materially important; the current guard
+only prevents accidental or obviously impossible local submissions.
 
 ## Store Listing Copy Draft
 

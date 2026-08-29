@@ -10,8 +10,10 @@ class GameApplication : Application() {
     @Synchronized
     fun initializePlayGames() {
         if (!playGamesInitialized && PlayGamesConfig.isConfigured(this)) {
-            PlayGamesSdk.initialize(this)
             playGamesInitialized = true
+            Thread({
+                PlayGamesSdk.initialize(this)
+            }, "kavvoro-playgames-init").start()
         }
     }
 }

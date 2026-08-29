@@ -15,19 +15,14 @@ import com.moonsolstudios.kavvoro.ads.InterstitialAdController
 import com.moonsolstudios.kavvoro.ads.RewardedAdController
 import com.moonsolstudios.kavvoro.billing.PlayBillingController
 import com.moonsolstudios.kavvoro.playgames.PlayGamesLeaderboardController
-import com.moonsolstudios.kavvoro.privacy.AgeGateView
 import com.moonsolstudios.kavvoro.privacy.AgeGroup
 import com.moonsolstudios.kavvoro.privacy.AgeProfileStore
 import com.moonsolstudios.kavvoro.privacy.PrivacyAdsController
 import com.moonsolstudios.kavvoro.ui.ChaosGameView
-import com.moonsolstudios.kavvoro.ui.KavvoroSplashView
 
 class MainActivity : Activity() {
     private var gameView: ChaosGameView? = null
     private var billingController: PlayBillingController? = null
-    private var splashView: KavvoroSplashView? = null
-    private var launchAfterSplash: Runnable? = null
-    private val mainHandler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,32 +31,11 @@ class MainActivity : Activity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         hideSystemBars()
 
-        val savedAgeGroup = AgeProfileStore.read(this)
-        showLaunchSplash(savedAgeGroup)
-    }
-
-    private fun showLaunchSplash(savedAgeGroup: AgeGroup?) {
-        val splash = KavvoroSplashView(this)
-        splashView = splash
-        setContentView(splash)
-        val launch = Runnable {
-            splashView = null
-            showEntryContent(savedAgeGroup)
-            hideSystemBars()
+        val savedAgeGroup = AgeProfileStore.read(this) ?: AgeGroup.ADULT
+        if (AgeProfileStore.read(this) == null) {
+            AgeProfileStore.save(this, savedAgeGroup)
         }
-        launchAfterSplash = launch
-        mainHandler.postDelayed(launch, KavvoroSplashView.SPLASH_DURATION_MS)
-    }
-
-    private fun showEntryContent(savedAgeGroup: AgeGroup?) {
-        if (isFinishing || (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1 && isDestroyed)) return
-        if (savedAgeGroup == null) {
-            window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
-            setContentView(AgeGateView(this, ::startGame))
-        } else {
-            startGame(savedAgeGroup)
-        }
-        hideSystemBars()
+        startGame(savedAgeGroup)
     }
 
     private fun startGame(ageGroup: AgeGroup) {
@@ -127,9 +101,6 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
-        launchAfterSplash?.let { mainHandler.removeCallbacks(it) }
-        launchAfterSplash = null
-        splashView = null
         billingController?.close()
         billingController = null
         gameView?.releaseGame()

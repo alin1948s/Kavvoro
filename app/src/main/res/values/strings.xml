@@ -6,4 +6,21 @@
     <string name="leaderboard_chaos_level_id" translatable="false">Cgklvefz9_kCEAIQAg</string>
     <string name="leaderboard_classic_streak_id" translatable="false">Cgklvefz9_kCEAIQAw</string>
     <string name="leaderboard_chaos_streak_id" translatable="false">Cgklvefz9_kCEAIQBA</string>
+    <string name="home_best_streak">BEST STREAK</string>
+    <string name="home_hype">HYPE</string>
+    <string name="home_level">LEVEL</string>
+    <string name="home_daily_rift">DAILY RIFT</string>
+    <string name="home_ready">READY</string>
+    <string name="home_claimed">CLAIMED</string>
+    <string name="home_rift_online">RIFT ONLINE</string>
+    <string name="home_play">PLAY</string>
+    <string name="home_choose_mode">CHOOSE YOUR MODE</string>
+    <string name="home_leaderboards">LEADERBOARDS</string>
+    <string name="home_vault_maxed">VAULT MAXED</string>
+    <string name="home_all_free_rewards">ALL FREE REWARDS</string>
+    <string name="home_unlocked">UNLOCKED</string>
+    <string name="home_collection_unlocks">COLLECTION &amp; UNLOCKS</string>
+    <string name="home_next_unlock">NEXT UNLOCK</string>
+    <string name="home_maxed">MAXED</string>
+    <string name="home_footer_settings">Collection, language and privacy are available from Settings.</string>
 </resources>

@@ -43,4 +43,18 @@ Use this before every Play Console upload.
 - Test on a 720p/low GPU device profile.
 - Confirm no frame pacing spikes during Chaos, result burst, and Collection scroll.
 - Confirm Lite rendering still keeps the ball, portals, hazards, and goal readable.
+- Music switches between Menu, Tutorial, Classic, and Chaos without a hard cut.
+- Music mute and SFX mute remain independent in every screen and during a track switch.
+- Listen on the phone speaker and headphones at normal volume; music must not clip or mask selection voices.
+- Run `tools/verify_localized_voice_assets.py`; every supported locale must have all 50 Brainball voices.
+- Rapidly switch Classic/Chaos, pause/resume the app, and confirm there is no stale track or audio burst.
 - Audio should not clip or drown out UI feedback.
+
+## Localization QA
+
+- Run the strict 19-language catalog tests before every release candidate.
+- Run `tools/localization_visual_matrix.ps1` on a stable emulator or device.
+- Check Home, Classic HUD/tutorial, Collection, and result states in each locale.
+- Check Arabic RTL alignment and Polish/long-string wrapping explicitly.
+- Confirm localized decimal separators remain consistent between HUD and results.
+- Record evidence in `docs/localization-qa-matrix.md`; pending rows block release.

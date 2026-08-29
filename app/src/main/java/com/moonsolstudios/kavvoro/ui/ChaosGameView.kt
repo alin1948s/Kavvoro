@@ -28,6 +28,9 @@ import com.moonsolstudios.kavvoro.audio.KavvoroSoundEngine
 import com.moonsolstudios.kavvoro.audio.MusicTrack
 import com.moonsolstudios.kavvoro.audio.SoundEvent
 import com.moonsolstudios.kavvoro.billing.PremiumCatalog
+import com.moonsolstudios.kavvoro.model.*
+import com.moonsolstudios.kavvoro.ui.home.HomeLayoutCalculator
+import com.moonsolstudios.kavvoro.ui.render.*
 import com.moonsolstudios.kavvoro.engine.CurseType
 import com.moonsolstudios.kavvoro.engine.BallPower
 import com.moonsolstudios.kavvoro.engine.Hazard
@@ -219,7 +222,16 @@ class ChaosGameView(
         "ui_back" to R.drawable.ui_icon_back,
         "ui_restore" to R.drawable.ui_icon_restore,
         "ui_sound" to R.drawable.ui_icon_sound,
-        "ui_music" to R.drawable.ui_icon_music
+        "ui_music" to R.drawable.ui_icon_music,
+        "home_background" to R.drawable.home_background,
+        "home_portal_back" to R.drawable.home_portal_back,
+        "home_platform" to R.drawable.home_platform,
+        "home_portal_platform" to R.drawable.home_portal_platform,
+        "home_portal_front" to R.drawable.home_portal_front,
+        "home_portal_front_fx" to R.drawable.home_portal_front_fx,
+        "home_play_cta_frame" to R.drawable.home_play_cta_frame,
+        "home_rift_status_frame" to R.drawable.home_rift_status_frame,
+        "brand_kavvoro" to R.drawable.brand_kavvoro
     )
     private val worldBitmaps = mutableMapOf<String, Bitmap>()
     private val scaledBackgroundBitmaps = mutableMapOf<String, Bitmap>()
@@ -330,11 +342,24 @@ class ChaosGameView(
     private val menuBackButton = RectF()
     private val menuCollectionButton = RectF()
     private val menuLeaderboardButton = RectF()
+    private val menuVaultButton = RectF()
     private val menuPrivacyButton = RectF()
     private val menuLanguageButton = RectF()
     private val menuSfxButton = RectF()
     private val menuMusicButton = RectF()
     private val menuPreviewBounds = RectF()
+    private val menuStatsRects = List(4) { RectF() }
+    private val menuHeroRect = RectF()
+    private val portalBackRect = RectF()
+    private val platformRect = RectF()
+    private val characterRect = RectF()
+    private val portalFrontRect = RectF()
+    private val menuClassicCard = RectF()
+    private val menuChaosCard = RectF()
+    private val menuClassicContinueButton = RectF()
+    private val menuClassicNewButton = RectF()
+    private val menuChaosStartButton = RectF()
+    private val homeLayoutCalculator = HomeLayoutCalculator()
     private val collectionBackButton = RectF()
     private val collectionRestoreButton = RectF()
     private val collectionFilterRects = MutableList(CollectionFilter.entries.size) { RectF() }
@@ -605,12 +630,9 @@ class ChaosGameView(
     }
 
     private fun dismissTutorialCard(): Boolean {
-        if (!prefs.edit()
-                .putBoolean(tutorialAcknowledgementKey(), true)
-                .commit()
-        ) {
-            return false
-        }
+        prefs.edit()
+            .putBoolean(tutorialAcknowledgementKey(), true)
+            .apply()
         tutorialCardVisible = false
         tutorialCardBounds.setEmpty()
         tutorialStartButton.setEmpty()
@@ -713,11 +735,12 @@ class ChaosGameView(
     }
 
     private fun clampMenuBallOffset(offsetX: Float, offsetY: Float): Point2 {
+        if (viewWidth <= 0 || viewHeight <= 0) return Point2(offsetX, offsetY)
         val safeRadius = dp(42f)
         val minX = safeRadius
-        val maxX = viewWidth - safeRadius
+        val maxX = max(minX, viewWidth - safeRadius)
         val minY = dp(58f)
-        val maxY = viewHeight - dp(58f)
+        val maxY = max(minY, viewHeight - dp(58f))
         val targetX = menuPreviewCenterX + offsetX
         val targetY = menuPreviewCenterY + offsetY
         return Point2(
@@ -741,26 +764,30 @@ class ChaosGameView(
             val dt = ((now - lastFrameNanos) / 1_000_000_000f).coerceIn(0f, 1f / 24f)
             lastFrameNanos = now
 
-            synchronized(lock) {
-                update(dt)
-            }
+            try {
+                synchronized(lock) {
+                    update(dt)
+                }
 
-            if (holder.surface.isValid) {
-                var canvas: Canvas? = null
-                try {
-                    canvas = lockRenderCanvas()
-                    if (canvas != null) {
-                        synchronized(lock) {
-                            drawGame(canvas)
+                if (holder.surface.isValid) {
+                    var canvas: Canvas? = null
+                    try {
+                        canvas = lockRenderCanvas()
+                        if (canvas != null) {
+                            synchronized(lock) {
+                                drawGame(canvas)
+                            }
+                        }
+                    } catch (_: IllegalArgumentException) {
+                        running = false
+                    } finally {
+                        if (canvas != null) {
+                            holder.unlockCanvasAndPost(canvas)
                         }
                     }
-                } catch (_: IllegalArgumentException) {
-                    running = false
-                } finally {
-                    if (canvas != null) {
-                        holder.unlockCanvasAndPost(canvas)
-                    }
                 }
+            } catch (e: Throwable) {
+                Log.e("ChaosGameView", "Error in gameLoop", e)
             }
 
             val frameTime = (System.nanoTime() - now) / 1_000_000
@@ -771,18 +798,10 @@ class ChaosGameView(
     }
 
     private fun lockRenderCanvas(): Canvas? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            try {
-                holder.lockHardwareCanvas()
-            } catch (_: IllegalArgumentException) {
-                holder.lockCanvas()
-            } catch (_: IllegalStateException) {
-                holder.lockCanvas()
-            } catch (_: UnsupportedOperationException) {
-                holder.lockCanvas()
-            }
-        } else {
+        return try {
             holder.lockCanvas()
+        } catch (_: Exception) {
+            null
         }
     }
 
@@ -845,7 +864,8 @@ class ChaosGameView(
             Screen.MENU,
             Screen.COLLECTION,
             Screen.LEADERBOARDS,
-            Screen.LANGUAGE -> MusicTrack.MENU
+            Screen.LANGUAGE,
+            Screen.SETTINGS -> MusicTrack.MENU
             Screen.AD,
             Screen.GAME -> when {
                 isTutorialLevel() -> MusicTrack.TUTORIAL
@@ -1467,6 +1487,10 @@ class ChaosGameView(
             MenuButton.PLAY -> playSelectedMode()
             MenuButton.CLASSIC -> selectHomeMode(GameMode.CLASSIC)
             MenuButton.CHAOS -> selectHomeMode(GameMode.CHAOS)
+            MenuButton.CLASSIC_CONTINUE -> startRun(GameMode.CLASSIC, continueProgress = true)
+            MenuButton.CLASSIC_START -> startRun(GameMode.CLASSIC, continueProgress = false)
+            MenuButton.CHAOS_START -> startRun(GameMode.CHAOS, continueProgress = false)
+            MenuButton.VAULT,
             MenuButton.COLLECTION -> {
                 screen = Screen.COLLECTION
                 collectionMessage = ""
@@ -1487,6 +1511,7 @@ class ChaosGameView(
                 syncLeaderboards()
             }
 
+            MenuButton.SETTINGS,
             MenuButton.PRIVACY -> privacyBridge.showPrivacyOptions()
             MenuButton.LANGUAGE -> {
                 screen = Screen.LANGUAGE
@@ -1841,6 +1866,17 @@ class ChaosGameView(
     }
 
     private fun drawBackground(canvas: Canvas) {
+        if (screen == Screen.MENU) {
+            val homeBg = worldBitmap("home_background")
+            if (homeBg != null) {
+                paint.shader = null
+                paint.alpha = 255
+                paint.isFilterBitmap = true
+                scratch.set(0f, 0f, viewWidth.toFloat(), viewHeight.toFloat())
+                canvas.drawBitmap(homeBg, null, scratch, paint)
+                return
+            }
+        }
         val chaosTheme = ((screen == Screen.GAME || screen == Screen.AD) && gameMode == GameMode.CHAOS) ||
             (screen == Screen.MENU && selectedMenuMode == GameMode.CHAOS)
         paint.shader = null
@@ -1979,406 +2015,207 @@ class ChaosGameView(
         if (levelHasCurse(CurseType.OVERHEAT) && state == GameState.SIMULATING) {
             paint.style = Paint.Style.FILL
             paint.color = 0x44FF5757
-            canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
+canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         }
     }
 
     private fun drawMenu(canvas: Canvas) {
-        drawBackground(canvas)
         layoutMenuButtons()
-        drawMenuPreview(canvas)
-
-        val left = menuContentLeft()
-        val top = dp(54f)
-        val contentWidth = menuContentWidth()
-        drawBrandTitle(canvas, left, top)
-        drawMenuHeaderStats(canvas, left, top)
-        drawMenuRewardStrip(canvas, left, top + dp(42f), contentWidth)
-
-        if (menuState == MenuState.MODES) {
-            drawDailyStreakHub(canvas, left, top + dp(100f), contentWidth)
-            drawHomeModeChip(canvas, menuContinueButton, GameMode.CLASSIC, 0xFF1DE8C8.toInt())
-            drawHomeModeChip(canvas, menuChaosButton, GameMode.CHAOS, 0xFFFF4D8D.toInt())
-            drawPrimaryPlayButton(canvas, menuStartButton)
-            drawMenuButton(
-                canvas = canvas,
-                rect = menuLeaderboardButton,
-                button = MenuButton.LEADERBOARDS,
-                title = t("LEADERBOARDS").uppercase(),
-                meta = t("GLOBAL RANKS").uppercase(),
-                accent = 0xFF8AA6FF.toInt()
-            )
-            drawMenuButton(
-                canvas = canvas,
-                rect = menuCollectionButton,
-                button = MenuButton.COLLECTION,
-                title = t("COLLECTION").uppercase(),
-                meta = "${unlockedSkinCount()}/${ballSkins.size} ${t("UNLOCKED COUNT").uppercase()}",
-                accent = selectedBallSkin().lineColor
-            )
-        } else {
-            val mode = selectedMenuMode
-            val accent = if (mode == GameMode.CHAOS) 0xFFFF4D8D.toInt() else 0xFF1DE8C8.toInt()
-            drawModeOptionsHeader(canvas, mode, accent)
-            drawMenuButton(
-                canvas = canvas,
-                rect = menuActionStartButton,
-                button = MenuButton.START,
-                title = t("START NEW").uppercase(),
-                meta = t("RESET TO LEVEL 01").uppercase(),
-                accent = 0xFFFFCF4A.toInt()
-            )
-            drawMenuButton(
-                canvas = canvas,
-                rect = menuChaosButton,
-                button = MenuButton.CONTINUE,
-                title = t("CONTINUE").uppercase(),
-                meta = "${t("LEVEL").uppercase()} ${modeProgress(mode).toString().padStart(2, '0')}   ${t("STREAK").uppercase()} ${modeStreak(mode)}",
-                accent = accent
-            )
-            drawMenuButton(
-                canvas = canvas,
-                rect = menuContinueButton,
-                button = MenuButton.BACK,
-                title = t("BACK").uppercase(),
-                meta = t("CHOOSE MODE").uppercase(),
-                accent = 0xFF8AA6FF.toInt()
-            )
+        Log.d("ChaosGameView", "drawMenu called viewWidth=$viewWidth, viewHeight=$viewHeight, homeLayoutMode=${homeLayoutCalculator.layoutMode}, brandRect=${homeLayoutCalculator.brandRect.top}")
+        val widthDp = viewWidth / uiDensity
+        val layoutMode = when {
+            widthDp <= 480f -> LayoutMode.COMPACT
+            widthDp <= 840f -> LayoutMode.MEDIUM
+            else -> LayoutMode.TABLET
         }
-        drawPrivacyMenuButton(canvas)
-        drawLanguageMenuButton(canvas)
-        drawMenuAudioButtons(canvas)
-    }
+        val scale = (viewHeight / uiDensity / 800f).coerceIn(0.72f, 1.25f)
+        val left = homeLayoutCalculator.contentRect.left
+        val contentWidth = homeLayoutCalculator.contentRect.width()
+        val right = homeLayoutCalculator.contentRect.right
+        val top = homeLayoutCalculator.brandRect.top
+        val isRtl = resources.configuration.layoutDirection == android.view.View.LAYOUT_DIRECTION_RTL
 
-    private fun drawPrivacyMenuButton(canvas: Canvas) {
-        val active = activeMenuButton == MenuButton.PRIVACY
-        val accent = 0xFF8AA6FF.toInt()
-        drawUiButtonFrame(canvas, menuPrivacyButton, active, accent, cornerDp = 7f)
-        val iconX = menuPrivacyButton.left + dp(22f)
-        val iconY = menuPrivacyButton.centerY()
-
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(accent, if (active) 120 else 72)
-        canvas.drawCircle(iconX, iconY, dp(12f), paint)
-        path.reset()
-        path.moveTo(iconX, iconY - dp(9f))
-        path.lineTo(iconX + dp(7f), iconY - dp(5f))
-        path.lineTo(iconX + dp(6f), iconY + dp(4f))
-        path.lineTo(iconX, iconY + dp(9f))
-        path.lineTo(iconX - dp(6f), iconY + dp(4f))
-        path.lineTo(iconX - dp(7f), iconY - dp(5f))
-        path.close()
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1.6f)
-        paint.color = 0xDDF7F4FF.toInt()
-        canvas.drawPath(path, paint)
-
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.textSize = dp(10f)
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.color = 0xCCFFFFFF.toInt()
-        canvas.drawText(t("PRIVACY").uppercase(), menuPrivacyButton.left + dp(43f), menuPrivacyButton.centerY() + dp(3.5f), textPaint)
-    }
-
-    private fun drawMenuAudioButtons(canvas: Canvas) {
-        drawAudioToggleButton(
+        SubScreenMasterRenderer.drawMenu(
             canvas = canvas,
-            rect = menuSfxButton,
-            active = activeMenuButton == MenuButton.SFX,
-            muted = sfxMuted,
-            music = false,
-            accent = 0xFF45F2FF.toInt()
+            drawBackground = { drawBackground(it) },
+            layoutMenuButtons = { layoutMenuButtons() },
+            menuState = menuState,
+            homeScale = scale,
+            homeLayoutMode = layoutMode,
+            homeContentLeft = left,
+            homeContentWidth = contentWidth,
+            menuContentRight = right,
+            safeTopMenu = top,
+            selectedSkin = selectedBallSkin(),
+            isRtl = isRtl,
+            menuPrivacyButton = menuPrivacyButton,
+            menuSfxButton = menuSfxButton,
+            menuStartButton = menuStartButton,
+            menuLeaderboardButton = menuLeaderboardButton,
+            menuVaultButton = menuVaultButton,
+            menuCollectionButton = menuCollectionButton,
+            menuStatsRects = menuStatsRects,
+            menuStatsTop = menuStatsRects[0].top,
+            menuStatsHeight = menuStatsRects[0].height(),
+            activeMenuButton = activeMenuButton,
+            sfxMuted = sfxMuted,
+            bestStreak = bestStreak(),
+            hypeBalance = hypeBalance(),
+            currentLevel = level.index,
+            dailyReady = !dailyRiftBonusClaimed(),
+            unlockedSkinCount = unlockedSkinCount(),
+            totalSkinsCount = ballSkins.size,
+            nextRewardText = nextRewardText(),
+            centerX = viewWidth * 0.5f,
+            viewHeight = viewHeight.toFloat(),
+            safeInsetBottom = 0f,
+            paint = paint,
+            dp = dp(1f),
+            t = { t(it) },
+            fitText = { text, maxW -> fitText(text, maxW) },
+            formatHypeAmount = { formatHypeAmount(it) },
+            worldBitmap = { worldBitmap(it) },
+            drawPrimaryPlayButton = { c, r -> drawPrimaryPlayButton(c, r) },
+            drawMenuPreview = { drawMenuPreview(it) },
+            drawPlayModeScreen = { c, l, w, t -> drawPlayModeScreen(c, l, w, t) }
         )
-        drawAudioToggleButton(
+    }
+
+    private fun drawPrimaryPlayButton(canvas: Canvas, rect: RectF) {
+        val hasProgress = modeProgress(selectedMenuMode) > 1
+        val title = if (hasProgress) "${t("CONTINUE").uppercase()} ${selectedMenuMode.menuTitle()}" else t("PLAY").uppercase()
+        val subtitle = if (hasProgress) {
+            "${t("LEVEL").uppercase()} ${modeProgress(selectedMenuMode).toString().padStart(2, '0')} • ${t("STREAK").uppercase()} ${modeStreak(selectedMenuMode)}"
+        } else {
+            t("CHOOSE YOUR MODE").uppercase()
+        }
+        SciFiCtaButtonRenderer.draw(
             canvas = canvas,
-            rect = menuMusicButton,
-            active = activeMenuButton == MenuButton.MUSIC,
-            muted = musicMuted,
-            music = true,
-            accent = 0xFFFFCF4A.toInt()
+            rect = rect,
+            active = activeMenuButton == MenuButton.PLAY,
+            paint = paint,
+            density = uiDensity,
+            context = context,
+            playTitle = title,
+            playSubtitle = subtitle
         )
     }
 
-    private fun drawLanguageMenuButton(canvas: Canvas) {
-        val active = activeMenuButton == MenuButton.LANGUAGE
-        val accent = 0xFF45F2FF.toInt()
-        drawUiButtonFrame(canvas, menuLanguageButton, active, accent, cornerDp = 7f)
-        val lang = KavvoroI18n.selected(context)
-        val code = if (lang == KavvoroLanguage.SYSTEM) KavvoroI18n.active(context).shortCode else lang.shortCode
-        val languageName = if (lang == KavvoroLanguage.SYSTEM) "AUTO" else lang.nativeName
-        val iconCx = menuLanguageButton.left + dp(22f)
-        val iconCy = menuLanguageButton.centerY()
-
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(accent, if (active) 120 else 72)
-        canvas.drawCircle(iconCx, iconCy, dp(12f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1.2f)
-        paint.color = 0xDDF7F4FF.toInt()
-        canvas.drawCircle(iconCx, iconCy, dp(8.5f), paint)
-        canvas.drawLine(iconCx - dp(8f), iconCy, iconCx + dp(8f), iconCy, paint)
-        canvas.drawLine(iconCx, iconCy - dp(8f), iconCx, iconCy + dp(8f), paint)
-        scratch.set(iconCx - dp(5.8f), iconCy - dp(8.5f), iconCx + dp(5.8f), iconCy + dp(8.5f))
-        canvas.drawOval(scratch, paint)
-
-        val badgeRight = menuLanguageButton.right - dp(8f)
-        val badgeWidth = dp(28f)
-        scratch.set(
-            badgeRight - badgeWidth,
-            menuLanguageButton.centerY() - dp(11f),
-            badgeRight,
-            menuLanguageButton.centerY() + dp(11f)
-        )
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(accent, if (active) 120 else 72)
-        canvas.drawRoundRect(scratch, dp(7f), dp(7f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1f)
-        paint.color = withAlpha(accent, 220)
-        canvas.drawRoundRect(scratch, dp(7f), dp(7f), paint)
-
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(7.4f)
-        textPaint.color = 0x99FFFFFF.toInt()
-        val textLeft = menuLanguageButton.left + dp(43f)
-        val textRight = scratch.left - dp(7f)
-        canvas.drawText("LANG", textLeft, menuLanguageButton.top + dp(15f), textPaint)
-        textPaint.textSize = dp(9.4f)
-        textPaint.color = 0xEAF7F4FF.toInt()
-        canvas.drawText(fitText(languageName, textRight - textLeft), textLeft, menuLanguageButton.top + dp(34f), textPaint)
-        textPaint.textAlign = Paint.Align.CENTER
-        textPaint.textSize = dp(9.5f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(code, scratch.centerX(), scratch.centerY() + dp(3.4f), textPaint)
-    }
-
-
-    private fun drawBrandTitle(canvas: Canvas, left: Float, top: Float) {
-        textPaint.shader = null
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(11f)
-        textPaint.color = 0xFFFF4D8D.toInt()
-        canvas.drawText("BRAINROT CHAOS", left, top - dp(25f), textPaint)
-
-        textPaint.textSize = dp(39f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText("KAVVORO", left, top + dp(9f), textPaint)
-
-        paint.style = Paint.Style.FILL
-        paint.color = selectedBallSkin().lineColor
-        canvas.drawRoundRect(left, top + dp(18f), left + dp(78f), top + dp(22f), dp(2f), dp(2f), paint)
-        paint.color = 0xFFFFCF4A.toInt()
-        canvas.drawRoundRect(left + dp(84f), top + dp(18f), left + dp(122f), top + dp(22f), dp(2f), dp(2f), paint)
-    }
-
-    private fun drawMenuHeaderStats(canvas: Canvas, left: Float, top: Float) {
-        val right = menuContentRight()
-        val hype = hypeBalance()
-        val best = bestStreak()
-        textPaint.textAlign = Paint.Align.RIGHT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(9f)
-        textPaint.color = 0x88FFFFFF.toInt()
-        canvas.drawText(t("HYPE").uppercase(), right, top - dp(22f), textPaint)
-        canvas.drawText(t("BEST STREAK").uppercase(), right - dp(68f), top - dp(22f), textPaint)
-        textPaint.textSize = dp(16f)
-        textPaint.color = 0xFFFFCF4A.toInt()
-        canvas.drawText(formatHypeAmount(hype), right, top + dp(1f), textPaint)
-        textPaint.color = selectedBallSkin().lineColor
-        canvas.drawText("x$best", right - dp(68f), top + dp(1f), textPaint)
-    }
-
-    private fun drawMenuRewardStrip(canvas: Canvas, left: Float, top: Float, width: Float) {
-        val height = dp(52f)
+    private fun drawPlayModeScreen(canvas: Canvas, left: Float, contentWidth: Float, top: Float) {
+        val widthDp = viewWidth / uiDensity
+        val compact = widthDp <= 480f
+        val short = (viewHeight / uiDensity) < 620f
+        val side = left
+        val right = left + contentWidth
         val gap = dp(10f)
-        val cardWidth = (width - gap) * 0.5f
-        val rewardLeft = left + cardWidth + gap
+        val cardHeight = (if (short) 110f else if (compact) 140f else 180f) * dp(1f)
+        val startY = top + dp(60f)
 
-        val rawReward = nextRewardText()
-        val vaultMaxed = rawReward == null
-        val rewardAccent = if (vaultMaxed) 0xFF45F2FF.toInt() else 0xFFFFCF4A.toInt()
-        val skin = selectedBallSkin()
-        val reward = rawReward
-            ?.replace(" ${t("AT").uppercase()} ", " / ")
-            ?: t("VAULT MAXED").uppercase()
+        menuClassicCard.set(side, startY, right, startY + cardHeight)
+        menuChaosCard.set(side, menuClassicCard.bottom + gap, right, menuClassicCard.bottom + gap + cardHeight)
 
-        scratch2.set(left, top, left + cardWidth, top + height)
-        drawHubCard(
+        val btnH = (if (short) 26f else if (compact) 32f else 40f) * dp(1f)
+        val btnY = menuClassicCard.bottom - btnH - dp(12f)
+        val halfW = (menuClassicCard.width() - dp(36f) - gap) * 0.5f
+        menuClassicContinueButton.set(menuClassicCard.left + dp(18f), btnY, menuClassicCard.left + dp(18f) + halfW, btnY + btnH)
+        menuClassicNewButton.set(menuClassicContinueButton.right + gap, btnY, menuClassicCard.right - dp(18f), btnY + btnH)
+
+        val chaosBtnY = menuChaosCard.bottom - btnH - dp(12f)
+        menuChaosStartButton.set(menuChaosCard.left + dp(18f), chaosBtnY, menuChaosCard.right - dp(18f), chaosBtnY + btnH)
+        menuContinueButton.set(side, menuChaosCard.bottom + gap * 2f, right, menuChaosCard.bottom + gap * 2f + dp(44f))
+
+        HomeMenuRenderer.drawPlayModeScreen(
             canvas = canvas,
-            rect = scratch2,
-            iconKey = null,
-            title = t("EQUIPPED").uppercase(),
-            value = skin.name,
-            meta = equippedSkinMeta(skin).uppercase(),
-            accent = skin.lineColor,
-            progress = 1f,
-            skin = skin,
-            compact = true
+            menuClassicCard = menuClassicCard,
+            menuChaosCard = menuChaosCard,
+            menuClassicContinueButton = menuClassicContinueButton,
+            menuClassicNewButton = menuClassicNewButton,
+            menuChaosStartButton = menuChaosStartButton,
+            menuContinueButton = menuContinueButton,
+            activeMenuButton = activeMenuButton,
+            classicProgress = modeProgress(GameMode.CLASSIC),
+            chaosProgress = modeProgress(GameMode.CHAOS),
+            classicStreak = modeStreak(GameMode.CLASSIC),
+            chaosStreak = modeStreak(GameMode.CHAOS),
+            compact = compact,
+            short = short,
+            safeCenterX = viewWidth * 0.5f,
+            paint = paint,
+            dp = dp(1f),
+            t = { t(it) },
+            fitText = { text, maxW -> fitText(text, maxW) },
+            drawWorldAsset = { c, key, r, a -> drawWorldAsset(c, key, r, a) },
+            menuButtonAt = { x, y -> menuButtonAt(x, y) }
         )
-
-        scratch3.set(rewardLeft, top, left + width, top + height)
-        drawHubCard(
-            canvas = canvas,
-            rect = scratch3,
-            iconKey = if (vaultMaxed) "boost_chain" else "boost_goal",
-            title = t("NEXT UNLOCK").uppercase(),
-            value = reward,
-            meta = if (vaultMaxed) t("ALL FREE REWARDS UNLOCKED").uppercase() else t("REWARD SIGNAL").uppercase(),
-            accent = rewardAccent,
-            progress = nextRewardInfo()?.progress ?: 1f,
-            compact = true
-        )
-    }
-
-    private fun equippedSkinMeta(skin: BallSkin): String {
-        return when {
-            skin.power != BallPower.NONE -> "${t("POWER").uppercase()} / ${ballPowerName(skin.power).uppercase()}"
-            skin.unlock.type == UnlockType.PREMIUM -> t("MYTHIC BRAINBALL").uppercase()
-            else -> t("SELECTED BRAINBALL").uppercase()
-        }
-    }
-
-    private fun drawDailyStreakHub(canvas: Canvas, left: Float, top: Float, width: Float) {
-        val gap = dp(10f)
-        val cardHeight = dp(66f)
-        val cardWidth = (width - gap) * 0.5f
-        scratch2.set(left, top, left + cardWidth, top + cardHeight)
-        scratch3.set(left + cardWidth + gap, top, left + width, top + cardHeight)
-        val dailyClaimed = dailyRiftBonusClaimed()
-        val dailyAmount = if (dailyClaimed) {
-            dailyRiftClaimedAmount().takeIf { it > 0 } ?: dailyRiftBonusForMode(selectedMenuMode)
-        } else {
-            dailyRiftBonusForMode(selectedMenuMode)
-        }
-        val dailyMeta = if (dailyClaimed) {
-            dailyRiftResetText()
-        } else {
-            "${t("NEXT CLEAR").uppercase()} / ${dailyRiftResetText()}"
-        }
-        drawHubCard(
-            canvas = canvas,
-            rect = scratch2,
-            iconKey = "boost_recharge",
-            title = t("DAILY RIFT").uppercase(),
-            value = "+$dailyAmount ${t("HYPE").uppercase()}",
-            meta = dailyMeta,
-            accent = 0xFF45F2FF.toInt(),
-            progress = if (dailyClaimed) 1f else dailyRiftDayProgress(),
-            status = if (dailyClaimed) t("CLAIMED").uppercase() else t("READY").uppercase()
-        )
-
-        val nextStreak = nextStreakRewardInfo()
-        val currentBest = bestStreak()
-        val target = nextStreak?.target ?: max(currentBest, 1)
-        drawHubCard(
-            canvas = canvas,
-            rect = scratch3,
-            iconKey = "boost_chain",
-            title = t("STREAK VAULT").uppercase(),
-            value = "x${max(modeStreak(GameMode.CLASSIC), modeStreak(GameMode.CHAOS))}",
-            meta = nextStreak?.let { "x${it.target}  ${it.name}" } ?: t("VAULT MAXED").uppercase(),
-            accent = selectedBallSkin().lineColor,
-            progress = (currentBest.toFloat() / target.toFloat()).coerceIn(0f, 1f)
-        )
-    }
-
-    private fun drawHubCard(
-        canvas: Canvas,
-        rect: RectF,
-        iconKey: String?,
-        title: String,
-        value: String,
-        meta: String,
-        accent: Int,
-        progress: Float,
-        status: String? = null,
-        skin: BallSkin? = null,
-        compact: Boolean = false
-    ) {
-        paint.style = Paint.Style.FILL
-        paint.shader = LinearGradient(
-            rect.left,
-            rect.top,
-            rect.right,
-            rect.bottom,
-            intArrayOf(withAlpha(accent, 58), 0xD70A1018.toInt()),
-            null,
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, dp(8f), dp(8f), paint)
-        paint.shader = null
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(0.9f)
-        paint.color = withAlpha(accent, 135)
-        canvas.drawRoundRect(rect, dp(8f), dp(8f), paint)
-
-        val iconSize = dp(if (compact) 26f else 30f)
-        val iconLeft = rect.left + dp(if (compact) 10f else 9f)
-        val iconTop = rect.centerY() - iconSize * 0.5f
-        if (skin != null) {
-            paint.style = Paint.Style.FILL
-            paint.color = withAlpha(accent, 80)
-            canvas.drawCircle(iconLeft + iconSize * 0.5f, rect.centerY(), iconSize * 0.72f, paint)
-            drawBallSkin(canvas, iconLeft + iconSize * 0.5f, rect.centerY(), iconSize * 0.44f, skin, animated = true, locked = false)
-        } else if (iconKey != null) {
-            paint.style = Paint.Style.FILL
-            paint.color = withAlpha(accent, if (compact) 82 else 0)
-            if (compact) canvas.drawCircle(iconLeft + iconSize * 0.5f, rect.centerY(), iconSize * 0.64f, paint)
-            scratch.set(iconLeft, iconTop, iconLeft + iconSize, iconTop + iconSize)
-            drawWorldAsset(canvas, iconKey, scratch, 220)
-        }
-
-        val textLeft = rect.left + dp(if (compact) 44f else 46f)
-        val statusRight = rect.right - dp(8f)
-        val statusLeft = status?.let {
-            textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-            textPaint.textSize = dp(7f)
-            val pillWidth = (textPaint.measureText(it) + dp(14f)).coerceIn(dp(42f), dp(66f))
-            val pillLeft = statusRight - pillWidth
-            scratch.set(pillLeft, rect.top + dp(7f), statusRight, rect.top + dp(22f))
-            paint.style = Paint.Style.FILL
-            paint.color = withAlpha(accent, 46)
-            canvas.drawRoundRect(scratch, dp(6f), dp(6f), paint)
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = dp(0.7f)
-            paint.color = withAlpha(accent, 135)
-            canvas.drawRoundRect(scratch, dp(6f), dp(6f), paint)
-            textPaint.textAlign = Paint.Align.CENTER
-            textPaint.color = withAlpha(0xFFF7F4FF.toInt(), 230)
-            canvas.drawText(fitText(it, pillWidth - dp(8f)), scratch.centerX(), scratch.centerY() + dp(2.5f), textPaint)
-            pillLeft
-        }
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(if (compact) 7.2f else 8.2f)
-        textPaint.color = withAlpha(accent, 225)
-        val titleMaxWidth = (statusLeft ?: rect.right) - textLeft - dp(8f)
-        canvas.drawText(fitText(title, titleMaxWidth), textLeft, rect.top + dp(if (compact) 14f else 17f), textPaint)
-        textPaint.textSize = dp(if (compact) 11.8f else 15f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(fitText(value, rect.right - textLeft - dp(8f)), textLeft, rect.top + dp(if (compact) 31f else 40f), textPaint)
-        textPaint.textSize = dp(if (compact) 6.5f else 7.6f)
-        textPaint.color = 0xAFFFFFFF.toInt()
-        canvas.drawText(fitText(meta, rect.right - textLeft - dp(8f)), textLeft, rect.top + dp(if (compact) 44f else 56f), textPaint)
-
-        val barLeft = rect.left + dp(9f)
-        val barRight = rect.right - dp(9f)
-        val barTop = rect.bottom - dp(4f)
-        paint.style = Paint.Style.FILL
-        paint.color = 0x22FFFFFF
-        canvas.drawRoundRect(barLeft, barTop, barRight, barTop + dp(2f), dp(2f), dp(2f), paint)
-        paint.color = accent
-        canvas.drawRoundRect(barLeft, barTop, barLeft + (barRight - barLeft) * progress, barTop + dp(2f), dp(2f), dp(2f), paint)
     }
 
     private fun drawMenuPreview(canvas: Canvas) {
+        val skin = selectedBallSkin()
+        if (menuState == MenuState.MODES) {
+            val portalBack = worldBitmap("home_portal_back")
+            if (portalBack != null) {
+                paint.alpha = 255
+                paint.isFilterBitmap = true
+                canvas.drawBitmap(portalBack, null, portalBackRect, paint)
+            }
+
+            val platform = worldBitmap("home_portal_platform") ?: worldBitmap("home_platform")
+            if (platform != null) {
+                paint.alpha = 255
+                paint.isFilterBitmap = true
+                canvas.drawBitmap(platform, null, platformRect, paint)
+            }
+
+            val charBmp = brainballBitmap(skin)
+            val floatX = sin(menuPulse * 1.3f) * dp(3f)
+            val floatY = sin(menuPulse * 1.8f) * dp(3f)
+            scratch.set(
+                characterRect.left + floatX,
+                characterRect.top + floatY,
+                characterRect.right + floatX,
+                characterRect.bottom + floatY
+            )
+            if (charBmp != null) {
+                paint.alpha = 255
+                paint.isFilterBitmap = true
+                canvas.drawBitmap(charBmp, null, scratch, paint)
+            } else {
+                drawBallSkin(
+                    canvas,
+                    scratch.centerX(),
+                    scratch.centerY(),
+                    scratch.width() * 0.5f,
+                    skin,
+                    true,
+                    false
+                )
+            }
+
+            val portalFront = worldBitmap("home_portal_front_fx") ?: worldBitmap("home_portal_front")
+            if (portalFront != null) {
+                paint.alpha = 255
+                paint.isFilterBitmap = true
+                canvas.drawBitmap(portalFront, null, portalFrontRect, paint)
+            }
+
+            val badgeY = (platformRect.bottom + dp(14f)).coerceAtMost(menuStartButton.top - dp(10f))
+            HomeUiRenderer.drawRiftOnlineBadge(
+                canvas = canvas,
+                cx = menuHeroRect.centerX(),
+                y = badgeY,
+                scale = 1f,
+                skinName = skin.name,
+                riftOnlineLabel = t("RIFT ONLINE").uppercase(),
+                paint = paint,
+                dp = dp(1f)
+            )
+            return
+        }
+
         updateMenuPreviewGeometry()
         val cx = menuPreviewCenterX
         val cy = menuPreviewCenterY
         val radius = menuPreviewRadius
-        val skin = selectedBallSkin()
         val floatX = sin(menuPulse * 1.3f) * dp(6f)
         val floatY = sin(menuPulse * 1.8f) * dp(5f)
         val ballX = cx + floatX + menuBallOffsetX
@@ -2393,53 +2230,12 @@ class ChaosGameView(
         paint.strokeWidth = dp(2.2f)
         paint.color = withAlpha(modeAccent, if (menuBallDragging) 210 else 120)
         canvas.drawLine(cx, cy, ballX, ballY, paint)
-        paint.strokeWidth = dp(10f)
-        paint.color = withAlpha(modeAccent, if (menuBallDragging) 34 else 18)
-        canvas.drawLine(cx, cy, ballX, ballY, paint)
         paint.strokeCap = Paint.Cap.BUTT
 
         paint.style = Paint.Style.FILL
         paint.color = withAlpha(if (selectedMenuMode == GameMode.CHAOS) 0xFFFF4D8D.toInt() else skin.lineColor, 125)
-        if (richEffects()) {
-            paint.maskFilter = BlurMaskFilter(dp(24f), BlurMaskFilter.Blur.NORMAL)
-        }
         canvas.drawCircle(ballX, ballY, dp(if (menuBallDragging) 47f else 42f), paint)
-        paint.maskFilter = null
         drawBallSkin(canvas, ballX, ballY, dp(if (menuBallDragging) 37f else 34f), skin, animated = true, locked = false)
-
-        val caption = "${t("RIFT ONLINE").uppercase()}  /  ${skin.name}"
-        textPaint.textAlign = Paint.Align.CENTER
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(9f)
-        val maxCaptionWidth = viewWidth - dp(48f)
-        val captionWidth = min(textPaint.measureText(caption) + dp(24f), maxCaptionWidth)
-        val captionX = ballX.coerceIn(dp(24f) + captionWidth * 0.5f, viewWidth - dp(24f) - captionWidth * 0.5f)
-        val captionSafeBottom = if (menuState == MenuState.MODES) {
-            min(menuContinueButton.top, menuChaosButton.top) - dp(8f)
-        } else {
-            menuActionStartButton.top - dp(8f)
-        }
-        val preferredCaptionY = if (ballY + dp(58f) <= captionSafeBottom) {
-            ballY + dp(58f)
-        } else {
-            ballY - dp(56f)
-        }
-        val captionY = preferredCaptionY.coerceIn(menuPreviewBounds.top + dp(20f), captionSafeBottom)
-        scratch.set(
-            captionX - captionWidth * 0.5f,
-            captionY - dp(16f),
-            captionX + captionWidth * 0.5f,
-            captionY + dp(8f)
-        )
-        paint.style = Paint.Style.FILL
-        paint.color = 0xAA050911.toInt()
-        canvas.drawRoundRect(scratch, dp(10f), dp(10f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1f)
-        paint.color = withAlpha(modeAccent, 120)
-        canvas.drawRoundRect(scratch, dp(10f), dp(10f), paint)
-        textPaint.color = 0xDEFFFFFF.toInt()
-        canvas.drawText(fitText(caption, captionWidth - dp(18f)), captionX, captionY, textPaint)
     }
 
     private fun updateMenuPreviewGeometry() {
@@ -2453,21 +2249,14 @@ class ChaosGameView(
         menuPreviewBounds.set(dp(10f), dp(76f), viewWidth - dp(10f), viewHeight - dp(78f))
     }
 
-    private fun drawModeOptionsHeader(canvas: Canvas, mode: GameMode, accent: Int) {
-        val left = dp(24f)
-        val baseline = menuActionStartButton.top - dp(22f)
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(10f)
-        textPaint.color = withAlpha(accent, 220)
-        canvas.drawText("${mode.menuTitle()} ${t("LOADOUT").uppercase()}", left, baseline - dp(20f), textPaint)
-        textPaint.textSize = dp(22f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText("${t("LEVEL").uppercase()} ${modeProgress(mode).toString().padStart(2, '0')}", left, baseline + dp(3f), textPaint)
-        textPaint.textAlign = Paint.Align.RIGHT
-        textPaint.textSize = dp(11f)
-        textPaint.color = 0xAAFFFFFF.toInt()
-        canvas.drawText("${t("STREAK").uppercase()} ${modeStreak(mode)}", viewWidth - dp(24f), baseline + dp(2f), textPaint)
+    private fun drawMenuChevron(canvas: Canvas, x: Float, y: Float, accent: Int) {
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = dp(1.8f)
+        paint.strokeCap = Paint.Cap.ROUND
+        paint.color = withAlpha(accent, 210)
+        canvas.drawLine(x - dp(4f), y - dp(4f), x, y, paint)
+        canvas.drawLine(x, y, x - dp(4f), y + dp(4f), paint)
+        paint.strokeCap = Paint.Cap.BUTT
     }
 
     private fun drawMascotFace(
@@ -2785,14 +2574,35 @@ class ChaosGameView(
     private fun worldBitmap(key: String): Bitmap? {
         worldBitmaps[key]?.let { return it }
         val resource = worldArtResources[key] ?: return null
-        val bitmap = if (key.startsWith("bg_")) {
-            BitmapFactory.decodeResource(
-                resources,
-                resource,
-                BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.RGB_565 }
-            )
+        val bitmap = if (key.startsWith("bg_") || key == "home_background") {
+            try {
+                BitmapFactory.decodeResource(
+                    resources,
+                    resource,
+                    BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.RGB_565 }
+                )
+            } catch (_: Exception) {
+                null
+            }
         } else {
-            BitmapFactory.decodeResource(resources, resource)
+            try {
+                BitmapFactory.decodeResource(resources, resource)
+            } catch (_: Exception) {
+                null
+            }
+        } ?: try {
+            val drawable = androidx.core.content.res.ResourcesCompat.getDrawable(resources, resource, context.theme)
+            if (drawable != null) {
+                val w = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 512
+                val h = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 128
+                val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+                val c = Canvas(bmp)
+                drawable.setBounds(0, 0, w, h)
+                drawable.draw(c)
+                bmp
+            } else null
+        } catch (_: Exception) {
+            null
         }
         return bitmap?.also { worldBitmaps[key] = it }
     }
@@ -2858,246 +2668,6 @@ class ChaosGameView(
         )
     }
 
-    private fun drawMenuButton(
-        canvas: Canvas,
-        rect: RectF,
-        button: MenuButton,
-        title: String,
-        meta: String,
-        accent: Int
-    ) {
-        val active = activeMenuButton == button
-        val compact = button == MenuButton.COLLECTION || button == MenuButton.LEADERBOARDS || button == MenuButton.BACK
-        val modeButton = button == MenuButton.CLASSIC || button == MenuButton.CHAOS || button == MenuButton.CONTINUE
-        val radius = dp(6f)
-        paint.style = Paint.Style.FILL
-        paint.color = if (active) withAlpha(accent, 82) else 0xE30D131D.toInt()
-        canvas.drawRoundRect(rect, radius, radius, paint)
-        paint.shader = LinearGradient(
-            rect.left,
-            rect.top,
-            rect.right,
-            rect.bottom,
-            intArrayOf(withAlpha(accent, if (active) 74 else 32), 0x00161D29),
-            floatArrayOf(0f, 0.78f),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, radius, radius, paint)
-        paint.shader = null
-        paint.color = accent
-        canvas.drawRect(rect.left, rect.top, rect.left + dp(if (active) 5f else 3f), rect.bottom, paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (active) 1.8f else 0.8f)
-        paint.color = if (active) withAlpha(accent, 230) else 0x32FFFFFF
-        canvas.drawRoundRect(rect, radius, radius, paint)
-
-        val iconCx = rect.left + dp(if (compact) 22f else 29f)
-        val iconCy = rect.centerY()
-        val iconRadius = dp(if (compact) 11f else 15f)
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(accent, if (active) 150 else 90)
-        if (richEffects()) {
-            paint.maskFilter = BlurMaskFilter(iconRadius * 0.7f, BlurMaskFilter.Blur.NORMAL)
-        }
-        canvas.drawCircle(iconCx, iconCy, iconRadius * 1.15f, paint)
-        paint.maskFilter = null
-        val assetKey = when (button) {
-            MenuButton.CLASSIC -> "portal_goal"
-            MenuButton.CHAOS -> "hazard_glitch"
-            MenuButton.START, MenuButton.CONTINUE -> "boost_goal"
-            MenuButton.LEADERBOARDS -> "boost_chain"
-            else -> null
-        }
-        when {
-            button == MenuButton.COLLECTION -> {
-                drawBallSkin(canvas, iconCx, iconCy, iconRadius, selectedBallSkin(), animated = true, locked = false)
-            }
-
-            assetKey != null -> {
-                scratch.set(iconCx - iconRadius, iconCy - iconRadius, iconCx + iconRadius, iconCy + iconRadius)
-                drawWorldAsset(canvas, assetKey, scratch)
-            }
-
-            button == MenuButton.BACK -> {
-                paint.style = Paint.Style.STROKE
-                paint.color = accent
-                paint.style = Paint.Style.STROKE
-                paint.strokeWidth = dp(2.4f)
-                paint.strokeCap = Paint.Cap.ROUND
-                canvas.drawLine(iconCx + dp(7f), iconCy - dp(7f), iconCx - dp(4f), iconCy, paint)
-                canvas.drawLine(iconCx - dp(4f), iconCy, iconCx + dp(7f), iconCy + dp(7f), paint)
-                paint.strokeCap = Paint.Cap.BUTT
-            }
-
-            else -> Unit
-        }
-
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(if (compact) 12f else 16f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        val textLeft = rect.left + dp(if (compact) 42f else 56f)
-        val titleY = if (compact) rect.top + dp(24f) else rect.top + dp(28f)
-        canvas.drawText(fitText(title, rect.right - textLeft - dp(16f)), textLeft, titleY, textPaint)
-        textPaint.textSize = dp(if (compact) 8.5f else 9.5f)
-        textPaint.color = 0x99FFFFFF.toInt()
-        canvas.drawText(fitText(meta, rect.right - textLeft - dp(16f)), textLeft, if (compact) rect.top + dp(41f) else rect.top + dp(48f), textPaint)
-
-        if (modeButton) {
-            val mode = when (button) {
-                MenuButton.CHAOS -> GameMode.CHAOS
-                MenuButton.CLASSIC -> GameMode.CLASSIC
-                else -> selectedMenuMode
-            }
-            val cleared = (modeProgress(mode) - 1).coerceAtLeast(0)
-            val progress = (cleared.mod(5)) / 5f
-            val barLeft = rect.left + dp(56f)
-            val barTop = rect.bottom - dp(11f)
-            val barRight = rect.right - dp(42f)
-            paint.style = Paint.Style.FILL
-            paint.color = 0x22FFFFFF
-            canvas.drawRoundRect(barLeft, barTop, barRight, barTop + dp(3f), dp(2f), dp(2f), paint)
-            paint.color = accent
-            canvas.drawRoundRect(barLeft, barTop, barLeft + (barRight - barLeft) * progress.coerceIn(0f, 1f), barTop + dp(3f), dp(2f), dp(2f), paint)
-
-            textPaint.textAlign = Paint.Align.RIGHT
-            textPaint.textSize = dp(11f)
-            textPaint.color = withAlpha(accent, 230)
-            canvas.drawText("L${modeProgress(mode).toString().padStart(2, '0')}", rect.right - dp(16f), rect.top + dp(28f), textPaint)
-            drawMenuChevron(canvas, rect.right - dp(20f), rect.bottom - dp(17f), accent)
-        }
-
-        if (button == MenuButton.CONTINUE) {
-            textPaint.textAlign = Paint.Align.RIGHT
-            textPaint.textSize = dp(9f)
-            textPaint.color = 0xFFFFCF4A.toInt()
-            scratch.set(rect.right - dp(42f), rect.top + dp(35f), rect.right - dp(14f), rect.top + dp(51f))
-            paint.style = Paint.Style.FILL
-            paint.color = 0x33FFCF4A
-            canvas.drawRoundRect(scratch, dp(4f), dp(4f), paint)
-            canvas.drawText(t("AD").uppercase(), scratch.centerX(), scratch.centerY() + dp(3f), textPaint)
-        }
-    }
-
-    private fun drawHomeModeChip(canvas: Canvas, rect: RectF, mode: GameMode, accent: Int) {
-        val selected = selectedMenuMode == mode
-        val active = activeMenuButton == if (mode == GameMode.CLASSIC) MenuButton.CLASSIC else MenuButton.CHAOS
-        val radius = dp(8f)
-        paint.style = Paint.Style.FILL
-        paint.shader = LinearGradient(
-            rect.left,
-            rect.top,
-            rect.right,
-            rect.bottom,
-            intArrayOf(
-                if (selected) withAlpha(accent, 92) else 0xC80B1019.toInt(),
-                if (active) withAlpha(accent, 62) else 0xE30D131D.toInt()
-            ),
-            null,
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, radius, radius, paint)
-        paint.shader = null
-
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (selected || active) 1.6f else 0.8f)
-        paint.color = if (selected) withAlpha(accent, 235) else 0x42FFFFFF
-        canvas.drawRoundRect(rect, radius, radius, paint)
-
-        val iconSize = dp(28f)
-        scratch.set(rect.left + dp(10f), rect.centerY() - iconSize * 0.5f, rect.left + dp(10f) + iconSize, rect.centerY() + iconSize * 0.5f)
-        drawWorldAsset(canvas, if (mode == GameMode.CLASSIC) "portal_goal" else "hazard_glitch", scratch, if (selected) 255 else 210)
-
-        textPaint.shader = null
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(12.5f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        val textLeft = rect.left + dp(46f)
-        canvas.drawText(mode.menuTitle(), textLeft, rect.top + dp(22f), textPaint)
-        textPaint.textSize = dp(8.3f)
-        textPaint.color = if (selected) withAlpha(accent, 230) else 0x99FFFFFF.toInt()
-        val meta = homeModeChipMeta(mode, selected)
-        canvas.drawText(fitText(meta, rect.right - textLeft - dp(10f)), textLeft, rect.top + dp(39f), textPaint)
-
-        if (modeProgress(mode) > 1) {
-            textPaint.textAlign = Paint.Align.RIGHT
-            textPaint.textSize = dp(10f)
-            textPaint.color = withAlpha(accent, 235)
-            canvas.drawText("L${modeProgress(mode).toString().padStart(2, '0')}", rect.right - dp(10f), rect.top + dp(22f), textPaint)
-        }
-    }
-
-    private fun homeModeChipMeta(mode: GameMode, selected: Boolean): String {
-        val progress = modeProgress(mode)
-        if (progress <= 1) return t("START LEVEL 01").uppercase()
-        val compact = "L${progress.toString().padStart(2, '0')} / x${modeStreak(mode)}"
-        return if (selected) "${t("SELECTED").uppercase()} / $compact" else compact
-    }
-
-    private fun drawPrimaryPlayButton(canvas: Canvas, rect: RectF) {
-        val mode = selectedMenuMode
-        val accent = if (mode == GameMode.CHAOS) 0xFFFF4D8D.toInt() else 0xFF1DE8C8.toInt()
-        val active = activeMenuButton == MenuButton.PLAY
-        val hasProgress = modeProgress(mode) > 1
-        val radius = dp(9f)
-        paint.style = Paint.Style.FILL
-        paint.shader = LinearGradient(
-            rect.left,
-            rect.top,
-            rect.right,
-            rect.bottom,
-            intArrayOf(
-                if (active) withAlpha(accent, 238) else withAlpha(accent, 212),
-                if (mode == GameMode.CHAOS) 0xFF5C1432.toInt() else 0xFF073A35.toInt()
-            ),
-            floatArrayOf(0f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, radius, radius, paint)
-        paint.shader = null
-
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (active) 2f else 1f)
-        paint.color = 0xBBFFFFFF.toInt()
-        canvas.drawRoundRect(rect, radius, radius, paint)
-
-        val iconSize = dp(45f)
-        scratch.set(rect.left + dp(13f), rect.centerY() - iconSize * 0.5f, rect.left + dp(13f) + iconSize, rect.centerY() + iconSize * 0.5f)
-        drawWorldAsset(canvas, if (mode == GameMode.CHAOS) "boost_plasma" else "boost_goal", scratch, 245)
-
-        val title = if (hasProgress) "${t("CONTINUE").uppercase()} ${mode.menuTitle()}" else "${t("PLAY").uppercase()} ${mode.menuTitle()}"
-        val meta = if (hasProgress) {
-            "${t("LEVEL").uppercase()} ${modeProgress(mode).toString().padStart(2, '0')}  /  ${t("STREAK").uppercase()} ${modeStreak(mode)}  /  ${t("AD CHECK").uppercase()}"
-        } else {
-            "${t("START LEVEL 01").uppercase()}  /  ${t("FIRST RUN").uppercase()}"
-        }
-        val textLeft = rect.left + dp(72f)
-        textPaint.shader = null
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(18f)
-        textPaint.color = 0xFF07090F.toInt()
-        canvas.drawText(fitText(title, rect.right - textLeft - dp(66f)), textLeft, rect.top + dp(28f), textPaint)
-        textPaint.textSize = dp(9.2f)
-        textPaint.color = 0xCC07090F.toInt()
-        canvas.drawText(fitText(meta, rect.right - textLeft - dp(22f)), textLeft, rect.top + dp(49f), textPaint)
-
-        paint.style = Paint.Style.FILL
-        paint.color = 0x3307090F
-        canvas.drawCircle(rect.right - dp(28f), rect.centerY(), dp(17f), paint)
-        drawMenuChevron(canvas, rect.right - dp(20f), rect.centerY(), 0xFF07090F.toInt())
-    }
-
-    private fun drawMenuChevron(canvas: Canvas, x: Float, y: Float, accent: Int) {
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1.8f)
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.color = withAlpha(accent, 210)
-        canvas.drawLine(x - dp(4f), y - dp(4f), x, y, paint)
-        canvas.drawLine(x, y, x - dp(4f), y + dp(4f), paint)
-        paint.strokeCap = Paint.Cap.BUTT
-    }
 
     private fun drawCollection(canvas: Canvas) {
         drawCollectionBackdrop(canvas)
@@ -6858,36 +6428,34 @@ class ChaosGameView(
     }
 
     private fun layoutMenuButtons() {
-        val side = menuContentLeft()
-        val right = menuContentRight()
-        val gap = dp(8f)
-        val bottom = viewHeight - dp(86f)
-        val audioTop = viewHeight - dp(68f)
-        val audioBottom = viewHeight - dp(22f)
-        val audioSize = dp(46f)
-        menuPrivacyButton.set(side, audioTop, side + dp(94f), audioBottom)
-        menuMusicButton.set(right - audioSize, audioTop, right, audioBottom)
-        menuSfxButton.set(right - audioSize * 2f - gap, audioTop, right - audioSize - gap, audioBottom)
-        menuLanguageButton.set(menuPrivacyButton.right + gap, audioTop, menuSfxButton.left - gap, audioBottom)
-        if (menuState == MenuState.MODES) {
-            val compactHeight = dp(54f)
-            val playHeight = dp(66f)
-            val chipHeight = dp(54f)
-            val half = side + (right - side) * 0.5f
-            menuLeaderboardButton.set(side, bottom - compactHeight, half - gap * 0.5f, bottom)
-            menuCollectionButton.set(half + gap * 0.5f, bottom - compactHeight, right, bottom)
-            menuStartButton.set(side, menuLeaderboardButton.top - gap - playHeight, right, menuLeaderboardButton.top - gap)
-            menuContinueButton.set(side, menuStartButton.top - gap - chipHeight, half - gap * 0.5f, menuStartButton.top - gap)
-            menuChaosButton.set(half + gap * 0.5f, menuStartButton.top - gap - chipHeight, right, menuStartButton.top - gap)
-            menuActionStartButton.setEmpty()
-            menuBackButton.setEmpty()
-        } else {
-            menuCollectionButton.setEmpty()
-            menuLeaderboardButton.setEmpty()
+        homeLayoutCalculator.calculate(
+            width = viewWidth.toFloat(),
+            height = viewHeight.toFloat(),
+            displayDensity = uiDensity
+        )
+        homeLayoutCalculator.settingsButtonRect.toRectF(menuPrivacyButton)
+        homeLayoutCalculator.soundButtonRect.toRectF(menuSfxButton)
+        homeLayoutCalculator.playCtaRect.toRectF(menuStartButton)
+        homeLayoutCalculator.leaderboardsCardRect.toRectF(menuLeaderboardButton)
+        homeLayoutCalculator.vaultCardRect.toRectF(menuVaultButton)
+        homeLayoutCalculator.collectionCardRect.toRectF(menuCollectionButton)
+        for (i in 0 until 4) {
+            homeLayoutCalculator.statCardRects[i].toRectF(menuStatsRects[i])
+        }
+        homeLayoutCalculator.heroRect.toRectF(menuHeroRect)
+        homeLayoutCalculator.portalRect.toRectF(portalBackRect)
+        homeLayoutCalculator.platformRect.toRectF(platformRect)
+        homeLayoutCalculator.characterRect.toRectF(characterRect)
+        homeLayoutCalculator.portalFrontRect.toRectF(portalFrontRect)
+
+        if (menuState != MenuState.MODES) {
+            val side = menuContentLeft()
+            val right = menuContentRight()
+            val gap = dp(8f)
+            val bottom = viewHeight - dp(86f)
             menuContinueButton.set(side, bottom - dp(54f), right, bottom)
             menuChaosButton.set(side, menuContinueButton.top - gap - dp(76f), right, menuContinueButton.top - gap)
             menuActionStartButton.set(side, menuChaosButton.top - gap - dp(62f), right, menuChaosButton.top - gap)
-            menuStartButton.setEmpty()
             menuBackButton.set(menuContinueButton)
         }
     }
@@ -6907,20 +6475,31 @@ class ChaosGameView(
     }
 
     private fun menuButtonAt(x: Float, y: Float): MenuButton {
-        if (menuPrivacyButton.contains(x, y)) return MenuButton.PRIVACY
-        if (menuLanguageButton.contains(x, y)) return MenuButton.LANGUAGE
+        if (menuPrivacyButton.contains(x, y)) return MenuButton.SETTINGS
         if (menuSfxButton.contains(x, y)) return MenuButton.SFX
-        if (menuMusicButton.contains(x, y)) return MenuButton.MUSIC
         if (menuState == MenuState.MODES) {
             if (menuStartButton.contains(x, y)) return MenuButton.PLAY
-            if (menuContinueButton.contains(x, y)) return MenuButton.CLASSIC
-            if (menuChaosButton.contains(x, y)) return MenuButton.CHAOS
             if (menuLeaderboardButton.contains(x, y)) return MenuButton.LEADERBOARDS
+            if (menuVaultButton.contains(x, y)) return MenuButton.VAULT
             if (menuCollectionButton.contains(x, y)) return MenuButton.COLLECTION
+            if (menuClassicContinueButton.contains(x, y)) return MenuButton.CLASSIC_CONTINUE
+            if (menuClassicNewButton.contains(x, y)) return MenuButton.CLASSIC_START
+            if (menuChaosStartButton.contains(x, y)) return MenuButton.CHAOS_START
+            for (i in 0 until 4) {
+                if (menuStatsRects[i].contains(x, y)) {
+                    if (i == 3) return MenuButton.PLAY
+                }
+            }
         } else {
+            if (menuClassicContinueButton.contains(x, y)) return MenuButton.CLASSIC_CONTINUE
+            if (menuClassicNewButton.contains(x, y)) return MenuButton.CLASSIC_START
+            if (menuChaosStartButton.contains(x, y)) return MenuButton.CHAOS_START
             if (menuActionStartButton.contains(x, y)) return MenuButton.START
             if (menuChaosButton.contains(x, y)) return MenuButton.CONTINUE
             if (menuContinueButton.contains(x, y)) return MenuButton.BACK
+            if (menuBackButton.contains(x, y)) return MenuButton.BACK
+            if (menuClassicCard.contains(x, y)) return MenuButton.CLASSIC
+            if (menuChaosCard.contains(x, y)) return MenuButton.CHAOS
         }
         return MenuButton.NONE
     }
@@ -7523,33 +7102,6 @@ class ChaosGameView(
         val iconKey: String
     )
 
-    private data class BallSkin(
-        val id: String,
-        val name: String,
-        val subtitle: String,
-        val primary: Int,
-        val secondary: Int,
-        val lineColor: Int,
-        val style: SkinStyle,
-        val unlock: UnlockRule,
-        val power: BallPower = BallPower.NONE
-    )
-
-    private data class UnlockRule(
-        val type: UnlockType,
-        val value: Int,
-        val label: String
-    )
-
-    private data class NextReward(
-        val name: String,
-        val label: String,
-        val target: Int,
-        val distance: Int,
-        val progress: Float,
-        val accent: Int
-    )
-
     interface AdBridge {
         fun showInterstitial(onFinished: () -> Unit)
         fun showRewardedContinue(onRewarded: () -> Unit, onUnavailable: () -> Unit)
@@ -7577,109 +7129,6 @@ class ChaosGameView(
                 override fun restore() = Unit
             }
         }
-    }
-
-    private enum class GameState {
-        READY,
-        SIMULATING,
-        WON,
-        LOST
-    }
-
-    private enum class Screen {
-        MENU,
-        GAME,
-        COLLECTION,
-        LEADERBOARDS,
-        LANGUAGE,
-        AD
-    }
-
-    private enum class MenuState {
-        MODES,
-        MODE_ACTION
-    }
-
-    private enum class GameMode(val label: String) {
-        CLASSIC("CLASSIC"),
-        CHAOS("CHAOS")
-    }
-
-    private enum class RenderProfile {
-        LOW,
-        BALANCED,
-        HIGH
-    }
-
-    private enum class MenuButton {
-        NONE,
-        PLAY,
-        CLASSIC,
-        START,
-        CHAOS,
-        LEADERBOARDS,
-        COLLECTION,
-        PRIVACY,
-        LANGUAGE,
-        SFX,
-        MUSIC,
-        CONTINUE,
-        BACK
-    }
-
-    private enum class CollectionFilter(val labelKey: String) {
-        ALL("ALL"),
-        SUPERPOWER("SUPERPOWER"),
-        HYPE("HYPE"),
-        PREMIUM("PREMIUM"),
-        COSMETIC("COSMETIC")
-    }
-
-    private enum class SkinStyle {
-        CLASSIC,
-        PRISM,
-        VOID,
-        CHROME,
-        PLASMA,
-        BLOP,
-        GLITCH,
-        ZAP,
-        LOOP,
-        STATIC,
-        RIFT,
-        BYTE,
-        WOBBLE,
-        CROWN
-    }
-
-    private enum class UnlockType {
-        DEFAULT,
-        PREMIUM,
-        CLASSIC_LEVEL,
-        CHAOS_LEVEL,
-        TUTORIAL_CLEAR,
-        BEST_STREAK,
-        SHARE_COUNT,
-        HYPE_COST
-    }
-
-    private enum class ButtonId {
-        NONE,
-        HOME,
-        RESTART,
-        SHARE,
-        NEXT,
-        SFX,
-        MUSIC,
-        CONTINUE,
-        AD_CONTINUE
-    }
-
-    private enum class AdAction {
-        NONE,
-        NEXT_LEVEL,
-        CONTINUE_AFTER_FAIL,
-        RESUME_RUN
     }
 
     private companion object {

@@ -4,8 +4,11 @@ import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
 import android.media.SoundPool
+import android.os.Handler
+import android.os.Looper
 import com.moonsolstudios.kavvoro.R
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
 enum class SoundEvent {
@@ -39,10 +42,7 @@ class KavvoroSoundEngine(context: Context) {
         )
         .build()
     private val loadedSounds = ConcurrentHashMap.newKeySet<Int>()
-    private val selectionSounds: IntArray
-    private val localizedSelectionSounds = ConcurrentHashMap<String, IntArray>()
-    private val bounceSounds: IntArray
-    private val eventSounds: Map<SoundEvent, Int>
+    private val rawResourceToSampleId = ConcurrentHashMap<Int, Int>()
     @Volatile
     private var released = false
     @Volatile
@@ -53,45 +53,63 @@ class KavvoroSoundEngine(context: Context) {
     private var paused = false
     private var languageCode = "en"
     private var activeSelectionStream = 0
+    private var pendingSelectionSampleId = 0
+    private val selectionFadeHandler = Handler(Looper.getMainLooper())
+    private val selectionFadeRunnables = mutableMapOf<Int, Runnable>()
+    private val fadingSelectionStreams = mutableSetOf<Int>()
+    private val musicTransitionHandler = Handler(Looper.getMainLooper())
+    private val musicExecutor = Executors.newSingleThreadExecutor { runnable ->
+        Thread(runnable, "kavvoro-music-worker")
+    }
     private var currentMusic: MusicTrack? = null
     private var musicPlayer: MediaPlayer? = null
+    private var fadingMusicPlayer: MediaPlayer? = null
+    private var musicTransitionRunnable: Runnable? = null
 
     init {
         soundPool.setOnLoadCompleteListener { _, sampleId, status ->
-            if (status == 0) loadedSounds += sampleId
+            if (status == 0) {
+                loadedSounds += sampleId
+                synchronized(this@KavvoroSoundEngine) {
+                    if (!released && !sfxMuted && pendingSelectionSampleId == sampleId) {
+                        pendingSelectionSampleId = 0
+                        fadeOutSelectionStream(activeSelectionStream)
+                        activeSelectionStream = play(sampleId, volume = SELECTION_PREVIEW_VOLUME, rate = 1f, priority = 5)
+                    }
+                }
+            }
         }
-        selectionSounds = selectionResources.map { soundPool.load(context, it, 1) }.toIntArray()
-        bounceSounds = bounceResources.map { soundPool.load(context, it, 1) }.toIntArray()
-        eventSounds = eventResources.mapValues { (_, resource) -> soundPool.load(context, resource, 1) }
     }
 
+    @Synchronized
     fun playSelection(index: Int) {
-        if (sfxMuted) return
-        val sound = selectionSoundsForLanguage().getOrNull(index) ?: return
-        if (activeSelectionStream != 0) {
-            soundPool.stop(activeSelectionStream)
-            activeSelectionStream = 0
+        if (released || sfxMuted) return
+        val resId = getSelectionResourceId(languageCode, index)
+        if (resId == 0) return
+        val sampleId = getOrLoadSample(resId)
+        fadeOutSelectionStream(activeSelectionStream)
+        if (sampleId in loadedSounds) {
+            pendingSelectionSampleId = 0
+            activeSelectionStream = play(sampleId, volume = SELECTION_PREVIEW_VOLUME, rate = 1f, priority = 5)
+        } else {
+            pendingSelectionSampleId = sampleId
         }
-        activeSelectionStream = play(sound, volume = 0.86f, rate = 1f, priority = 5)
     }
 
     @Synchronized
     fun setLanguageCode(code: String) {
         if (languageCode == code) return
         languageCode = code
-        ensureSelectionPackLoaded(code)
-        if (activeSelectionStream != 0) {
-            soundPool.stop(activeSelectionStream)
-            activeSelectionStream = 0
-        }
+        fadeOutSelectionStream(activeSelectionStream)
     }
 
     fun playBounce(brainballIndex: Int, impactStrength: Float) {
         if (sfxMuted) return
         if (impactStrength < 0.7f) return
         val normalized = ((impactStrength - 0.7f) / 6.2f).coerceIn(0f, 1f)
-        val tier = (normalized * (bounceSounds.size - 1)).roundToInt()
-        val sound = bounceSounds[tier]
+        val tier = (normalized * (bounceResources.size - 1)).roundToInt()
+        val resId = bounceResources.getOrNull(tier) ?: return
+        val sound = getOrLoadSample(resId)
         val characterPitch = 0.86f + ((brainballIndex * 37) % 29) / 100f
         val impactPitch = 0.92f + normalized * 0.16f
         play(
@@ -104,7 +122,8 @@ class KavvoroSoundEngine(context: Context) {
 
     fun playEvent(event: SoundEvent, brainballIndex: Int = 0, intensity: Float = 1f) {
         if (sfxMuted) return
-        val sound = eventSounds[event] ?: return
+        val resId = eventResources[event] ?: return
+        val sound = getOrLoadSample(resId)
         val characterPitch = 0.94f + ((brainballIndex * 19) % 15) / 100f
         val rate = when (event) {
             SoundEvent.RIFT_ON, SoundEvent.RIFT_OFF, SoundEvent.POWER -> characterPitch
@@ -132,16 +151,17 @@ class KavvoroSoundEngine(context: Context) {
             return
         }
         currentMusic = track
-        rebuildMusicPlayer()
+        if (paused || musicMuted) {
+            releaseMusicPlayer()
+        } else {
+            rebuildMusicPlayer()
+        }
     }
 
     @Synchronized
     fun setSfxMuted(muted: Boolean) {
         sfxMuted = muted
-        if (muted && activeSelectionStream != 0) {
-            soundPool.stop(activeSelectionStream)
-            activeSelectionStream = 0
-        }
+        if (muted) stopSelectionPreviewsImmediately()
     }
 
     @Synchronized
@@ -170,13 +190,13 @@ class KavvoroSoundEngine(context: Context) {
     fun release() {
         if (released) return
         released = true
-        if (activeSelectionStream != 0) {
-            soundPool.stop(activeSelectionStream)
-            activeSelectionStream = 0
-        }
+        pendingSelectionSampleId = 0
+        stopSelectionPreviewsImmediately()
         releaseMusicPlayer()
         soundPool.release()
         loadedSounds.clear()
+        rawResourceToSampleId.clear()
+        musicExecutor.shutdown()
     }
 
     private fun play(sound: Int, volume: Float, rate: Float, priority: Int): Int {
@@ -184,28 +204,62 @@ class KavvoroSoundEngine(context: Context) {
         return soundPool.play(sound, volume, volume, priority, 0, rate.coerceIn(0.5f, 2f))
     }
 
-    private fun selectionSoundsForLanguage(): IntArray {
-        return localizedSelectionSounds[languageCode] ?: ensureSelectionPackLoaded(languageCode) ?: selectionSounds
+    private fun fadeOutSelectionStream(streamId: Int) {
+        if (streamId == 0) return
+        selectionFadeRunnables[streamId]?.let(selectionFadeHandler::removeCallbacks)
+        val steps = SelectionPreviewFade.steps(SELECTION_PREVIEW_VOLUME)
+        var stepIndex = 0
+        fadingSelectionStreams += streamId
+        val fade = object : Runnable {
+            override fun run() {
+                if (released) {
+                    selectionFadeRunnables.remove(streamId)
+                    fadingSelectionStreams.remove(streamId)
+                    return
+                }
+                val step = steps[stepIndex]
+                soundPool.setVolume(streamId, step.volume, step.volume)
+                if (stepIndex == steps.lastIndex) {
+                    soundPool.stop(streamId)
+                    selectionFadeRunnables.remove(streamId)
+                    fadingSelectionStreams.remove(streamId)
+                    return
+                }
+                stepIndex += 1
+                selectionFadeHandler.postDelayed(this, steps[stepIndex].elapsedMs - step.elapsedMs)
+            }
+        }
+        selectionFadeRunnables[streamId] = fade
+        selectionFadeHandler.post(fade)
     }
 
-    private fun ensureSelectionPackLoaded(languageCode: String): IntArray? {
-        if (languageCode == "en" || languageCode !in supportedAudioLanguageCodes) return null
-        localizedSelectionSounds[languageCode]?.let { return it }
-        val loaded = loadSelectionPack(languageCode) ?: return null
-        localizedSelectionSounds[languageCode] = loaded
-        return loaded
+    private fun stopSelectionPreviewsImmediately() {
+        selectionFadeHandler.removeCallbacksAndMessages(null)
+        if (activeSelectionStream != 0) soundPool.stop(activeSelectionStream)
+        fadingSelectionStreams.forEach(soundPool::stop)
+        activeSelectionStream = 0
+        selectionFadeRunnables.clear()
+        fadingSelectionStreams.clear()
     }
 
-    private fun loadSelectionPack(languageCode: String): IntArray? {
-        val resources = (0 until SELECTION_SOUND_COUNT).map { index ->
-            appContext.resources.getIdentifier(
-                "brainball_select_${languageCode}_${index.toString().padStart(2, '0')}",
+    private fun getSelectionResourceId(lang: String, index: Int): Int {
+        if (lang != "en" && lang in supportedAudioLanguageCodes) {
+            val resId = appContext.resources.getIdentifier(
+                "brainball_select_${lang}_${index.toString().padStart(2, '0')}",
                 "raw",
                 appContext.packageName
             )
+            if (resId != 0) return resId
         }
-        if (resources.any { it == 0 }) return null
-        return resources.map { soundPool.load(appContext, it, 1) }.toIntArray()
+        return selectionResources.getOrNull(index) ?: 0
+    }
+
+    private fun getOrLoadSample(resId: Int): Int {
+        if (resId == 0) return 0
+        rawResourceToSampleId[resId]?.let { return it }
+        val sampleId = soundPool.load(appContext, resId, 1)
+        rawResourceToSampleId[resId] = sampleId
+        return sampleId
     }
 
     private fun startMusicIfAllowed() {
@@ -213,17 +267,18 @@ class KavvoroSoundEngine(context: Context) {
         val track = currentMusic ?: return
         val player = musicPlayer
         if (player == null) {
-            rebuildMusicPlayer()
+            rebuildMusicPlayer(track, crossfade = false)
             return
         }
         try {
             if (!player.isPlaying) player.start()
         } catch (_: IllegalStateException) {
-            rebuildMusicPlayer(track)
+            rebuildMusicPlayer(track, crossfade = false)
         }
     }
 
     private fun pauseMusic() {
+        cancelMusicTransition(restoreActiveVolume = true)
         val player = musicPlayer ?: return
         try {
             if (player.isPlaying) player.pause()
@@ -232,33 +287,135 @@ class KavvoroSoundEngine(context: Context) {
         }
     }
 
-    private fun rebuildMusicPlayer(track: MusicTrack? = currentMusic) {
-        releaseMusicPlayer()
+    private fun rebuildMusicPlayer(
+        track: MusicTrack? = currentMusic,
+        crossfade: Boolean = true,
+    ) {
         if (released || paused || musicMuted || track == null) return
         val resource = musicResources[track] ?: return
-        val player = MediaPlayer.create(appContext, resource) ?: return
-        try {
-            player.isLooping = true
-            player.setVolume(MUSIC_VOLUME, MUSIC_VOLUME)
-            player.start()
-            musicPlayer = player
-        } catch (_: IllegalStateException) {
-            player.release()
+        cancelMusicTransition(restoreActiveVolume = true)
+        val oldPlayer = musicPlayer
+        musicPlayer = null
+        musicExecutor.execute {
+            if (released || paused || musicMuted || currentMusic != track) {
+                releaseMediaPlayer(oldPlayer)
+                return@execute
+            }
+            val player = MediaPlayer.create(appContext, resource) ?: run {
+                releaseMediaPlayer(oldPlayer)
+                return@execute
+            }
+            synchronized(this@KavvoroSoundEngine) {
+                if (released || paused || musicMuted || currentMusic != track) {
+                    releaseMediaPlayer(oldPlayer)
+                    releaseMediaPlayer(player)
+                    return@synchronized
+                }
+                try {
+                    player.isLooping = true
+                    val shouldCrossfade = crossfade && oldPlayer != null
+                    val initialVolume = if (shouldCrossfade) 0f else MUSIC_VOLUME
+                    player.setVolume(initialVolume, initialVolume)
+                    player.start()
+                    musicPlayer = player
+                    if (shouldCrossfade) {
+                        beginMusicCrossfade(oldPlayer, player)
+                    } else {
+                        releaseMediaPlayer(oldPlayer)
+                    }
+                } catch (_: IllegalStateException) {
+                    releaseMediaPlayer(player)
+                    releaseMediaPlayer(oldPlayer)
+                }
+            }
         }
     }
 
     private fun releaseMusicPlayer() {
-        val player = musicPlayer ?: return
+        cancelMusicTransition(restoreActiveVolume = false)
+        val player = musicPlayer
         musicPlayer = null
-        try {
-            player.stop()
-        } catch (_: IllegalStateException) {
-            // Already stopped or never started.
+        releaseMediaPlayer(player)
+    }
+
+    private fun beginMusicCrossfade(oldPlayer: MediaPlayer?, newPlayer: MediaPlayer) {
+        if (oldPlayer == null) return
+        val fadeInSteps = MusicTransition.steps(0f, 1f, MusicTransition.DURATION_MS)
+        fadingMusicPlayer = oldPlayer
+        val stepDelayMs = (MusicTransition.DURATION_MS / fadeInSteps.lastIndex).coerceAtLeast(1L)
+        val fade = object : Runnable {
+            var stepIndex = 0
+
+            override fun run() {
+                if (
+                    released ||
+                    musicPlayer !== newPlayer ||
+                    fadingMusicPlayer !== oldPlayer ||
+                    paused ||
+                    musicMuted
+                ) {
+                    return
+                }
+
+                val fadeIn = fadeInSteps[stepIndex]
+                val fadeOut = 1f - fadeIn
+                try {
+                    oldPlayer.setVolume(MUSIC_VOLUME * fadeOut, MUSIC_VOLUME * fadeOut)
+                    newPlayer.setVolume(MUSIC_VOLUME * fadeIn, MUSIC_VOLUME * fadeIn)
+                } catch (_: IllegalStateException) {
+                    cancelMusicTransition(restoreActiveVolume = true)
+                    return
+                }
+
+                if (stepIndex == fadeInSteps.lastIndex) {
+                    fadingMusicPlayer = null
+                    musicTransitionRunnable = null
+                    releaseMediaPlayer(oldPlayer)
+                    try {
+                        newPlayer.setVolume(MUSIC_VOLUME, MUSIC_VOLUME)
+                    } catch (_: IllegalStateException) {
+                        // The player was released by the platform while transitioning.
+                    }
+                    return
+                }
+
+                stepIndex += 1
+                musicTransitionHandler.postDelayed(this, stepDelayMs)
+            }
         }
-        player.release()
+        musicTransitionRunnable = fade
+        musicTransitionHandler.post(fade)
+    }
+
+    private fun cancelMusicTransition(restoreActiveVolume: Boolean) {
+        musicTransitionRunnable?.let(musicTransitionHandler::removeCallbacks)
+        musicTransitionRunnable = null
+        val fadingPlayer = fadingMusicPlayer
+        fadingMusicPlayer = null
+        releaseMediaPlayer(fadingPlayer)
+        if (restoreActiveVolume) {
+            try {
+                musicPlayer?.setVolume(MUSIC_VOLUME, MUSIC_VOLUME)
+            } catch (_: IllegalStateException) {
+                // The player was released by the platform while transitioning.
+            }
+        }
+    }
+
+    private fun releaseMediaPlayer(player: MediaPlayer?) {
+        if (player == null) return
+        musicExecutor.execute {
+            try {
+                player.stop()
+            } catch (_: IllegalStateException) {
+                // Already stopped or never started.
+            }
+            player.release()
+        }
     }
 
     companion object {
+        private const val SELECTION_PREVIEW_VOLUME = 0.86f
         private const val MUSIC_VOLUME = 0.3f
         private const val SELECTION_SOUND_COUNT = 50
         private val supportedAudioLanguageCodes = listOf(

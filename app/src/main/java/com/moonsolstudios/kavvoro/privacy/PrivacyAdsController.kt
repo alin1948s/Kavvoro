@@ -108,12 +108,14 @@ class PrivacyAdsController(
     private fun initializeAdsIfAllowed() {
         if (!consentInformation.canRequestAds()) return
         if (!mobileAdsInitialized.compareAndSet(false, true)) return
-        MobileAds.initialize(activity) {
-            activity.runOnUiThread {
-                interstitialAds.enable()
-                rewardedAds.enable()
+        Thread({
+            MobileAds.initialize(activity) {
+                activity.runOnUiThread {
+                    interstitialAds.enable()
+                    rewardedAds.enable()
+                }
             }
-        }
+        }, "kavvoro-mobileads-init").start()
     }
 
     private fun t(value: String): String = KavvoroI18n.t(activity, value)

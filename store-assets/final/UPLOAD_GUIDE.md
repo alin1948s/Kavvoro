@@ -73,9 +73,18 @@ Only use this section if Play Games on PC is enabled for this release.
 
 ## Tablet status
 
-Do not upload tablet screenshots yet. A real 1920 x 1080 Android tablet emulator check showed that the current phone-first UI remains functional but is too small on a low-density tablet. Reusing enlarged phone screenshots would misrepresent the tablet experience.
+- 7-inch portrait set: upload the seven files from `tablet-7/` in numeric order.
+  - All seven files are 1200 x 1920 PNG.
+- 10-inch portrait set: upload the seven files from `tablet-10/` in numeric order.
+  - All seven files are 1600 x 2560 PNG.
 
-If Play Console allows a phone-only listing, leave the 7-inch and 10-inch sections empty. If it marks either section as required, tablet UI adaptation is a release blocker and should be completed before adding those screenshots.
+These are dedicated large-screen captures from the current tablet layout review;
+they are not enlarged phone screenshots. Recheck the final signed release APK
+visually before uploading if the release build changes after these captures.
+
+Upload status: all seven images from each tablet set were added to the default
+Google Play listing and saved as a draft on 2026-08-22. Publishing that draft
+remains a separate Play Console action.
 
 ## Final checks before publishing
 
@@ -84,4 +93,5 @@ If Play Console allows a phone-only listing, leave the 7-inch and 10-inch sectio
 - Keep the feature graphic text-free for localization.
 - Verify that the YouTube trailer plays without an age gate.
 - Confirm the privacy policy and data-deletion URLs remain publicly accessible.
-- Do not claim tablet or PC optimization until those targets pass device testing.
+- Do not claim tablet or PC optimization beyond the targets that have passed the
+  corresponding device/emulator review.

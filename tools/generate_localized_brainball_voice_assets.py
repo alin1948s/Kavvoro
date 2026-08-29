@@ -16,7 +16,8 @@ from pathlib import Path
 
 import edge_tts
 
-from generate_brainball_voice_assets import RAW_DIR, RAW_LINES, VoiceLine, process_voice
+from brainball_voice_processing import process_voice
+from generate_brainball_voice_assets import RAW_DIR, RAW_LINES, VoiceLine
 
 
 SUPPORTED_LOCALES = [

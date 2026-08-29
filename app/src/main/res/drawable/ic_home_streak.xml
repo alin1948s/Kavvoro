@@ -1,0 +1,58 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Gradient Bars -->
+    <path
+        android:pathData="M5,18 L5,14 L8,11 L8,18 Z" >
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startY="11" android:startX="6.5"
+                android:endY="18" android:endX="6.5"
+                android:type="linear">
+                <item android:offset="0" android:color="#4400E5FF"/>
+                <item android:offset="1" android:color="#0000E5FF"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M9,18 L9,15 L14,10 L14,18 Z" >
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startY="10" android:startX="11.5"
+                android:endY="18" android:endX="11.5"
+                android:type="linear">
+                <item android:offset="0" android:color="#6600E5FF"/>
+                <item android:offset="1" android:color="#0000E5FF"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path
+        android:pathData="M15,18 L15,12 L19,8 L19,18 Z" >
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startY="8" android:startX="17"
+                android:endY="18" android:endX="17"
+                android:type="linear">
+                <item android:offset="0" android:color="#8800E5FF"/>
+                <item android:offset="1" android:color="#0000E5FF"/>
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Line chart -->
+    <path
+        android:pathData="M3,16 L8,11 L13,15 L20,6"
+        android:strokeWidth="2.5"
+        android:strokeColor="#00E5FF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- Arrow head -->
+    <path
+        android:pathData="M15,6 L21,5 L20,11 Z"
+        android:fillColor="#00E5FF"/>
+</vector>
