@@ -31,6 +31,7 @@ class PlayBillingController(private val activity: Activity) :
     private var pendingPurchaseId: String? = null
     private var restoreRequested = false
     private var closed = false
+    private var started = false
 
     private val billingClient = BillingClient.newBuilder(activity)
         .setListener(this)
@@ -43,11 +44,13 @@ class PlayBillingController(private val activity: Activity) :
         .build()
 
     fun start() {
+        if (closed || started) return
+        started = true
         connect()
     }
 
     fun refreshPurchases() {
-        if (closed) return
+        if (closed || !started) return
         if (billingClient.isReady) {
             queryOwnedProducts(showResult = false)
         } else {

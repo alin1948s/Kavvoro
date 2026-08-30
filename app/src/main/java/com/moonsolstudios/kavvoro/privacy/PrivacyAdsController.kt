@@ -5,6 +5,7 @@ import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
+import android.os.Process
 import android.widget.Toast
 import com.google.android.gms.ads.AgeRestrictedTreatment
 import com.google.android.gms.ads.MobileAds
@@ -17,6 +18,8 @@ import com.moonsolstudios.kavvoro.ads.RewardedAdController
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.ui.PrivacyBridge
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 
 class PrivacyAdsController(
     private val activity: Activity,
@@ -25,8 +28,19 @@ class PrivacyAdsController(
 ) : PrivacyBridge {
     private val consentInformation = UserMessagingPlatform.getConsentInformation(activity)
     private val mobileAdsInitialized = AtomicBoolean(false)
+    private val closed = AtomicBoolean(false)
+    private val adsInitializationExecutor = Executors.newSingleThreadExecutor { task ->
+        Thread(
+            {
+                Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND)
+                task.run()
+            },
+            "kavvoro-mobileads-init"
+        )
+    }
 
     fun start(ageGroup: AgeGroup) {
+        if (closed.get()) return
         configureAgeTreatment(ageGroup)
         val params = ConsentRequestParameters.Builder()
             .setTagForUnderAgeOfConsent(ageGroup != AgeGroup.ADULT)
@@ -106,16 +120,30 @@ class PrivacyAdsController(
     }
 
     private fun initializeAdsIfAllowed() {
+        if (closed.get()) return
         if (!consentInformation.canRequestAds()) return
         if (!mobileAdsInitialized.compareAndSet(false, true)) return
-        Thread({
-            MobileAds.initialize(activity) {
-                activity.runOnUiThread {
-                    interstitialAds.enable()
-                    rewardedAds.enable()
+        try {
+            adsInitializationExecutor.execute {
+                MobileAds.initialize(activity.applicationContext) {
+                    if (!closed.get()) {
+                        activity.runOnUiThread {
+                            if (!closed.get()) {
+                                interstitialAds.enable()
+                                rewardedAds.enable()
+                            }
+                        }
+                    }
                 }
             }
-        }, "kavvoro-mobileads-init").start()
+        } catch (_: RejectedExecutionException) {
+            // Activity teardown won the race with a late consent callback.
+        }
+    }
+
+    fun close() {
+        if (!closed.compareAndSet(false, true)) return
+        adsInitializationExecutor.shutdown()
     }
 
     private fun t(value: String): String = KavvoroI18n.t(activity, value)

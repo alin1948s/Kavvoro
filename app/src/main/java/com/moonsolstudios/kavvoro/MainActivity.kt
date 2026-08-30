@@ -18,11 +18,14 @@ import com.moonsolstudios.kavvoro.playgames.PlayGamesLeaderboardController
 import com.moonsolstudios.kavvoro.privacy.AgeGroup
 import com.moonsolstudios.kavvoro.privacy.AgeProfileStore
 import com.moonsolstudios.kavvoro.privacy.PrivacyAdsController
+import com.moonsolstudios.kavvoro.startup.FirstFrameStartupGate
 import com.moonsolstudios.kavvoro.ui.ChaosGameView
 
 class MainActivity : Activity() {
     private var gameView: ChaosGameView? = null
     private var billingController: PlayBillingController? = null
+    private var privacyAdsController: PrivacyAdsController? = null
+    private val firstFrameStartupGate = FirstFrameStartupGate()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,9 +49,6 @@ class MainActivity : Activity() {
         val privacy = PrivacyAdsController(this, ads, rewardedAds)
         val billing = PlayBillingController(this)
 
-        (application as GameApplication).initializePlayGames()
-        privacy.start(ageGroup)
-
         val view = ChaosGameView(
             context = this,
             adBridge = object : ChaosGameView.AdBridge {
@@ -66,7 +66,17 @@ class MainActivity : Activity() {
             },
             leaderboardBridge = PlayGamesLeaderboardController(this),
             privacyBridge = privacy,
-            purchaseBridge = billing
+            purchaseBridge = billing,
+            onFirstFrameRendered = {
+                firstFrameStartupGate.runOnce {
+                    if (isFinishing || isDestroyed) {
+                        return@runOnce
+                    }
+                    reportFullyDrawn()
+                    privacy.start(ageGroup)
+                    billing.start()
+                }
+            }
         )
         billing.listener = object : PlayBillingController.Listener {
             override fun onPremiumPricesUpdated(pricesByProductId: Map<String, String>) {
@@ -82,9 +92,9 @@ class MainActivity : Activity() {
             }
         }
         billingController = billing
+        privacyAdsController = privacy
         gameView = view
         setContentView(view)
-        billing.start()
         hideSystemBars()
     }
 
@@ -101,6 +111,9 @@ class MainActivity : Activity() {
     }
 
     override fun onDestroy() {
+        firstFrameStartupGate.cancel()
+        privacyAdsController?.close()
+        privacyAdsController = null
         billingController?.close()
         billingController = null
         gameView?.releaseGame()

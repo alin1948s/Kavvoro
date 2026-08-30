@@ -52,6 +52,7 @@ import com.moonsolstudios.kavvoro.i18n.TutorialCopy
 import com.moonsolstudios.kavvoro.share.ReplaySharePayload
 import com.moonsolstudios.kavvoro.share.ReplayVideoExporter
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -65,9 +66,11 @@ class ChaosGameView(
     private val adBridge: AdBridge = AdBridge.NONE,
     private val leaderboardBridge: LeaderboardBridge = LeaderboardBridge.NONE,
     private val privacyBridge: PrivacyBridge = PrivacyBridge.NONE,
-    private val purchaseBridge: PurchaseBridge = PurchaseBridge.NONE
+    private val purchaseBridge: PurchaseBridge = PurchaseBridge.NONE,
+    private val onFirstFrameRendered: () -> Unit = {}
 ) : SurfaceView(context), SurfaceHolder.Callback {
     private val lock = Any()
+    private val firstFrameReported = AtomicBoolean(false)
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val path = Path()
@@ -783,6 +786,7 @@ class ChaosGameView(
                     } finally {
                         if (canvas != null) {
                             holder.unlockCanvasAndPost(canvas)
+                            reportFirstFrameRendered()
                         }
                     }
                 }
@@ -795,6 +799,11 @@ class ChaosGameView(
             val sleepMs = (targetFrameMillis() - frameTime).coerceAtLeast(2L)
             SystemClock.sleep(sleepMs)
         }
+    }
+
+    private fun reportFirstFrameRendered() {
+        if (!firstFrameReported.compareAndSet(false, true)) return
+        post(onFirstFrameRendered)
     }
 
     private fun lockRenderCanvas(): Canvas? {
