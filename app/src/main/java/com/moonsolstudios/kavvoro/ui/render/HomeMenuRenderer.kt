@@ -1,7 +1,12 @@
 package com.moonsolstudios.kavvoro.ui.render
 
 import android.content.res.Resources
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.BlurMaskFilter
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
+import android.graphics.Typeface
 import com.moonsolstudios.kavvoro.model.BallSkin
 import com.moonsolstudios.kavvoro.model.GameMode
 import com.moonsolstudios.kavvoro.model.LayoutMode
@@ -17,9 +22,6 @@ object HomeMenuRenderer {
 
     private val scratch = RectF()
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-
-    private fun withAlpha(color: Int, alpha: Int): Int =
-        (color and 0x00FFFFFF) or ((alpha.coerceIn(0, 255)) shl 24)
 
     fun drawBrandTitle(
         canvas: Canvas,

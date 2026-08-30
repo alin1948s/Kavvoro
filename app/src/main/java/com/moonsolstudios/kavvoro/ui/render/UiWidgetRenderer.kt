@@ -8,16 +8,13 @@ import android.graphics.RectF
 import android.graphics.Shader
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.model.ButtonId
-import com.moonsolstudios.kavvoro.ui.LocaleLayoutPolicy
-import com.moonsolstudios.kavvoro.ui.LocaleTextRole
+import com.moonsolstudios.kavvoro.ui.layout.LocaleLayoutPolicy
+import com.moonsolstudios.kavvoro.ui.layout.LocaleTextRole
 import kotlin.math.max
 
 object UiWidgetRenderer {
 
     private val scratch = RectF()
-
-    private fun withAlpha(color: Int, alpha: Int): Int =
-        (color and 0x00FFFFFF) or (alpha.coerceIn(0, 255) shl 24)
 
     fun fitText(
         context: Context,

@@ -10,6 +10,24 @@ import org.junit.Test
 
 class KavvoroI18nTest {
     @Test
+    fun voiceLocaleMappingMatchesTheShippedAssetInventory() {
+        val englishFallbacks = setOf(
+            KavvoroLanguage.SYSTEM,
+            KavvoroLanguage.EN,
+            KavvoroLanguage.CS,
+            KavvoroLanguage.SV,
+            KavvoroLanguage.FI,
+            KavvoroLanguage.TH
+        )
+
+        englishFallbacks.forEach { language ->
+            assertEquals("en", KavvoroI18n.audioLanguageCode(language))
+        }
+        assertEquals("zh", KavvoroI18n.audioLanguageCode(KavvoroLanguage.ZH))
+        assertEquals("zh", KavvoroI18n.audioLanguageCode(KavvoroLanguage.ZH_TW))
+    }
+
+    @Test
     fun testerReportedPolishVisibleKeysAreNotLeftInEnglish() {
         listOf(
             "AGE CHECK",

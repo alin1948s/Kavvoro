@@ -27,19 +27,20 @@ vertical replays.
   builds, age-gated consent handling, and Google Play Billing integration hooks.
 - Platform services: Google Play Games Services v2 hooks for authentication,
   leaderboards, and score submission.
-- Observability: Firebase Analytics event schema and Crashlytics are integrated;
-  the debug build has been verified to report a test crash for this package.
+- Observability: Firebase Crashlytics is integrated and the Firebase Analytics
+  runtime dependency is retained for the Google/Firebase integration. The old
+  unused custom telemetry wrapper and its parallel event schema were removed.
 - Audio inventory: 50 Brainball selection OGGs are present and container-
-  validated for each of the 19 selectable languages; see
+  validated for 19 voice locales; `zh_tw` deliberately reuses the `zh` pack,
+  while Czech, Swedish, Finnish, and Thai currently fall back to English. See
   `docs/localized-voice-inventory.md`.
-- Localization audit: strict rendered catalogs are complete for all 19
+- Localization audit: strict rendered catalogs are complete for all 24
   selectable languages, with one source-controlled Kotlin file per language
   under `app/src/main/java/com/moonsolstudios/kavvoro/i18n/catalog/`. The
-  isolated Home/Classic HUD capture is now accepted for 19/19 locales (38
-  valid PNGs); the run resets the app before each language and was manually
-  corrected for Arabic/Japanese/Korean selection drift. The remaining release
-  gate is full review of tutorial, Collection, and result states. Arabic RTL
-  and Polish long-string smoke checks are already covered.
+  last accepted isolated Home/Classic HUD baseline covers the original 19
+  locales; the capture tool now follows all 24 entries in the canonical enum.
+  The remaining release gate is visual evidence for the five added locales and
+  full review of tutorial, Collection, and result states.
 - Store package: the default Google Play listing has its icon, feature graphic,
   videos, seven phone screenshots, seven dedicated 7-inch screenshots, seven
   dedicated 10-inch screenshots, and the complete Play Games on PC image set.
@@ -47,12 +48,123 @@ vertical replays.
   same source assets remain validator-checked locally.
 - Leaderboards: local sanity guard blocks incomplete, non-positive, or
   impossible-progress submissions; server-side anti-cheat is still deferred.
-- Release state: version `0.1.0` / version code `1` has been prepared as a
-  signed AAB. Google Play has granted production-release access, but the
-  release is inactive and the latest store-listing changes remain a draft.
-- Active roadmap: [`docs/superpowers/plans/2026-08-22-release-polish-roadmap.md`](docs/superpowers/plans/2026-08-22-release-polish-roadmap.md)
+- Release state: Gradle is configured for version `0.1.2` / version code `4`.
+  Google Play has granted production-release access, but the release is
+  inactive and the latest store-listing changes remain a draft.
+- Current documentation index: [`docs/README.md`](docs/README.md).
 - Repository safety: signing material and `app/google-services.json` are local
   only and must never be committed.
+
+## Repository Structure
+
+Only project entry points and configuration belong at repository root. Runtime
+captures, device logs, generated APK/AAB/ZIP files, copied source trees, and
+one-off fixtures do not.
+
+```text
+Kavvoro/
+├── app/                  Android application, resources, and mirrored tests
+├── art/                  editable/source artwork
+├── docs/                 current docs plus explicitly archived plans/specs
+├── figma-assets/         canonical editable UI exports
+├── gradle/               Gradle wrapper support
+├── screenshots/          curated QA evidence grouped by screen/flow
+├── store-assets/         canonical Play Store source assets
+├── tools/                repeatable generators, validators, and capture tools
+├── web/                  hosted project support files
+├── handoff/              ignored temporary delivery output; policy only in Git
+├── README.md             project status, architecture, and contribution rules
+└── *.gradle.kts          build configuration
+```
+
+Generated build output belongs under `build/` or `app/build/`. Screenshot
+automation fixtures live beside the scripts that consume them. Historical
+plans are retained under `docs/archive/`, clearly separated from current
+instructions.
+
+### Application package map
+
+All production Kotlin lives under
+`app/src/main/java/com/moonsolstudios/kavvoro/`; the package declaration must
+match the directory.
+
+| Package | Responsibility |
+| --- | --- |
+| root / `startup` | Android entry point and startup timing only |
+| `model` | dependency-light domain and UI state values; no Android services |
+| `engine` | physics, level generation, scoring, and gameplay rules |
+| `repository` | canonical catalog/progress persistence access |
+| `i18n` | language selection, catalogs, formatting, and translated copy |
+| `ui/layout` | deterministic geometry and locale-aware layout policy |
+| `ui/render` | Canvas drawing; reads state but does not own persistence |
+| `ui/controller` | touch interpretation and screen actions |
+| `ui/tutorial` | tutorial-only layout and input policy |
+| `audio`, `ads`, `billing`, `playgames`, `privacy`, `share` | bounded platform integrations |
+
+`ChaosGameView` is the runtime coordinator and current SurfaceView state owner.
+New pure calculations, rendering primitives, input policies, repositories, or
+SDK bridges must go into the package responsible for that behavior instead of
+making this coordinator larger.
+
+The intended dependency direction is:
+
+```text
+Android entry point → UI coordinator/controllers → engine/repositories/models
+                                      ↓
+                          render/layout/tutorial
+                                      ↓
+                              platform bridges
+```
+
+Models and pure engine/layout code must not depend on renderers or Activities.
+Renderers must not mutate preferences or initialize SDKs. Platform integration
+belongs in its named feature package, not in the generic `ui` package.
+
+## Adding or Refactoring Files
+
+Before adding a file, search the entire repository for the same responsibility,
+type name, resource name, and likely synonyms. Extend the canonical
+implementation when the difference can be expressed clearly; do not create
+`Legacy`, `New`, `V2`, or a second source of truth.
+
+Use these placement rules:
+
+1. Put production Kotlin in the narrowest package from the map above and mirror
+   that path under `app/src/test/java/` for unit tests.
+2. Keep small, cohesive state-only declarations together in a descriptive
+   `*Models.kt` file. Give a class its own file when it owns behavior, lifecycle,
+   I/O, mutable state, or enough logic to test independently.
+3. Split a file when it mixes responsibilities or changes for unrelated
+   reasons. Do not split a few related enums or data classes into one-line files.
+4. Keep reusable layout math pure and testable in `ui/layout`; keep Canvas work
+   in `ui/render`; keep `MotionEvent` flow in `ui/controller`.
+5. Add translated strings to the English key catalog and every strict locale
+   catalog in the same change. `KavvoroLanguage` and `LocalizationCatalog` are
+   the canonical language inventory.
+6. Put Android resources in the matching `res/` type. Use stable lowercase
+   snake-case names. If a raw resource is resolved dynamically, update
+   `app/src/main/res/raw/keep.xml` and its validator/test.
+7. Put repeatable developer automation in `tools/`, with its fixtures and a
+   README beside it. Put accepted visual evidence in a named `screenshots/`
+   subfolder; never leave exploratory captures or dumps at root.
+8. Put current operational documentation directly in `docs/`; move superseded
+   plans/specifications to `docs/archive/` and label them historical.
+9. Never commit secrets, signing material, `google-services.json`, build output,
+   device logs, generated handoff bundles, APKs, AABs, or copied repositories.
+
+Before merging a structural change:
+
+```powershell
+rg "OldType|old.package" app docs tools
+python tools/verify_repository_structure.py
+.\gradlew.bat testDebugUnitTest lintDebug assembleDebug assembleRelease bundleRelease
+python -m unittest discover -s tools -p "test_*.py"
+git diff --check
+```
+
+Also verify that every moved Kotlin file has a matching package declaration,
+that tests mirror production packages, and that a deleted public declaration
+has no static, resource-driven, manifest, or reflection-based consumer.
 
 ## Brainball Roster Contract
 
@@ -205,10 +317,10 @@ See also:
 
 Priority order:
 
-1. **P0 — Complete localization audit:** finish extended-state evidence and
-   full manual review; strict catalogs, trusted 19-row Home/Classic capture,
-   placeholder checks, locale number formatting, and voice inventory are
-   complete. Track evidence in
+1. **P0 — Complete localization audit:** capture the five UI locales added
+   after the original 19-row baseline, then finish extended-state evidence and
+   full manual review. Strict 24-locale catalogs, placeholder checks, locale
+   layout policy, and the 19-pack voice inventory are automated. Track evidence in
    `docs/localization-qa-matrix.md`.
 2. **P0 — Challenge loop:** add challenge deep-link import/export and ghost
    replay so one player can send a run that another player can attempt.
@@ -217,8 +329,8 @@ Priority order:
    physical devices and record every regression in this README or the release
    checklist.
 4. **P1 — Measurement tuning:** configure Remote Config for safe tuning of
-   level difficulty, streak gates, and monetization; the Analytics event schema
-   and Crashlytics baseline are now in place.
+   level difficulty, streak gates, and monetization; Crashlytics is in place,
+   while any future analytics schema must be introduced only with real call-sites.
 5. **P2 — Social growth:** improve challenge links, replay cards, and the
    share-to-short-video flow around the challenge/ghost loop.
 6. **P2 — Final polish:** finish beat-reactive haptics, final audio listening

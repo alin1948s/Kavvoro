@@ -596,6 +596,4 @@ object HomeUiRenderer {
         canvas.drawText(part2, textStartX + part1W, y + 3.2f * scale * dp, textPaint)
     }
 
-    private fun withAlpha(color: Int, alpha: Int): Int =
-        (color and 0x00FFFFFF) or ((alpha.coerceIn(0, 255)) shl 24)
 }

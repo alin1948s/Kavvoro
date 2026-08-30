@@ -27,6 +27,19 @@ release/
 /verify-*.png
 /verify-*.mp4
 
+# Root-level runtime and device-debug artifacts
+/_qa_*.png
+/screen_verify*.png
+/screenshot_*.png
+/anr_dump*.txt
+/thread_states*.txt
+/scrcpy_*.log
+/temp_pref.xml
+
+# Handoff bundles are generated from canonical sources; keep only the policy.
+/handoff/*
+!/handoff/README.md
+
 # Python generator cache
 __pycache__/
 *.py[cod]

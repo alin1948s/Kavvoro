@@ -158,13 +158,6 @@ object SubScreenMasterRenderer {
         premiumCompactPriceLabel: (BallSkin) -> String
     ) {
         layoutCollection()
-        val currentType = when (collectionFilter) {
-            CollectionFilter.ALL -> CollectionFilterType.ALL
-            CollectionFilter.SUPERPOWER -> CollectionFilterType.SUPERPOWER
-            CollectionFilter.HYPE -> CollectionFilterType.HYPE
-            CollectionFilter.PREMIUM -> CollectionFilterType.PREMIUM
-            CollectionFilter.COSMETIC -> CollectionFilterType.COSMETIC
-        }
         CollectionUiRenderer.drawCollectionScreen(
             canvas = canvas,
             viewWidth = viewWidth,
@@ -181,7 +174,7 @@ object SubScreenMasterRenderer {
             collectionRestoreButton = collectionRestoreButton,
             collectionFilterRects = collectionFilterRects,
             collectionItemRects = collectionItemRects,
-            collectionFilter = currentType,
+            collectionFilter = collectionFilter,
             activeCollectionIndex = activeCollectionIndex,
             collectionFilterActiveIndexFn = collectionFilterActiveIndexFn,
             collectionViewportTop = collectionViewportTop,

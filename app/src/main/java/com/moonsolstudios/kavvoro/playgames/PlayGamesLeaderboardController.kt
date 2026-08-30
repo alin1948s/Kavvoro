@@ -4,8 +4,6 @@ import android.app.Activity
 import android.content.Context
 import com.google.android.gms.games.PlayGames
 import com.moonsolstudios.kavvoro.R
-import com.moonsolstudios.kavvoro.ui.LeaderboardBoard
-import com.moonsolstudios.kavvoro.ui.LeaderboardBridge
 
 class PlayGamesLeaderboardController(
     private val activity: Activity

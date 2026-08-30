@@ -51,23 +51,6 @@ object SettingsTouchController {
         return (((x - rect.left) / rect.width()) * 100f).roundToInt().coerceIn(0, 100)
     }
 
-    fun resetGameData(prefs: android.content.SharedPreferences) {
-        val keep = setOf(
-            com.moonsolstudios.kavvoro.repository.GameProgressRepository.SFX_MUTED_KEY,
-            com.moonsolstudios.kavvoro.repository.GameProgressRepository.MUSIC_MUTED_KEY,
-            com.moonsolstudios.kavvoro.repository.GameProgressRepository.SETTINGS_MASTER_VOLUME_KEY,
-            com.moonsolstudios.kavvoro.repository.GameProgressRepository.SETTINGS_MUSIC_VOLUME_KEY,
-            com.moonsolstudios.kavvoro.repository.GameProgressRepository.SETTINGS_SFX_VOLUME_KEY,
-            com.moonsolstudios.kavvoro.repository.GameProgressRepository.SETTINGS_HAPTIC_KEY,
-            com.moonsolstudios.kavvoro.repository.GameProgressRepository.SETTINGS_SCREEN_SHAKE_KEY,
-            com.moonsolstudios.kavvoro.repository.GameProgressRepository.SETTINGS_PERFORMANCE_KEY
-        )
-        prefs.edit().apply {
-            prefs.all.keys.filterNot { it in keep }.forEach { remove(it) }
-            apply()
-        }
-    }
-
     fun handleAction(
         button: SettingsButton,
         performHaptic: (Int) -> Unit,

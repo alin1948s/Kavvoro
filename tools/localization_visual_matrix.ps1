@@ -8,6 +8,7 @@ param(
 $ErrorActionPreference = "Stop"
 $adb = Join-Path $env:ANDROID_HOME "platform-tools/adb.exe"
 $packageName = "com.moonsolstudios.kavvoro"
+$privacyFixture = Join-Path $PSScriptRoot "screenshot-capture/fixtures/privacy_profile.xml"
 $languages = @(
     @{ Code = "en"; Name = "English" },
     @{ Code = "ro"; Name = "Romanian" },
@@ -18,16 +19,21 @@ $languages = @(
     @{ Code = "pt"; Name = "Portuguese" },
     @{ Code = "nl"; Name = "Nederlands" },
     @{ Code = "pl"; Name = "Polski" },
+    @{ Code = "cs"; Name = "Čeština" },
+    @{ Code = "sv"; Name = "Svenska" },
+    @{ Code = "fi"; Name = "Suomi" },
     @{ Code = "tr"; Name = "Turkish" },
     @{ Code = "ru"; Name = "Russian" },
     @{ Code = "uk"; Name = "Ukrainian" },
     @{ Code = "ar"; Name = "Arabic" },
     @{ Code = "hi"; Name = "Hindi" },
+    @{ Code = "th"; Name = "ภาษาไทย" },
     @{ Code = "id"; Name = "Indonesia" },
     @{ Code = "vi"; Name = "Vietnamese" },
     @{ Code = "ja"; Name = "Japanese" },
     @{ Code = "ko"; Name = "Korean" },
-    @{ Code = "zh"; Name = "Chinese" }
+    @{ Code = "zh"; Name = "简体中文" },
+    @{ Code = "zh_tw"; Name = "繁體中文" }
 )
 
 if (-not (Test-Path -LiteralPath $adb)) {
@@ -57,41 +63,30 @@ function Wait-ForBoot {
 
 function Set-AppLanguage {
     param([Parameter(Mandatory = $true)][string]$Code)
-    $codeIndex = -1
-    for ($i = 0; $i -lt $languages.Count; $i++) {
-        if ($languages[$i].Code -eq $Code) { $codeIndex = $i; break }
-    }
-    if ($codeIndex -lt 0) { throw "Unknown language code: $Code" }
+    if ($languages.Code -notcontains $Code) { throw "Unknown language code: $Code" }
 
-    # Use the same visible selector as a tester. This avoids depending on
-    # private app storage permissions and keeps the matrix close to real QA.
-    Invoke-Adb @("shell", "input", "tap", "525", "2240")
-    Start-Sleep -Milliseconds 500
-
-    $densityLine = (& $adb @adbArgs shell wm density 2>$null | Select-String "Physical density")
-    $density = 1.0
-    if ($densityLine -match "(\d+)") { $density = [double]$Matches[1] / 160.0 }
-    $languageIndex = $codeIndex + 1 # SYSTEM occupies index zero in the app.
-    $viewportTop = 102.0 * $density
-    $viewportBottom = 2400.0 - 86.0 * $density
-    $itemHeight = 58.0 * $density
-    $gap = 10.0 * $density
-    $baseCenter = $viewportTop + 2.0 * $density + $itemHeight * 0.5
-    $step = $itemHeight + $gap
-    $scroll = if ($languageIndex -le 10) { 0.0 } elseif ($languageIndex -le 16) { 1200.0 } else { 1650.0 }
-    if ($scroll -gt 0) {
-        Invoke-Adb @("shell", "input", "swipe", "500", "1900", "500", "700", "500")
-        Start-Sleep -Milliseconds 350
-        if ($scroll -gt 1200) {
-            Invoke-Adb @("shell", "input", "swipe", "500", "1500", "500", "1050", "350")
-            Start-Sleep -Milliseconds 350
-        }
+    # The visual matrix tests rendered locales, not selector hit-testing. Write
+    # the debug preference directly so every row is deterministic and remains
+    # valid when selector spacing or the language inventory changes.
+    $tempPreference = Join-Path ([System.IO.Path]::GetTempPath()) "kavvoro_locale.xml"
+    $xml = "<?xml version='1.0' encoding='utf-8' standalone='yes' ?>`r`n<map>`r`n    <string name=`"ui_language`">$Code</string>`r`n</map>`r`n"
+    try {
+        [System.IO.File]::WriteAllText($tempPreference, $xml, [System.Text.UTF8Encoding]::new($false))
+        Invoke-Adb @("push", $tempPreference, "/data/local/tmp/kavvoro_locale.xml")
+        Invoke-Adb @("shell", "run-as", $packageName, "mkdir", "-p", "shared_prefs")
+        Invoke-Adb @("shell", "run-as", $packageName, "cp", "/data/local/tmp/kavvoro_locale.xml", "shared_prefs/kavvoro_locale.xml")
+    } finally {
+        Remove-Item -LiteralPath $tempPreference -Force -ErrorAction SilentlyContinue
     }
-    $targetY = [int]($baseCenter + $languageIndex * $step - $scroll)
-    Invoke-Adb @("shell", "input", "tap", "300", "$targetY")
-    Start-Sleep -Milliseconds 450
-    Invoke-Adb @("shell", "input", "tap", "970", "140")
-    Start-Sleep -Milliseconds 650
+}
+
+function Ensure-PrivacyProfile {
+    if (-not (Test-Path -LiteralPath $privacyFixture)) {
+        throw "Privacy fixture not found: $privacyFixture"
+    }
+    Invoke-Adb @("push", (Resolve-Path -LiteralPath $privacyFixture).Path, "/data/local/tmp/privacy_profile.xml")
+    Invoke-Adb @("shell", "run-as", $packageName, "mkdir", "-p", "shared_prefs")
+    Invoke-Adb @("shell", "run-as", $packageName, "cp", "/data/local/tmp/privacy_profile.xml", "shared_prefs/privacy_profile.xml")
 }
 
 function Capture-Screenshot {
@@ -114,14 +109,7 @@ function Restart-App {
 
 Wait-ForBoot
 if (-not $SkipInstall) { Invoke-Adb @("install", "-r", (Resolve-Path -LiteralPath $Apk).Path) }
-
-# The app creates its private shared_prefs directory on first launch. Start it
-# once before writing the deterministic language override below.
-Restart-App
-Invoke-Adb @("shell", "input", "tap", "970", "140")
-Start-Sleep -Milliseconds 300
-Invoke-Adb @("shell", "input", "tap", "1000", "70")
-Start-Sleep -Milliseconds 600
+Ensure-PrivacyProfile
 
 New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $results = [System.Collections.Generic.List[object]]::new()
@@ -129,10 +117,10 @@ $results = [System.Collections.Generic.List[object]]::new()
 foreach ($language in $languages) {
     $code = $language.Code
     $prefix = Join-Path $OutputDirectory $code
-    # Reset the app for every locale. This prevents a tutorial/game/result
-    # transition or an OS dialog from contaminating the next language row.
-    Restart-App
     Set-AppLanguage $code
+    # Restart after setting the preference so SharedPreferences cannot serve a
+    # cached value from the previous locale.
+    Restart-App
     Capture-Screenshot ("$prefix-menu.png")
 
     # Medium_Phone is 1080x2400. These taps are kept in the script so the same
@@ -160,7 +148,7 @@ $markdown.Add("# Localization visual QA matrix")
 $markdown.Add("")
 $markdown.Add("Generated: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss K')")
 $markdown.Add("")
-$markdown.Add("The automated pass captures the main menu and Classic entry/HUD for all 19 selectable languages. Tutorial, Collection, and result states remain explicit manual checkpoints because their state transitions are gameplay-dependent.")
+$markdown.Add("The automated pass captures the main menu and Classic entry/HUD for all 24 selectable languages. Tutorial, Collection, and result states remain explicit manual checkpoints because their state transitions are gameplay-dependent.")
 $markdown.Add("")
 $markdown.Add("| Language | Code | Menu | Classic HUD | Tutorial | Collection | Result | Notes |")
 $markdown.Add("|---|---:|---|---|---|---|---|---|")

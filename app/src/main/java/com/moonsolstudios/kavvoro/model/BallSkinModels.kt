@@ -2,6 +2,14 @@ package com.moonsolstudios.kavvoro.model
 
 import com.moonsolstudios.kavvoro.engine.BallPower
 
+enum class CollectionFilter(val labelKey: String) {
+    ALL("ALL"),
+    SUPERPOWER("SUPERPOWER"),
+    HYPE("HYPE"),
+    PREMIUM("PREMIUM"),
+    COSMETIC("COSMETIC")
+}
+
 enum class SkinStyle {
     CLASSIC,
     CROWN,

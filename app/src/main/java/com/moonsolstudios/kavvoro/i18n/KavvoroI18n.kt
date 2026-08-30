@@ -1,6 +1,7 @@
 package com.moonsolstudios.kavvoro.i18n
 
 import android.content.Context
+import androidx.core.content.edit
 import java.util.Locale
 
 enum class KavvoroLanguage(
@@ -91,9 +92,7 @@ object KavvoroI18n {
 
     fun setSelected(context: Context, language: KavvoroLanguage) {
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit()
-            .putString(PREF_KEY, language.code)
-            .apply()
+            .edit { putString(PREF_KEY, language.code) }
     }
 
     fun label(context: Context, language: KavvoroLanguage): String {
@@ -110,8 +109,10 @@ object KavvoroI18n {
         return LocalizationCatalog.locale(resolved)[english] ?: english
     }
 
-    fun audioLanguageCode(context: Context): String {
-        return when (active(context)) {
+    fun audioLanguageCode(context: Context): String = audioLanguageCode(active(context))
+
+    internal fun audioLanguageCode(language: KavvoroLanguage): String {
+        return when (language) {
             KavvoroLanguage.RO -> "ro"
             KavvoroLanguage.ES -> "es"
             KavvoroLanguage.FR -> "fr"
@@ -120,22 +121,23 @@ object KavvoroI18n {
             KavvoroLanguage.PT -> "pt"
             KavvoroLanguage.NL -> "nl"
             KavvoroLanguage.PL -> "pl"
-            KavvoroLanguage.CS -> "cs"
-            KavvoroLanguage.SV -> "sv"
-            KavvoroLanguage.FI -> "fi"
             KavvoroLanguage.TR -> "tr"
             KavvoroLanguage.RU -> "ru"
             KavvoroLanguage.UK -> "uk"
             KavvoroLanguage.AR -> "ar"
             KavvoroLanguage.HI -> "hi"
-            KavvoroLanguage.TH -> "th"
             KavvoroLanguage.ID -> "id"
             KavvoroLanguage.VI -> "vi"
             KavvoroLanguage.JA -> "ja"
             KavvoroLanguage.KO -> "ko"
             KavvoroLanguage.ZH -> "zh"
             KavvoroLanguage.ZH_TW -> "zh"
-            else -> "en"
+            KavvoroLanguage.SYSTEM,
+            KavvoroLanguage.EN,
+            KavvoroLanguage.CS,
+            KavvoroLanguage.SV,
+            KavvoroLanguage.FI,
+            KavvoroLanguage.TH -> "en"
         }
     }
 }

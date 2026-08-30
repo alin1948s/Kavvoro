@@ -1,27 +1,12 @@
 from io import BytesIO
-from pathlib import Path
 import subprocess
 import time
 
 from PIL import Image
 
-ADB = r"C:\Users\Alin\AppData\Local\Android\Sdk\platform-tools\adb.exe"
-APK = r"C:\Users\Alin\Desktop\MoonsolStudios\Kavvoro\app\build\outputs\apk\debug\app-debug.apk"
-OUTPUT = Path(r"C:\Users\Alin\Desktop\MoonsolStudios\Kavvoro\screenshots\age-check")
-PACKAGE = "com.moonsolstudios.kavvoro"
-TARGETS = [
-    ("phone-360x800.png", 360, 800),
-    ("phone-412x915.png", 412, 915),
-    ("phone-480x854.png", 480, 854),
-    ("phone-720x1280.png", 720, 1280),
-    ("phone-1080x2400.png", 1080, 2400),
-    ("tablet-600x1024.png", 600, 1024),
-    ("tablet-800x1280.png", 800, 1280),
-    ("tablet-1024x1366.png", 1024, 1366),
-    ("tablet-1200x1920.png", 1200, 1920),
-    ("tablet-1536x2048.png", 1536, 2048),
-    ("tablet-1600x2560.png", 1600, 2560),
-]
+from capture_support import ADB, APK, PACKAGE, PROJECT_ROOT, TARGETS
+
+OUTPUT = PROJECT_ROOT / "screenshots" / "age-check"
 
 
 def run(*args: str, timeout: float = 45.0) -> subprocess.CompletedProcess[bytes]:
@@ -114,29 +99,34 @@ def wait_for_age_check(width: int, height: int) -> bytes:
     raise RuntimeError("Age Check was not visible before the screenshot timeout")
 
 
-OUTPUT.mkdir(parents=True, exist_ok=True)
-run("install", "-r", APK, timeout=90.0)
-try:
-    # Keep the emulator's normal 320dpi profile while changing the viewport.
-    # The app uses real dp/sp, so a 680dp tablet column is rendered at the same
-    # physical scale as the live tablet. Forcing 160dpi here would make a
-    # correct 680dp max-width look artificially tiny in 1600px captures.
-    run("shell", "wm", "density", "320")
-    run("shell", "settings", "put", "system", "accelerometer_rotation", "0")
-    run("shell", "settings", "put", "system", "user_rotation", "1")
-    for name, width, height in TARGETS:
-        print(f"Capturing {name}", flush=True)
-        # wm size is expressed in the emulator's natural orientation. The
-        # display is locked portrait for this app, so swap the dimensions to
-        # make the captured screencap itself width x height.
-        run("shell", "wm", "size", f"{height}x{width}")
-        wait_for_viewport(width, height)
+def main() -> None:
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    run("install", "-r", str(APK), timeout=90.0)
+    try:
+        # Keep the emulator's normal 320dpi profile while changing the viewport.
+        # The app uses real dp/sp, so a 680dp tablet column is rendered at the same
+        # physical scale as the live tablet. Forcing 160dpi here would make a
+        # correct 680dp max-width look artificially tiny in 1600px captures.
+        run("shell", "wm", "density", "320")
+        run("shell", "settings", "put", "system", "accelerometer_rotation", "0")
+        run("shell", "settings", "put", "system", "user_rotation", "1")
+        for name, width, height in TARGETS:
+            print(f"Capturing {name}", flush=True)
+            # wm size is expressed in the emulator's natural orientation. The
+            # display is locked portrait for this app, so swap the dimensions to
+            # make the captured screencap itself width x height.
+            run("shell", "wm", "size", f"{height}x{width}")
+            wait_for_viewport(width, height)
+            run("shell", "am", "force-stop", PACKAGE)
+            run("shell", "pm", "clear", PACKAGE)
+            run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
+            (OUTPUT / name).write_bytes(wait_for_age_check(width, height))
+    finally:
+        run("shell", "wm", "size", "reset")
+        run("shell", "wm", "density", "reset")
         run("shell", "am", "force-stop", PACKAGE)
-        run("shell", "pm", "clear", PACKAGE)
         run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
-        (OUTPUT / name).write_bytes(wait_for_age_check(width, height))
-finally:
-    run("shell", "wm", "size", "reset")
-    run("shell", "wm", "density", "reset")
-    run("shell", "am", "force-stop", PACKAGE)
-    run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
+
+
+if __name__ == "__main__":
+    main()

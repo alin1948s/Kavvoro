@@ -1,30 +1,13 @@
 import io
-from pathlib import Path
 import subprocess
 import time
 
 import numpy as np
 from PIL import Image
 
-ADB = r"C:\Users\Alin\AppData\Local\Android\Sdk\platform-tools\adb.exe"
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-PRIVACY_XML = PROJECT_ROOT / "privacy_profile.xml"
-OUTPUT = PROJECT_ROOT / "screenshots" / "home"
-PACKAGE = "com.moonsolstudios.kavvoro"
+from capture_support import ADB, PACKAGE, PRIVACY_XML, PROJECT_ROOT, TARGETS
 
-TARGETS = [
-    ("phone-360x800.png", 360, 800),
-    ("phone-412x915.png", 412, 915),
-    ("phone-480x854.png", 480, 854),
-    ("phone-720x1280.png", 720, 1280),
-    ("phone-1080x2400.png", 1080, 2400),
-    ("tablet-600x1024.png", 600, 1024),
-    ("tablet-800x1280.png", 800, 1280),
-    ("tablet-1024x1366.png", 1024, 1366),
-    ("tablet-1200x1920.png", 1200, 1920),
-    ("tablet-1536x2048.png", 1536, 2048),
-    ("tablet-1600x2560.png", 1600, 2560),
-]
+OUTPUT = PROJECT_ROOT / "screenshots" / "home"
 
 
 def run_adb(*args: str, timeout: float = 30.0) -> subprocess.CompletedProcess[bytes]:

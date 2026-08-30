@@ -1,6 +1,7 @@
 package com.moonsolstudios.kavvoro.repository
 
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.moonsolstudios.kavvoro.BuildConfig
 import com.moonsolstudios.kavvoro.engine.LevelDirector
 import com.moonsolstudios.kavvoro.model.BallSkin
@@ -19,6 +20,23 @@ class GameProgressRepository(
     private val premiumPricesBySkin: Map<String, String> = emptyMap(),
     private val t: (String) -> String = { it }
 ) {
+
+    /** Clears gameplay/progression data without changing the user's preferences. */
+    fun resetAllProgressPreservingSettings() {
+        val settingsKeys = setOf(
+            SFX_MUTED_KEY,
+            MUSIC_MUTED_KEY,
+            SETTINGS_MASTER_VOLUME_KEY,
+            SETTINGS_MUSIC_VOLUME_KEY,
+            SETTINGS_SFX_VOLUME_KEY,
+            SETTINGS_HAPTIC_KEY,
+            SETTINGS_SCREEN_SHAKE_KEY,
+            SETTINGS_PERFORMANCE_KEY
+        )
+        prefs.edit {
+            prefs.all.keys.filterNot { it in settingsKeys }.forEach { remove(it) }
+        }
+    }
 
     companion object {
         const val DEFAULT_SKIN_ID = "nodlo"
@@ -42,11 +60,15 @@ class GameProgressRepository(
         fun earnedSkinKey(id: String): String = "skin_unlocked_$id"
         fun premiumPriceKey(id: String): String = "premium_price_$id"
         fun purchasedSkinKey(id: String): String = "skin_purchased_$id"
-        fun progressKey(mode: com.moonsolstudios.kavvoro.model.GameMode): String = when (mode) {
-            com.moonsolstudios.kavvoro.model.GameMode.CLASSIC -> "classic_level"
-            com.moonsolstudios.kavvoro.model.GameMode.CHAOS -> "chaos_level"
+        fun failContinueCountKey(mode: GameMode, levelNumber: Int): String =
+            "fail_continue_${mode.name.lowercase()}_$levelNumber"
+        fun bestKey(mode: GameMode, levelNumber: Int): String =
+            "best_rank_${mode.name.lowercase()}_$levelNumber"
+        fun progressKey(mode: GameMode): String = when (mode) {
+            GameMode.CLASSIC -> "classic_level"
+            GameMode.CHAOS -> "chaos_level"
         }
-        fun streakKey(mode: com.moonsolstudios.kavvoro.model.GameMode): String = "streak_${mode.name.lowercase()}"
+        fun streakKey(mode: GameMode): String = "streak_${mode.name.lowercase()}"
     }
 
     fun isSkinUnlocked(skin: BallSkin): Boolean {
@@ -56,7 +78,7 @@ class GameProgressRepository(
         if (skin.unlock.type == UnlockType.HYPE_COST) return prefs.getBoolean(earnedSkinKey(skin.id), false)
         if (prefs.getBoolean(earnedSkinKey(skin.id), false)) return true
         if (!unlockConditionMet(skin.unlock)) return false
-        prefs.edit().putBoolean(earnedSkinKey(skin.id), true).apply()
+        prefs.edit { putBoolean(earnedSkinKey(skin.id), true) }
         return true
     }
 
@@ -90,7 +112,7 @@ class GameProgressRepository(
 
     fun spendHype(amount: Int) {
         val next = (hypeBalance() - amount.coerceAtLeast(0)).coerceAtLeast(0)
-        prefs.edit().putInt(HYPE_BANK_KEY, next).apply()
+        prefs.edit { putInt(HYPE_BANK_KEY, next) }
     }
 
     fun formatHypeAmount(value: Int): String {
@@ -112,12 +134,12 @@ class GameProgressRepository(
         val key = dailyRiftBonusKey()
         if (prefs.getBoolean(key, false)) return 0
         val bonus = dailyRiftBonusForMode(gameMode)
-        prefs.edit()
-            .putBoolean(key, true)
-            .putInt(dailyRiftBonusAmountKey(), bonus)
-            .putString(dailyRiftBonusModeKey(), gameMode.name)
-            .putLong(dailyRiftBonusClaimedAtKey(), System.currentTimeMillis())
-            .apply()
+        prefs.edit {
+            putBoolean(key, true)
+            putInt(dailyRiftBonusAmountKey(), bonus)
+            putString(dailyRiftBonusModeKey(), gameMode.name)
+            putLong(dailyRiftBonusClaimedAtKey(), System.currentTimeMillis())
+        }
         return bonus
     }
 
@@ -255,12 +277,6 @@ class GameProgressRepository(
             ?: "0.99 LOCAL"
     }
 
-    fun premiumPriceKey(id: String): String = "premium_price_$id"
-
-    fun purchasedSkinKey(id: String): String = "skin_purchased_$id"
-
-    fun earnedSkinKey(id: String): String = "skin_unlocked_$id"
-
     fun modeMeta(mode: GameMode, streak: Int): String {
         val progress = modeProgress(mode)
         val modeStreak = modeStreak(mode, streak)
@@ -293,20 +309,15 @@ class GameProgressRepository(
     fun resetModeProgress(mode: GameMode) {
         val existingHighestLevel = modeHighestLevel(mode)
         val existingBestStreak = modeBestStreak(mode)
-        prefs.edit()
-            .putInt(highestLevelKey(mode), existingHighestLevel)
-            .putInt(bestModeStreakKey(mode), existingBestStreak)
-            .putInt(progressKey(mode), 1)
-            .putInt(streakKey(mode), 0)
-            .putInt(freeFailContinueKey(mode), 0)
-            .putInt(continueAdStreakKey(mode), 0)
-            .putInt(levelAdKey(mode), 0)
-            .apply()
-    }
-
-    fun progressKey(mode: GameMode): String = when (mode) {
-        GameMode.CLASSIC -> "classic_level"
-        GameMode.CHAOS -> "chaos_level"
+        prefs.edit {
+            putInt(highestLevelKey(mode), existingHighestLevel)
+            putInt(bestModeStreakKey(mode), existingBestStreak)
+            putInt(progressKey(mode), 1)
+            putInt(streakKey(mode), 0)
+            putInt(freeFailContinueKey(mode), 0)
+            putInt(continueAdStreakKey(mode), 0)
+            putInt(levelAdKey(mode), 0)
+        }
     }
 
     fun highestLevelKey(mode: GameMode): String = "highest_level_${mode.name.lowercase()}"
@@ -317,24 +328,16 @@ class GameProgressRepository(
 
     fun fairBestStreakKey(mode: GameMode): String = "fair_best_streak_${mode.name.lowercase()}"
 
-    fun streakKey(mode: GameMode): String = "streak_${mode.name.lowercase()}"
-
     fun freeFailContinueKey(mode: GameMode): String = "free_fail_continue_${mode.name.lowercase()}"
 
     fun continueAdStreakKey(mode: GameMode): String = "continue_ad_streak_${mode.name.lowercase()}"
 
     fun levelAdKey(mode: GameMode): String = "level_ad_checkpoint_${mode.name.lowercase()}"
 
-    fun failContinueCountKey(mode: GameMode, levelNumber: Int): String =
-        "fail_continue_${mode.name.lowercase()}_$levelNumber"
-
-    fun bestKey(mode: GameMode, levelNumber: Int): String =
-        "best_rank_${mode.name.lowercase()}_$levelNumber"
-
     fun breakStreak(mode: GameMode) {
-        prefs.edit()
-            .putInt(streakKey(mode), 0)
-            .putInt("clear_streak", 0)
-            .apply()
+        prefs.edit {
+            putInt(streakKey(mode), 0)
+            putInt("clear_streak", 0)
+        }
     }
 }

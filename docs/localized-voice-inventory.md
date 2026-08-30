@@ -1,8 +1,11 @@
 # Localized Brainball voice inventory
 
-The release APK ships 50 Brainball selection voices for each of the 19
-selectable languages. The files live in `app/src/main/res/raw/` and are
-validated by `tools/verify_localized_voice_assets.py`.
+The release APK ships 50 Brainball selection voices for each of 19 voice
+locales. The UI has 24 explicitly selectable languages: Traditional Chinese
+reuses the Simplified Chinese (`zh`) voice pack, while Czech, Swedish, Finnish,
+and Thai deliberately fall back to the English pack until dedicated recordings
+are added. The files live in `app/src/main/res/raw/` and are validated by
+`tools/verify_localized_voice_assets.py`.
 
 | Locale | Files |
 |---|---:|

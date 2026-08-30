@@ -9,17 +9,10 @@ import android.graphics.RectF
 import android.graphics.Shader
 import com.moonsolstudios.kavvoro.engine.BallPower
 import com.moonsolstudios.kavvoro.model.BallSkin
+import com.moonsolstudios.kavvoro.model.CollectionFilter
 import com.moonsolstudios.kavvoro.model.SkinStyle
 import com.moonsolstudios.kavvoro.model.UnlockType
 import kotlin.math.min
-
-enum class CollectionFilterType(val labelKey: String) {
-    ALL("ALL"),
-    SUPERPOWER("SUPERPOWER"),
-    HYPE("HYPE"),
-    PREMIUM("PREMIUM"),
-    COSMETIC("COSMETIC")
-}
 
 /**
  * Procedural UI renderer for the Collection & Brainball Vault screens.
@@ -35,7 +28,7 @@ object CollectionUiRenderer {
     fun drawFilters(
         canvas: Canvas,
         filterRects: List<RectF>,
-        currentFilter: CollectionFilterType,
+        currentFilter: CollectionFilter,
         activeIndex: Int,
         activeFilterIndexFn: (Int) -> Int,
         paint: Paint,
@@ -44,17 +37,17 @@ object CollectionUiRenderer {
         fitText: (String, Float) -> String,
         drawWorldAsset: (Canvas, String, RectF, Int) -> Unit
     ) {
-        CollectionFilterType.entries.forEachIndexed { index, filter ->
+        CollectionFilter.entries.forEachIndexed { index, filter ->
             val rect = filterRects.getOrNull(index) ?: return@forEachIndexed
             if (rect.isEmpty) return@forEachIndexed
             val selected = filter == currentFilter
             val active = activeIndex == activeFilterIndexFn(index)
             val accent = when (filter) {
-                CollectionFilterType.ALL -> 0xFFF7F4FF.toInt()
-                CollectionFilterType.SUPERPOWER -> 0xFFFFCF4A.toInt()
-                CollectionFilterType.HYPE -> 0xFF1DE8C8.toInt()
-                CollectionFilterType.PREMIUM -> 0xFFFF4D8D.toInt()
-                CollectionFilterType.COSMETIC -> 0xFF8AA6FF.toInt()
+                CollectionFilter.ALL -> 0xFFF7F4FF.toInt()
+                CollectionFilter.SUPERPOWER -> 0xFFFFCF4A.toInt()
+                CollectionFilter.HYPE -> 0xFF1DE8C8.toInt()
+                CollectionFilter.PREMIUM -> 0xFFFF4D8D.toInt()
+                CollectionFilter.COSMETIC -> 0xFF8AA6FF.toInt()
             }
             paint.style = Paint.Style.FILL
             paint.color = when {
@@ -67,7 +60,7 @@ object CollectionUiRenderer {
             paint.strokeWidth = (if (selected) 1.4f else 0.8f) * dp
             paint.color = withAlpha(accent, if (selected) 220 else 110)
             canvas.drawRoundRect(rect, 7f * dp, 7f * dp, paint)
-            if (filter == CollectionFilterType.SUPERPOWER) {
+            if (filter == CollectionFilter.SUPERPOWER) {
                 val icon = 13f * dp
                 scratchRect.set(rect.left + 5f * dp, rect.centerY() - icon * 0.5f, rect.left + 5f * dp + icon, rect.centerY() + icon * 0.5f)
                 drawWorldAsset(canvas, "boost_plasma", scratchRect, if (selected) 245 else 170)
@@ -78,7 +71,7 @@ object CollectionUiRenderer {
             textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
             textPaint.textSize = 8f * dp
             textPaint.color = if (selected) 0xFFF7F4FF.toInt() else withAlpha(0xFFF7F4FF.toInt(), 170)
-            val labelLeftPad = if (filter == CollectionFilterType.SUPERPOWER) 12f * dp else 0f
+            val labelLeftPad = if (filter == CollectionFilter.SUPERPOWER) 12f * dp else 0f
             canvas.drawText(
                 fitText(t(filter.labelKey).uppercase(), rect.width() - 10f * dp - labelLeftPad),
                 rect.centerX() + labelLeftPad * 0.35f,
@@ -643,7 +636,7 @@ object CollectionUiRenderer {
         collectionRestoreButton: RectF,
         collectionFilterRects: List<RectF>,
         collectionItemRects: List<RectF>,
-        collectionFilter: CollectionFilterType,
+        collectionFilter: CollectionFilter,
         activeCollectionIndex: Int,
         collectionFilterActiveIndexFn: (Int) -> Int,
         collectionViewportTop: Float,
@@ -803,7 +796,4 @@ object CollectionUiRenderer {
         )
     }
 
-    private fun withAlpha(color: Int, alpha: Int): Int =
-        (color and 0x00FFFFFF) or ((alpha.coerceIn(0, 255)) shl 24)
 }
-

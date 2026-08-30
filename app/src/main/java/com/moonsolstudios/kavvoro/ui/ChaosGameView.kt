@@ -25,14 +25,46 @@ import androidx.core.content.FileProvider
 import androidx.core.content.edit
 import com.moonsolstudios.kavvoro.BuildConfig
 import com.moonsolstudios.kavvoro.R
+import com.moonsolstudios.kavvoro.ads.AdPolicyController
 import com.moonsolstudios.kavvoro.audio.KavvoroSoundEngine
 import com.moonsolstudios.kavvoro.audio.MusicTrack
 import com.moonsolstudios.kavvoro.audio.SoundEvent
 import com.moonsolstudios.kavvoro.billing.PremiumCatalog
 import com.moonsolstudios.kavvoro.billing.PurchaseBridge
-import com.moonsolstudios.kavvoro.model.*
-import com.moonsolstudios.kavvoro.ui.home.HomeLayoutCalculator
-import com.moonsolstudios.kavvoro.ui.render.*
+import com.moonsolstudios.kavvoro.model.AdAction
+import com.moonsolstudios.kavvoro.model.BallSkin
+import com.moonsolstudios.kavvoro.model.ButtonId
+import com.moonsolstudios.kavvoro.model.CollectionFilter
+import com.moonsolstudios.kavvoro.model.GameMode
+import com.moonsolstudios.kavvoro.model.GameState
+import com.moonsolstudios.kavvoro.model.MenuButton
+import com.moonsolstudios.kavvoro.model.MenuState
+import com.moonsolstudios.kavvoro.model.NextReward
+import com.moonsolstudios.kavvoro.model.RenderProfile
+import com.moonsolstudios.kavvoro.model.Screen
+import com.moonsolstudios.kavvoro.model.SettingsButton
+import com.moonsolstudios.kavvoro.model.SkinStyle
+import com.moonsolstudios.kavvoro.model.UnlockType
+import com.moonsolstudios.kavvoro.playgames.LeaderboardBoard
+import com.moonsolstudios.kavvoro.playgames.LeaderboardBridge
+import com.moonsolstudios.kavvoro.privacy.PrivacyBridge
+import com.moonsolstudios.kavvoro.ui.layout.HomeLayoutCalculator
+import com.moonsolstudios.kavvoro.ui.layout.ScreenLayoutManager
+import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
+import com.moonsolstudios.kavvoro.ui.render.AtmosphereRenderer
+import com.moonsolstudios.kavvoro.ui.render.HomeMenuRenderer
+import com.moonsolstudios.kavvoro.ui.render.HomeUiRenderer
+import com.moonsolstudios.kavvoro.ui.render.LanguageSelectorRenderer
+import com.moonsolstudios.kavvoro.ui.render.SciFiCtaButtonRenderer
+import com.moonsolstudios.kavvoro.ui.render.SubScreenMasterRenderer
+import com.moonsolstudios.kavvoro.ui.render.UiWidgetRenderer
+import com.moonsolstudios.kavvoro.ui.render.withAlpha
+import com.moonsolstudios.kavvoro.ui.tutorial.TutorialCardLayout
+import com.moonsolstudios.kavvoro.ui.tutorial.TutorialGateOutcome
+import com.moonsolstudios.kavvoro.ui.tutorial.TutorialGestureSlop
+import com.moonsolstudios.kavvoro.ui.tutorial.TutorialInputGate
+import com.moonsolstudios.kavvoro.ui.tutorial.TutorialPointerAction
+import com.moonsolstudios.kavvoro.ui.tutorial.TutorialTouchTarget
 import com.moonsolstudios.kavvoro.engine.CurseType
 import com.moonsolstudios.kavvoro.engine.BallPower
 import com.moonsolstudios.kavvoro.engine.Hazard
@@ -52,7 +84,6 @@ import com.moonsolstudios.kavvoro.engine.STAGE_WIDTH
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.i18n.KavvoroLanguage
 import com.moonsolstudios.kavvoro.i18n.TutorialCopy
-import com.moonsolstudios.kavvoro.layout.ScreenLayoutManager
 import com.moonsolstudios.kavvoro.repository.BallSkinCatalog
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.BEST_STREAK_KEY
@@ -67,7 +98,6 @@ import com.moonsolstudios.kavvoro.share.ReplayVideoExporter
 import com.moonsolstudios.kavvoro.ui.controller.LanguageTouchController
 import com.moonsolstudios.kavvoro.ui.controller.LeaderboardTouchController
 import com.moonsolstudios.kavvoro.ui.controller.AdaptiveQualityController
-import com.moonsolstudios.kavvoro.ui.controller.AdPolicyController
 import com.moonsolstudios.kavvoro.ui.controller.CollectionTouchController
 import com.moonsolstudios.kavvoro.ui.controller.GameLoopDirector
 import com.moonsolstudios.kavvoro.ui.controller.SettingsTouchController
@@ -384,13 +414,13 @@ class ChaosGameView(
     fun updatePremiumPrices(pricesByProductId: Map<String, String>) {
         post {
             synchronized(lock) {
-                val editor = prefs.edit()
-                pricesByProductId.forEach { (productId, price) ->
-                    val skinId = PremiumCatalog.productToSkinId[productId] ?: return@forEach
-                    premiumPricesBySkin[skinId] = price
-                    editor.putString(premiumPriceKey(skinId), price)
+                prefs.edit {
+                    pricesByProductId.forEach { (productId, price) ->
+                        val skinId = PremiumCatalog.productToSkinId[productId] ?: return@forEach
+                        premiumPricesBySkin[skinId] = price
+                        putString(GameProgressRepository.premiumPriceKey(skinId), price)
+                    }
                 }
-                editor.apply()
             }
         }
     }
@@ -399,11 +429,11 @@ class ChaosGameView(
         post {
             synchronized(lock) {
                 val ownedSkinIds = ownedProductIds.mapNotNull(PremiumCatalog.productToSkinId::get).toSet()
-                val editor = prefs.edit()
-                PremiumCatalog.skinToProductId.keys.forEach { skinId ->
-                    editor.putBoolean(purchasedSkinKey(skinId), skinId in ownedSkinIds)
+                prefs.edit {
+                    PremiumCatalog.skinToProductId.keys.forEach { skinId ->
+                        putBoolean(GameProgressRepository.purchasedSkinKey(skinId), skinId in ownedSkinIds)
+                    }
                 }
-                editor.apply()
             }
         }
     }
@@ -588,9 +618,7 @@ class ChaosGameView(
     }
 
     private fun dismissTutorialCard(): Boolean {
-        prefs.edit()
-            .putBoolean(tutorialAcknowledgementKey(), true)
-            .apply()
+        prefs.edit { putBoolean(tutorialAcknowledgementKey(), true) }
         tutorialCardVisible = false
         tutorialCardBounds.setEmpty()
         tutorialStartButton.setEmpty()
@@ -1266,34 +1294,34 @@ class ChaosGameView(
     }
 
     private fun saveBest(score: RunScore) {
-        val current = prefs.getString(bestKey(score.level), null)
+        val current = prefs.getString(GameProgressRepository.bestKey(gameMode, score.level), null)
         if (current == null || rankValue(score.rank) < rankValue(current)) {
-            prefs.edit().putString(bestKey(score.level), score.rank).apply()
+            prefs.edit { putString(GameProgressRepository.bestKey(gameMode, score.level), score.rank) }
         }
         val nextLevel = max(modeProgress(gameMode), score.level + 1)
         val nextBestStreak = max(modeBestStreak(gameMode), streak)
         val newHypeBalance = (hypeBalance().toLong() + lastHypeScore.toLong())
             .coerceAtMost(Int.MAX_VALUE.toLong())
             .toInt()
-        prefs.edit()
-            .putInt(progressKey(gameMode), nextLevel)
-            .putInt(streakKey(gameMode), streak)
-            .putInt(highestLevelKey(gameMode), max(modeHighestLevel(gameMode), nextLevel))
-            .putInt(bestModeStreakKey(gameMode), nextBestStreak)
-            .putInt(BEST_STREAK_KEY, max(bestStreak(), streak))
-            .putInt("clear_streak", streak)
-            .putInt("last_hype", lastHypeScore)
-            .putInt(HYPE_BANK_KEY, newHypeBalance)
-            .apply()
+        prefs.edit {
+            putInt(GameProgressRepository.progressKey(gameMode), nextLevel)
+            putInt(GameProgressRepository.streakKey(gameMode), streak)
+            putInt(highestLevelKey(gameMode), max(modeHighestLevel(gameMode), nextLevel))
+            putInt(bestModeStreakKey(gameMode), nextBestStreak)
+            putInt(BEST_STREAK_KEY, max(bestStreak(), streak))
+            putInt("clear_streak", streak)
+            putInt("last_hype", lastHypeScore)
+            putInt(HYPE_BANK_KEY, newHypeBalance)
+        }
         val levelBoard = if (gameMode == GameMode.CLASSIC) LeaderboardBoard.CLASSIC_LEVEL else LeaderboardBoard.CHAOS_LEVEL
         val streakBoard = if (gameMode == GameMode.CLASSIC) LeaderboardBoard.CLASSIC_STREAK else LeaderboardBoard.CHAOS_STREAK
         if (selectedBallSkin().power == BallPower.NONE) {
             val fairLevel = max(prefs.getInt(fairHighestLevelKey(gameMode), modeHighestLevel(gameMode)), nextLevel)
             val fairStreak = max(prefs.getInt(fairBestStreakKey(gameMode), modeBestStreak(gameMode)), nextBestStreak)
-            prefs.edit()
-                .putInt(fairHighestLevelKey(gameMode), fairLevel)
-                .putInt(fairBestStreakKey(gameMode), fairStreak)
-                .apply()
+            prefs.edit {
+                putInt(fairHighestLevelKey(gameMode), fairLevel)
+                putInt(fairBestStreakKey(gameMode), fairStreak)
+            }
             leaderboardBridge.submitScore(levelBoard, fairLevel.toLong())
             leaderboardBridge.submitScore(streakBoard, fairStreak.toLong())
         }
@@ -1311,7 +1339,7 @@ class ChaosGameView(
 
     private fun toggleSfxMuted() {
         sfxMuted = !sfxMuted
-        prefs.edit().putBoolean(SFX_MUTED_KEY, sfxMuted).apply()
+        prefs.edit { putBoolean(SFX_MUTED_KEY, sfxMuted) }
         audio.setSfxMuted(sfxMuted)
         if (!sfxMuted) {
             audio.playEvent(SoundEvent.UI_TAP, selectedBallIndex())
@@ -1320,7 +1348,7 @@ class ChaosGameView(
 
     private fun toggleMusicMuted() {
         musicMuted = !musicMuted
-        prefs.edit().putBoolean(MUSIC_MUTED_KEY, musicMuted).apply()
+        prefs.edit { putBoolean(MUSIC_MUTED_KEY, musicMuted) }
         audio.setMusicMuted(musicMuted)
         if (!musicMuted) {
             syncMusicTrack()
@@ -1953,13 +1981,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
 
     private fun drawMenu(canvas: Canvas) {
         layoutMenuButtons()
-        Log.d("ChaosGameView", "drawMenu called viewWidth=$viewWidth, viewHeight=$viewHeight, homeLayoutMode=${homeLayoutCalculator.layoutMode}, brandRect=${homeLayoutCalculator.brandRect.top}")
-        val widthDp = viewWidth / uiDensity
-        val layoutMode = when {
-            widthDp <= 480f -> LayoutMode.COMPACT
-            widthDp <= 840f -> LayoutMode.MEDIUM
-            else -> LayoutMode.TABLET
-        }
         val scale = (viewHeight / uiDensity / 800f).coerceIn(0.72f, 1.25f)
         val left = homeLayoutCalculator.contentRect.left
         val contentWidth = homeLayoutCalculator.contentRect.width()
@@ -1973,7 +1994,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             layoutMenuButtons = { layoutMenuButtons() },
             menuState = menuState,
             homeScale = scale,
-            homeLayoutMode = layoutMode,
+            homeLayoutMode = homeLayoutCalculator.layoutMode,
             homeContentLeft = left,
             homeContentWidth = contentWidth,
             menuContentRight = right,
@@ -2972,7 +2993,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
     }
 
     private fun resetGameDataFromSettings() {
-        SettingsTouchController.resetGameData(prefs)
+        progressRepository.resetAllProgressPreservingSettings()
         settingsResetConfirm = false
         selectedSkinId = DEFAULT_SKIN_ID
         collectionFocusSkinId = DEFAULT_SKIN_ID
@@ -5555,7 +5576,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         val before = unlockedSkinIds()
         val used = prefs.getInt(SHARE_COUNT_KEY, 0)
         val total = used + 1
-        prefs.edit().putInt(SHARE_COUNT_KEY, total).apply()
+        prefs.edit { putInt(SHARE_COUNT_KEY, total) }
         val unlocked = unlockedSkinIds()
         val newSkin = ballSkins.firstOrNull { it.id in (unlocked - before) }
         if (newSkin != null) {
@@ -5699,12 +5720,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
     private fun premiumCompactPriceLabel(skin: BallSkin): String =
         premiumPriceLabel(skin).substringBefore(" ")
 
-    private fun premiumPriceKey(id: String): String = GameProgressRepository.premiumPriceKey(id)
-
-    private fun purchasedSkinKey(id: String): String = GameProgressRepository.purchasedSkinKey(id)
-
-    private fun earnedSkinKey(id: String): String = GameProgressRepository.earnedSkinKey(id)
-
     private fun curseStackLabel(): String {
         if (level.curses.isEmpty()) return t("NO CURSE").uppercase()
         return level.curses.joinToString(" + ") { t(it.name.uppercase()).uppercase() }
@@ -5732,8 +5747,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
 
     private fun resetModeProgress(mode: GameMode) = progressRepository.resetModeProgress(mode)
 
-    private fun progressKey(mode: GameMode): String = GameProgressRepository.progressKey(mode)
-
     private fun highestLevelKey(mode: GameMode): String = progressRepository.highestLevelKey(mode)
 
     private fun fairHighestLevelKey(mode: GameMode): String = progressRepository.fairHighestLevelKey(mode)
@@ -5741,8 +5754,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
     private fun bestModeStreakKey(mode: GameMode): String = progressRepository.bestModeStreakKey(mode)
 
     private fun fairBestStreakKey(mode: GameMode): String = progressRepository.fairBestStreakKey(mode)
-
-    private fun streakKey(mode: GameMode): String = GameProgressRepository.streakKey(mode)
 
     private fun levelAdKey(mode: GameMode): String = progressRepository.levelAdKey(mode)
     private fun GameMode.menuTitle(): String = when (this) {
@@ -5783,18 +5794,12 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
 
     private fun localizedLevelTitle(title: String): String = t(title.uppercase()).uppercase()
 
-    private fun bestKey(level: Int): String = "best_rank_${gameMode.name.lowercase()}_$level"
-
     private fun rankValue(rank: String): Int = when (rank) {
         "S" -> 0
         "A" -> 1
         "B" -> 2
         "C" -> 3
         else -> 9
-    }
-
-    private fun withAlpha(color: Int, alpha: Int): Int {
-        return (color and 0x00FFFFFF) or (alpha.coerceIn(0, 255) shl 24)
     }
 
     private data class ShareRequest(

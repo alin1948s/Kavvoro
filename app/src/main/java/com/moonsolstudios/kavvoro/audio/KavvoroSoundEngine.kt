@@ -267,7 +267,7 @@ class KavvoroSoundEngine(context: Context) {
     // Localized clips follow a stable generated naming scheme; keep.xml preserves them for shrinking.
     @SuppressLint("DiscouragedApi")
     private fun getSelectionResourceId(lang: String, index: Int): Int {
-        if (lang != "en" && lang in supportedAudioLanguageCodes) {
+        if (lang != "en") {
             val resId = appContext.resources.getIdentifier(
                 "brainball_select_${lang}_${index.toString().padStart(2, '0')}",
                 "raw",
@@ -446,28 +446,6 @@ class KavvoroSoundEngine(context: Context) {
     companion object {
         private const val SELECTION_PREVIEW_VOLUME = 0.86f
         private const val MUSIC_VOLUME = 0.3f
-        private const val SELECTION_SOUND_COUNT = 50
-        private val supportedAudioLanguageCodes = listOf(
-            "ro",
-            "es",
-            "fr",
-            "de",
-            "it",
-            "pt",
-            "nl",
-            "pl",
-            "tr",
-            "ru",
-            "uk",
-            "ar",
-            "hi",
-            "id",
-            "vi",
-            "ja",
-            "ko",
-            "zh"
-        )
-
         private val selectionResources = listOf(
             R.raw.brainball_select_00, R.raw.brainball_select_01, R.raw.brainball_select_02,
             R.raw.brainball_select_03, R.raw.brainball_select_04, R.raw.brainball_select_05,

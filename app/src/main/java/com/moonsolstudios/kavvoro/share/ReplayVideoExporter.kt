@@ -1,5 +1,7 @@
 package com.moonsolstudios.kavvoro.share
 
+import com.moonsolstudios.kavvoro.ui.render.withAlpha
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -672,10 +674,6 @@ class ReplayVideoExporter(private val context: Context) {
         return (replaySeconds + 1.2f).coerceIn(4.2f, 10.8f)
     }
 
-    private fun withAlpha(color: Int, alpha: Int): Int {
-        return (color and 0x00FFFFFF) or (alpha.coerceIn(0, 255) shl 24)
-    }
-
     private fun drawAsset(canvas: Canvas, resource: Int, bounds: RectF, alpha: Int = 255) {
         val bitmap = bitmapCache[resource]
             ?: BitmapFactory.decodeResource(context.resources, resource)?.also { bitmapCache[resource] = it }
@@ -702,7 +700,6 @@ class ReplayVideoExporter(private val context: Context) {
         private const val VIDEO_WIDTH = 720
         private const val VIDEO_HEIGHT = 1280
         private const val FRAME_RATE = 30
-        private const val VIDEO_SECONDS = 5
         private const val BIT_RATE = 3_600_000
     }
 }

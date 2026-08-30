@@ -6,15 +6,19 @@ The captured failures are foreground input-dispatch ANRs. Android waited about
 five seconds for `MainActivity` to process focus or touch input while its main
 thread was busy initializing Google Mobile Ads and the WebView runtime.
 
-Direct evidence:
+Direct evidence from the captured device traces:
 
-- `anr_dump_1.txt`: `MobileAds.initialize` →
-  `PrivacyAdsController.initializeAdsIfAllowed` → `MainActivity.startGame` is
-  on the `main` thread when the focus event times out.
-- `anr_dump_2.txt`: the main thread is inside Chromium WebView and
+- `MobileAds.initialize` → `PrivacyAdsController.initializeAdsIfAllowed` →
+  `MainActivity.startGame` was on the `main` thread when the focus event timed
+  out.
+- A second trace placed the main thread inside Chromium WebView and
   `SharedPreferences` setup during a motion-event timeout.
 - The failing emulator was under 98% total CPU load; the app used 86% CPU,
   mostly in kernel work, while WebView/media/SoundPool workers were active.
+
+Raw `adb`/ANR dumps are intentionally not versioned because they are transient,
+device-specific diagnostics. This document preserves the relevant stacks,
+measurements, interpretation, and validated fix.
 
 The earlier eager SoundPool preload and large Home bitmap decode increased CPU
 and memory pressure, but neither explains the captured main-thread stack by

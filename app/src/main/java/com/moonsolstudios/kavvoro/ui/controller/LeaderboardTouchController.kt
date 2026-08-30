@@ -4,10 +4,11 @@ import android.content.SharedPreferences
 import android.graphics.RectF
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
+import androidx.core.content.edit
 import com.moonsolstudios.kavvoro.model.GameMode
-import com.moonsolstudios.kavvoro.ui.LeaderboardBoard
-import com.moonsolstudios.kavvoro.ui.LeaderboardBridge
-import com.moonsolstudios.kavvoro.ui.LeaderboardScoreGuard
+import com.moonsolstudios.kavvoro.playgames.LeaderboardBoard
+import com.moonsolstudios.kavvoro.playgames.LeaderboardBridge
+import com.moonsolstudios.kavvoro.playgames.LeaderboardScoreGuard
 
 object LeaderboardTouchController {
 
@@ -34,12 +35,12 @@ object LeaderboardTouchController {
         modeHighestLevel: (GameMode) -> Int,
         modeBestStreak: (GameMode) -> Int
     ) {
-        val editor = prefs.edit()
-        GameMode.entries.forEach { mode ->
-            if (!prefs.contains(fairHighestLevelKey(mode))) editor.putInt(fairHighestLevelKey(mode), modeHighestLevel(mode))
-            if (!prefs.contains(fairBestStreakKey(mode))) editor.putInt(fairBestStreakKey(mode), modeBestStreak(mode))
+        prefs.edit {
+            GameMode.entries.forEach { mode ->
+                if (!prefs.contains(fairHighestLevelKey(mode))) putInt(fairHighestLevelKey(mode), modeHighestLevel(mode))
+                if (!prefs.contains(fairBestStreakKey(mode))) putInt(fairBestStreakKey(mode), modeBestStreak(mode))
+            }
         }
-        editor.apply()
     }
 
     fun submitScore(
@@ -55,7 +56,7 @@ object LeaderboardTouchController {
             LeaderboardBoard.CLASSIC_STREAK -> modeBestStreak(GameMode.CLASSIC)
             LeaderboardBoard.CHAOS_STREAK -> modeBestStreak(GameMode.CHAOS)
         }
-        if (LeaderboardScoreGuard.isSubmitAllowed(board, score, completedRun = true, currentProgress = currentProgress)) {
+        if (LeaderboardScoreGuard.isSubmitAllowed(score, completedRun = true, currentProgress = currentProgress)) {
             leaderboardBridge.submitScore(board, score.toLong())
         }
     }

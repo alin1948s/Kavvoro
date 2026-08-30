@@ -4,9 +4,9 @@ import android.app.AlertDialog
 import android.app.Activity
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.net.Uri
 import android.os.Process
 import android.widget.Toast
+import androidx.core.net.toUri
 import com.google.android.gms.ads.AgeRestrictedTreatment
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
@@ -16,7 +16,6 @@ import com.google.android.ump.UserMessagingPlatform
 import com.moonsolstudios.kavvoro.ads.InterstitialAdController
 import com.moonsolstudios.kavvoro.ads.RewardedAdController
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
-import com.moonsolstudios.kavvoro.ui.PrivacyBridge
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
@@ -89,7 +88,7 @@ class PrivacyAdsController(
 
     private fun openExternalPage(url: String) {
         try {
-            activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+            activity.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
         } catch (_: ActivityNotFoundException) {
             Toast.makeText(activity, t("Privacy policy is temporarily unavailable."), Toast.LENGTH_SHORT).show()
         }

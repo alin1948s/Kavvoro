@@ -1,6 +1,7 @@
 package com.moonsolstudios.kavvoro.ui.controller
 
 import android.graphics.RectF
+import androidx.core.content.edit
 import com.moonsolstudios.kavvoro.billing.PremiumCatalog
 import com.moonsolstudios.kavvoro.billing.PurchaseBridge
 import com.moonsolstudios.kavvoro.engine.BallPower
@@ -65,7 +66,7 @@ object CollectionTouchController {
         backButton.set(contentRight - size, safeTop22, contentRight, safeTop22 + size)
         restoreButton.set(contentRight - 96f * dp, safeTop68, contentRight, safeTop88)
 
-        com.moonsolstudios.kavvoro.layout.ScreenLayoutManager.layoutCollectionFilters(
+        com.moonsolstudios.kavvoro.ui.layout.ScreenLayoutManager.layoutCollectionFilters(
             side = contentLeft,
             contentWidth = contentRight - contentLeft,
             top = safeTop192,
@@ -146,7 +147,7 @@ object CollectionTouchController {
         if (isSkinUnlocked(skin)) {
             onSkinSelected(skin.id)
             onFocusSkin(skin.id)
-            prefs.edit().putString(GameProgressRepository.SELECTED_SKIN_KEY, skin.id).apply()
+            prefs.edit { putString(GameProgressRepository.SELECTED_SKIN_KEY, skin.id) }
             setMessage("${skin.name} ${t("IS NOW IN YOUR HEAD")} / ${t("AURA").uppercase()} ${brainballAura(skin)}", 2.4f)
             return
         }
@@ -167,10 +168,10 @@ object CollectionTouchController {
                 spendHype(price)
                 onSkinSelected(skin.id)
                 onFocusSkin(skin.id)
-                prefs.edit()
-                    .putBoolean(GameProgressRepository.earnedSkinKey(skin.id), true)
-                    .putString(GameProgressRepository.SELECTED_SKIN_KEY, skin.id)
-                    .apply()
+                prefs.edit {
+                    putBoolean(GameProgressRepository.earnedSkinKey(skin.id), true)
+                    putString(GameProgressRepository.SELECTED_SKIN_KEY, skin.id)
+                }
                 setMessage("${t("UNLOCKED").uppercase()} ${skin.name} / -${formatHypeAmount(price)} ${t("HYPE").uppercase()}", 3.2f)
                 playSoundEvent(com.moonsolstudios.kavvoro.audio.SoundEvent.UNLOCK, skinIndex)
                 hapticSequence(

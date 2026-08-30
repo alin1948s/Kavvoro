@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
-<map>
-    <string name="privacy_profile">standard</string>
-    <boolean name="privacy_prompt_resolved" value="true" />
-    <int name="privacy_policy_version" value="1" />
-    <string name="selected_skin_id">prism_king</string>
-</map>
