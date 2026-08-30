@@ -430,6 +430,7 @@ object SettingsUiRenderer {
         settingsLanguageButton: RectF,
         selectedLanguageLabel: String,
         settingsAccountButton: RectF,
+        accountStatusLabel: String,
         settingsPrivacyButton: RectF,
         settingsTermsButton: RectF,
         settingsDataDeletionButton: RectF,
@@ -481,7 +482,7 @@ object SettingsUiRenderer {
         drawNavRow(canvas, settingsLanguageButton, t("LANGUAGE"), selectedLanguageLabel, 0xFF45F2FF.toInt(), 0, true, compact, paint, dp, fitText)
 
         drawSectionLabel(canvas, t("ACCOUNT & CLOUD").uppercase(), left, settingsAccountButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
-        drawNavRow(canvas, settingsAccountButton, t("ACCOUNT"), t("Manage your account and progress"), 0xFF45F2FF.toInt(), 1, true, compact, paint, dp, fitText)
+        drawNavRow(canvas, settingsAccountButton, t("ACCOUNT"), accountStatusLabel, 0xFF45F2FF.toInt(), 1, true, compact, paint, dp, fitText)
 
         drawSectionLabel(canvas, t("INFO & LEGAL").uppercase(), left, settingsPrivacyButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
         drawCardFrame(canvas, left, right, settingsPrivacyButton.top, settingsAboutButton.bottom, paint, dp)

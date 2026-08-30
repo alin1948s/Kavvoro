@@ -6,7 +6,8 @@ import com.google.android.gms.games.PlayGames
 import com.moonsolstudios.kavvoro.R
 
 class PlayGamesLeaderboardController(
-    private val activity: Activity
+    private val activity: Activity,
+    private val accountController: PlayGamesAccountController = PlayGamesAccountController(activity)
 ) : LeaderboardBridge {
     override val configured: Boolean = PlayGamesConfig.isConfigured(activity)
 
@@ -15,20 +16,10 @@ class PlayGamesLeaderboardController(
             onFailure()
             return
         }
-        val signInClient = PlayGames.getGamesSignInClient(activity)
-        signInClient.isAuthenticated.addOnCompleteListener(activity) { authTask ->
-            if (authTask.isSuccessful && authTask.result.isAuthenticated) {
-                openAuthenticated(board, onFailure)
-            } else {
-                signInClient.signIn().addOnCompleteListener(activity) { signInTask ->
-                    if (signInTask.isSuccessful && signInTask.result.isAuthenticated) {
-                        openAuthenticated(board, onFailure)
-                    } else {
-                        onFailure()
-                    }
-                }
-            }
-        }
+        accountController.withAuthenticated(
+            onAuthenticated = { openAuthenticated(board, onFailure) },
+            onFailure = onFailure
+        )
     }
 
     override fun submitScore(board: LeaderboardBoard, score: Long) {

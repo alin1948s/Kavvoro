@@ -157,6 +157,8 @@ object LeaderboardUiRenderer {
         bottom70: Float,
         bottom16: Float,
         configured: Boolean,
+        accountStatusLabel: String,
+        accountStatusColor: Int,
         highestLevelText: String,
         bestStreakText: String,
         leaderboardScores: List<String>,
@@ -180,8 +182,13 @@ object LeaderboardUiRenderer {
         textPaint.color = 0xFFF7F4FF.toInt()
         canvas.drawText(t("LEADERBOARDS").uppercase(), left, top56, textPaint)
         textPaint.textSize = 10f * dp
-        textPaint.color = if (configured) 0xFF64E572.toInt() else 0xAAFFFFFF.toInt()
-        canvas.drawText(t(if (configured) "GOOGLE PLAY / NO POWERS" else "LOCAL RECORDS").uppercase(), left, top78, textPaint)
+        textPaint.color = if (configured) accountStatusColor else 0xAAFFFFFF.toInt()
+        canvas.drawText(
+            (if (configured) accountStatusLabel else t("LOCAL RECORDS")).uppercase(),
+            left,
+            top78,
+            textPaint
+        )
         drawBackButton(canvas, leaderboardBackButton, activeLeaderboardIndex == -2)
 
         paint.style = Paint.Style.FILL

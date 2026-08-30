@@ -25,8 +25,8 @@ vertical replays.
   including the ball, control trail, tether, score, and challenge code.
 - Monetization: AdMob interstitial/rewarded-ad gates with test IDs in debug
   builds, age-gated consent handling, and Google Play Billing integration hooks.
-- Platform services: Google Play Games Services v2 hooks for authentication,
-  leaderboards, and score submission.
+- Platform services: Google Play Games Services v2 with silent launch
+  authentication, explicit retry fallback, leaderboards, and score submission.
 - Observability: Firebase Crashlytics is integrated and the Firebase Analytics
   runtime dependency is retained for the Google/Firebase integration. The old
   unused custom telemetry wrapper and its parallel event schema were removed.
@@ -270,7 +270,18 @@ Create four highest-score leaderboards in Play Console, then replace the placeho
 - `leaderboard_classic_streak_id`
 - `leaderboard_chaos_streak_id`
 
-Until all five values are configured, the Leaderboards screen remains in local-record mode and the Play Games SDK is not initialized.
+The merged Play Games v2 init provider initializes the SDK without blocking the
+first frame. After the first frame, the game observes silent authentication and
+shows the result in Settings and Leaderboards. If authentication is unavailable,
+the game remains playable offline and Account/Leaderboards expose an explicit
+retry action. Play Games is used for platform features (leaderboards and score
+submission); local progress is not presented as cloud save.
+
+The Account row is intentionally kept in Settings as the canonical platform-
+account entry point. Do not add a blocking login dialog or a permanent Home
+login CTA. If cloud save or cross-platform identity is added later, introduce a
+separate backend identity flow instead of treating the Play Games player ID as
+the game's primary account.
 
 ## Build
 

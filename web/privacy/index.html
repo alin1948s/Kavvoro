@@ -53,7 +53,7 @@
           <tr><td>Neutral age screen and saved age category</td><td>Yes</td><td>Yes</td></tr>
           <tr><td>Google Mobile Ads and User Messaging Platform</td><td>Yes</td><td>Yes</td></tr>
           <tr><td>Firebase Analytics</td><td>Disabled in the current release</td><td>Yes, after the age screen</td></tr>
-          <tr><td>Google Play Games</td><td>When available</td><td>Not in the current release</td></tr>
+          <tr><td>Google Play Games</td><td>When available, including automatic platform authentication</td><td>Not in the current release</td></tr>
           <tr><td>Google Play purchases</td><td>When a paid item is offered</td><td>Not in the current release</td></tr>
           <tr><td>MoonSol Studios account or cloud save</td><td>No</td><td>No</td></tr>
         </tbody>
@@ -102,7 +102,7 @@
     <section>
       <h2>6. Additional Google services in Kavvoro</h2>
       <h3>Google Play Games</h3>
-      <p>If Play Games features are available and used, Google processes the player’s Play Games profile and submitted game activity. Kavvoro may submit eligible scores to Google-hosted leaderboards. MoonSol Studios does not operate a separate leaderboard database.</p>
+      <p>On Android, Kavvoro may attempt silent Google Play Games platform authentication when the Game starts. If the device and account support the service, Google processes the player’s Play Games profile and submitted game activity. Kavvoro may submit eligible scores to Google-hosted leaderboards. MoonSol Studios does not operate a separate leaderboard database, does not create a MoonSol Studios account and does not use the Play Games player ID as a primary account for local progress.</p>
 
       <h3>Google Play purchases</h3>
       <p>Optional purchases are processed by Google Play Billing. Google handles payment credentials. Kavvoro receives product ownership and transaction status needed to unlock, acknowledge and restore an item; MoonSol Studios does not receive full card or bank-account details.</p>
@@ -130,7 +130,7 @@
 
     <section>
       <h2>9. Retention and deletion</h2>
-      <p>Local Game data remains until it is cleared, overwritten, restored from an eligible Android backup or the Game is uninstalled. The Games do not create a MoonSol Studios account.</p>
+      <p>Local Game data remains until it is cleared, overwritten, restored from an eligible Android backup or the Game is uninstalled. Play Games platform data is retained and managed by Google under the player’s Google Account settings. The Games do not create a MoonSol Studios account or provide cloud save for local progress.</p>
       <p>Google-controlled advertising, consent, analytics, purchase and Play Games information is retained according to Google’s service settings, legal obligations and policies. Clearing Rift Lab’s storage or uninstalling it removes local data and causes a later installation to use a new Analytics app-instance identifier. Aggregate reports may remain without a direct identifier.</p>
       <p>Support correspondence is retained only as long as reasonably needed to answer the request, keep necessary business records, resolve disputes, prevent abuse or comply with law. Read our <a href="/data-deletion/">Data Deletion page</a> for instructions.</p>
     </section>
@@ -147,7 +147,7 @@
         <li>Open <strong>Ad Privacy Options</strong> in a Game when the option is required and available.</li>
         <li>Manage the Android Advertising ID and privacy controls in Android Settings.</li>
         <li>Clear the Game’s storage or uninstall it to remove local progress and reset local identifiers.</li>
-        <li>Manage Play Games, purchase and Google activity through the relevant Google Account controls.</li>
+        <li>Manage Play Games profile, connected games, purchase and Google activity through the relevant Google Account controls.</li>
         <li>Contact us to request access, correction, deletion, restriction or objection where applicable.</li>
       </ul>
       <p>Because the Games do not ask for a MoonSol Studios account and Rift Lab Analytics is pseudonymous, we may be unable to connect an email request to a particular anonymous Analytics instance without additional information that the Game does not currently expose.</p>

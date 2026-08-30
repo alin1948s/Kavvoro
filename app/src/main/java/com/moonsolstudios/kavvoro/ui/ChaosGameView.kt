@@ -47,6 +47,8 @@ import com.moonsolstudios.kavvoro.model.SkinStyle
 import com.moonsolstudios.kavvoro.model.UnlockType
 import com.moonsolstudios.kavvoro.playgames.LeaderboardBoard
 import com.moonsolstudios.kavvoro.playgames.LeaderboardBridge
+import com.moonsolstudios.kavvoro.playgames.AccountBridge
+import com.moonsolstudios.kavvoro.playgames.AccountState
 import com.moonsolstudios.kavvoro.privacy.PrivacyBridge
 import com.moonsolstudios.kavvoro.ui.layout.HomeLayoutCalculator
 import com.moonsolstudios.kavvoro.ui.layout.ScreenLayoutManager
@@ -117,6 +119,7 @@ class ChaosGameView(
     context: Context,
     private val adBridge: AdBridge = AdBridge.NONE,
     private val leaderboardBridge: LeaderboardBridge = LeaderboardBridge.NONE,
+    private val accountBridge: AccountBridge = AccountBridge.NONE,
     private val privacyBridge: PrivacyBridge = PrivacyBridge.NONE,
     private val purchaseBridge: PurchaseBridge = PurchaseBridge.NONE,
     private val onFirstFrameRendered: () -> Unit = {}
@@ -239,6 +242,8 @@ class ChaosGameView(
     private var leaderboardMessage = ""
     private var leaderboardMessageTimer = 0f
     private var activeLeaderboardIndex = -1
+    @Volatile
+    private var accountState = accountBridge.state
 
     private val menuStartButton = RectF()
     private val menuActionStartButton = RectF()
@@ -534,6 +539,15 @@ class ChaosGameView(
         pendingAction?.invoke()
         if (event.actionMasked == MotionEvent.ACTION_UP) performClick()
         return true
+    }
+
+    fun updateAccountState(next: AccountState) {
+        post {
+            synchronized(lock) {
+                accountState = next
+                postInvalidate()
+            }
+        }
     }
 
     override fun performClick(): Boolean {
@@ -2750,6 +2764,8 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             bottom70 = viewHeight - dp(70f),
             bottom16 = viewHeight - dp(16f),
             configured = leaderboardBridge.configured,
+            accountStatusLabel = accountStatusLabel(),
+            accountStatusColor = accountStatusColor(),
             highestLevelText = "L${max(modeHighestLevel(GameMode.CLASSIC), modeHighestLevel(GameMode.CHAOS)).toString().padStart(2, '0')}",
             bestStreakText = "x${max(modeBestStreak(GameMode.CLASSIC), modeBestStreak(GameMode.CHAOS))}",
             activeLeaderboardIndex = activeLeaderboardIndex,
@@ -2766,6 +2782,21 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             }
         )
     }
+
+    private fun accountStatusLabel(): String = when (accountState) {
+        AccountState.CONNECTING -> t("CONNECTING TO GOOGLE PLAY")
+        AccountState.SIGNED_IN -> t("GOOGLE PLAY CONNECTED")
+        AccountState.SIGNED_OUT -> t("GOOGLE PLAY NOT CONNECTED")
+        AccountState.UNAVAILABLE -> t("PLAY GAMES UNAVAILABLE")
+    }
+
+    private fun accountStatusColor(): Int = when (accountState) {
+        AccountState.CONNECTING -> 0xFF45F2FF.toInt()
+        AccountState.SIGNED_IN -> 0xFF64E572.toInt()
+        AccountState.SIGNED_OUT -> 0xFFFFCF4A.toInt()
+        AccountState.UNAVAILABLE -> 0xFFFF6B8A.toInt()
+    }
+
     private fun handleLeaderboardTouch(event: MotionEvent) {
         LeaderboardTouchController.handleTouch(
             event = event,
@@ -2830,6 +2861,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             settingsLanguageButton = settingsLanguageButton,
             selectedLanguageLabel = KavvoroI18n.label(context, KavvoroI18n.selected(context)),
             settingsAccountButton = settingsAccountButton,
+            accountStatusLabel = accountStatusLabel(),
             settingsPrivacyButton = settingsPrivacyButton,
             settingsTermsButton = settingsTermsButton,
             settingsDataDeletionButton = settingsDataDeletionButton,
@@ -3011,7 +3043,20 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
                 triggerScreenTransition(0xFF45F2FF.toInt())
             }
             SettingsButton.ACCOUNT -> return {
-                Toast.makeText(context, t("PLAY GAMES UNAVAILABLE"), Toast.LENGTH_SHORT).show()
+                when (accountState) {
+                    AccountState.CONNECTING -> Toast.makeText(
+                        context,
+                        t("CONNECTING TO GOOGLE PLAY"),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    AccountState.SIGNED_IN -> Toast.makeText(
+                        context,
+                        t("GOOGLE PLAY CONNECTED"),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    AccountState.SIGNED_OUT,
+                    AccountState.UNAVAILABLE -> accountBridge.retry()
+                }
             }
             SettingsButton.PRIVACY -> return { privacyBridge.openPrivacyPolicy() }
             SettingsButton.TERMS -> return { privacyBridge.openTermsOfService() }

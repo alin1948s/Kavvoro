@@ -17,7 +17,8 @@ internal object UiTranslations {
         "PERFORMANCE MODE", "Reduce effects for smoother gameplay", "ACCOUNT & CLOUD", "ACCOUNT",
         "Manage your account and progress", "INFO & LEGAL", "LANGUAGE", "TERMS OF SERVICE", "DATA DELETION",
         "Erase all local app data", "ABOUT MOONSOL STUDIOS",
-        "Collection, language and privacy are available from Settings.", "TERMS", "DATA"
+        "Collection, language and privacy are available from Settings.", "TERMS", "DATA",
+        "GOOGLE PLAY CONNECTED", "GOOGLE PLAY NOT CONNECTED"
     ).toSet()
 
     private val keys = listOf(
@@ -28,7 +29,8 @@ internal object UiTranslations {
         "NEW GAME", "NO ACTIVE RUN", "NO CURSE", "PERFORMANCE MODE", "Reduce effects for smoother gameplay", "RESET PROGRESS", "RESET PROGRESS?",
         "SCREEN SHAKE", "SETTINGS", "SOUND EFFECTS", "START FRESH WHEN READY", "START NEW GAME",
         "STANDARD RULES", "STEADY PROGRESSION", "TERMS", "TERMS OF SERVICE", "UNLOCKS", "Vibration on actions",
-        "WILD MODIFIERS", "Shake the screen on impact", "This cannot be undone."
+        "WILD MODIFIERS", "Shake the screen on impact", "This cannot be undone.",
+        "GOOGLE PLAY CONNECTED", "GOOGLE PLAY NOT CONNECTED"
     )
 
     private fun bundle(vararg values: String): Map<String, String> {
@@ -46,7 +48,8 @@ internal object UiTranslations {
         "NEW GAME", "NO ACTIVE RUN", "NO CURSE", "PERFORMANCE MODE", "Reduce effects for smoother gameplay", "RESET PROGRESS", "RESET PROGRESS?",
         "SCREEN SHAKE", "SETTINGS", "SOUND EFFECTS", "START FRESH WHEN READY", "START NEW GAME",
         "STANDARD RULES", "STEADY PROGRESSION", "TERMS", "TERMS OF SERVICE", "UNLOCKS", "Vibration on actions",
-        "WILD MODIFIERS", "Shake the screen on impact", "This cannot be undone."
+        "WILD MODIFIERS", "Shake the screen on impact", "This cannot be undone.",
+        "GOOGLE PLAY CONNECTED", "GOOGLE PLAY NOT CONNECTED"
     )
 
     private val localized: Map<KavvoroLanguage, Map<String, String>> = mapOf(
@@ -59,7 +62,8 @@ internal object UiTranslations {
             "JOC NOU", "FĂRĂ RUN ACTIV", "FĂRĂ BLESTEM", "MOD PERFORMANȚĂ", "Reduce efectele pentru un joc mai fluid", "RESETARE PROGRES", "RESETEZI PROGRESUL?",
             "ZGUDUIRE ECRAN", "SETĂRI", "EFECTE SONORE", "ÎNCEPE DE LA ZERO CÂND EȘTI GATA", "JOC NOU",
             "REGULI STANDARD", "PROGRES CONSTANT", "TERMENI", "TERMENI ȘI CONDIȚII", "DEBLOCĂRI", "Vibrații la acțiuni",
-            "MODIFICATORI HAOS", "Scutură ecranul la impact", "Acest lucru nu poate fi anulat."
+            "MODIFICATORI HAOS", "Scutură ecranul la impact", "Acest lucru nu poate fi anulat.",
+            "GOOGLE PLAY CONECTAT", "GOOGLE PLAY NECONECTAT"
         ),
         KavvoroLanguage.ES to bundle(
             "PARTIDA ACTIVA", "CUENTA", "CUENTA Y NUBE", "SONIDO", "SOBRE MOONSOL STUDIOS",
@@ -69,7 +73,8 @@ internal object UiTranslations {
             "NUEVA PARTIDA", "SIN PARTIDA ACTIVA", "SIN MALDICIÓN", "MODO RENDIMIENTO", "Reduce los efectos para una experiencia más fluida", "RESTABLECER PROGRESO", "¿RESTABLECER PROGRESO?",
             "VIBRACIÓN DE PANTALLA", "AJUSTES", "EFECTOS DE SONIDO", "EMPIEZA DE NUEVO CUANDO ESTÉS LISTO", "NUEVA PARTIDA",
             "REGLAS ESTÁNDAR", "PROGRESIÓN CONSTANTE", "TÉRMINOS", "TÉRMINOS Y CONDICIONES", "DESBLOQUEOS", "Vibración en las acciones",
-            "MODIFICADORES SALVAJES", "Agita la pantalla al impactar", "Esta acción no se puede deshacer."
+            "MODIFICADORES SALVAJES", "Agita la pantalla al impactar", "Esta acción no se puede deshacer.",
+            "GOOGLE PLAY CONECTADO", "GOOGLE PLAY NO CONECTADO"
         ),
         KavvoroLanguage.FR to bundle(
             "PARTIE EN COURS", "COMPTE", "COMPTE ET CLOUD", "SON", "À PROPOS DE MOONSOL STUDIOS",
@@ -79,7 +84,8 @@ internal object UiTranslations {
             "NOUVELLE PARTIE", "AUCUNE PARTIE EN COURS", "AUCUNE MALÉDICTION", "MODE PERFORMANCE", "Réduit les effets pour un jeu plus fluide", "RÉINITIALISER LA PROGRESSION", "RÉINITIALISER LA PROGRESSION ?",
             "VIBRATION DE L’ÉCRAN", "RÉGLAGES", "EFFETS SONORES", "REPARTIR DE ZÉRO QUAND TU ES PRÊT", "NOUVELLE PARTIE",
             "RÈGLES STANDARD", "PROGRESSION RÉGULIÈRE", "TERMES", "TERMES ET CONDITIONS", "DÉBLOCAGES", "Vibrations lors des actions",
-            "MODIFICATEURS SAUVAGES", "Secoue l’écran à l’impact", "Cette action est irréversible."
+            "MODIFICATEURS SAUVAGES", "Secoue l’écran à l’impact", "Cette action est irréversible.",
+            "GOOGLE PLAY CONNECTÉ", "GOOGLE PLAY NON CONNECTÉ"
         ),
         KavvoroLanguage.DE to bundle(
             "AKTIVER LAUF", "KONTO", "KONTO UND CLOUD", "TON", "ÜBER MOONSOL STUDIOS",
@@ -89,7 +95,8 @@ internal object UiTranslations {
             "NEUES SPIEL", "KEIN AKTIVER LAUF", "KEIN FLUCH", "LEISTUNGSMODUS", "Effekte für flüssigeres Spielen reduzieren", "FORTSCHRITT ZURÜCKSETZEN", "FORTSCHRITT ZURÜCKSETZEN?",
             "BILDSCHIRMRUCKELN", "EINSTELLUNGEN", "SOUNDEFFEKTE", "STARTE NEU, WENN DU BEREIT BIST", "NEUES SPIEL",
             "STANDARDREGELN", "STETIGER FORTSCHRITT", "BEGRIFFE", "NUTZUNGSBEDINGUNGEN", "FREISCHALTUNGEN", "Vibration bei Aktionen",
-            "WILDE MODIFIKATOREN", "Bildschirm bei Aufprall bewegen", "Das kann nicht rückgängig gemacht werden."
+            "WILDE MODIFIKATOREN", "Bildschirm bei Aufprall bewegen", "Das kann nicht rückgängig gemacht werden.",
+            "GOOGLE PLAY VERBUNDEN", "GOOGLE PLAY NICHT VERBUNDEN"
         ),
         KavvoroLanguage.IT to bundle(
             "PARTITA ATTIVA", "PROFILO", "ACCOUNT E CLOUD", "SUONO", "CHI SIAMO",
@@ -99,7 +106,8 @@ internal object UiTranslations {
             "NUOVA PARTITA", "NESSUNA PARTITA ATTIVA", "NESSUNA MALEDIZIONE", "MODALITÀ PRESTAZIONI", "Riduci gli effetti per un gioco più fluido", "AZZERA PROGRESSI", "AZZERARE I PROGRESSI?",
             "SCOSSA SCHERMO", "IMPOSTAZIONI", "EFFETTI SONORI", "RICOMINCIA DA ZERO QUANDO SEI PRONTO", "NUOVA PARTITA",
             "REGOLE STANDARD", "PROGRESSIONE COSTANTE", "TERMINI", "TERMINI E CONDIZIONI", "SBLOCCABILI", "Vibrazione nelle azioni",
-            "MODIFICATORI SELVAGGI", "Scuoti lo schermo all’impatto", "Questa operazione non può essere annullata."
+            "MODIFICATORI SELVAGGI", "Scuoti lo schermo all’impatto", "Questa operazione non può essere annullata.",
+            "GOOGLE PLAY CONNESSO", "GOOGLE PLAY NON CONNESSO"
         ),
         KavvoroLanguage.PT to bundle(
             "PARTIDA ATIVA", "CONTA", "CONTA E NUVEM", "ÁUDIO", "SOBRE A MOONSOL STUDIOS",
@@ -109,7 +117,8 @@ internal object UiTranslations {
             "NOVO JOGO", "SEM PARTIDA ATIVA", "SEM MALDIÇÃO", "MODO DE DESEMPENHO", "Reduz os efeitos para uma experiência mais suave", "REPOR PROGRESSO", "REPOR O PROGRESSO?",
             "ABANÃO DO ECRÃ", "DEFINIÇÕES", "EFEITOS SONOROS", "COMEÇA DE NOVO QUANDO ESTIVERES PRONTO", "NOVO JOGO",
             "REGRAS PADRÃO", "PROGRESSÃO ESTÁVEL", "TERMOS", "TERMOS E CONDIÇÕES", "DESBLOQUEIOS", "Vibração nas ações",
-            "MODIFICADORES SELVAGENS", "Abanar o ecrã no impacto", "Esta ação não pode ser anulada."
+            "MODIFICADORES SELVAGENS", "Abanar o ecrã no impacto", "Esta ação não pode ser anulada.",
+            "GOOGLE PLAY LIGADO", "GOOGLE PLAY DESLIGADO"
         ),
         KavvoroLanguage.NL to bundle(
             "ACTIEVE RUN", "PROFIEL", "ACCOUNT EN CLOUD", "GELUID", "OVER MOONSOL STUDIOS",
@@ -119,7 +128,8 @@ internal object UiTranslations {
             "NIEUW SPEL", "GEEN ACTIEVE RUN", "GEEN VLOEK", "PRESTATIEMODUS", "Verminder effecten voor vloeiender spel", "VOORTGANG RESETTEN", "VOORTGANG RESETTEN?",
             "SCHERMBEWEGING", "INSTELLINGEN", "GELUIDSEFFECTEN", "BEGIN OPNIEUW ALS JE KLAAR BENT", "NIEUW SPEL",
             "STANDAARDREGELS", "GELIJKMATIGE VOORTGANG", "VOORWAARDEN", "ALGEMENE VOORWAARDEN", "ONTGRENDELINGEN", "Trillen bij acties",
-            "WILDE MODIFIERS", "Schud het scherm bij impact", "Dit kan niet ongedaan worden gemaakt."
+            "WILDE MODIFIERS", "Schud het scherm bij impact", "Dit kan niet ongedaan worden gemaakt.",
+            "GOOGLE PLAY VERBONDEN", "GOOGLE PLAY NIET VERBONDEN"
         ),
         KavvoroLanguage.PL to bundle(
             "AKTYWNA RUNDA", "KONTO", "KONTO I CHMURA", "DŹWIĘK", "O MOONSOL STUDIOS",
@@ -129,7 +139,8 @@ internal object UiTranslations {
             "NOWA GRA", "BRAK AKTYWNEJ RUNDY", "BRAK KLĄTWY", "TRYB WYDAJNOŚCI", "Ogranicz efekty dla płynniejszej gry", "RESETUJ POSTĘP", "ZRESETOWAĆ POSTĘP?",
             "WSTRZĄSY EKRANU", "USTAWIENIA", "EFEKTY DŹWIĘKOWE", "ZACZNIJ OD NOWA, GDY BĘDZIESZ GOTOWY", "NOWA GRA",
             "ZASADY STANDARDOWE", "STAŁY POSTĘP", "WARUNKI", "REGULAMIN", "ODBLOKOWANIA", "Wibracje podczas akcji",
-            "DZIKIE MODYFIKATORY", "Wstrząs ekranu przy uderzeniu", "Tej operacji nie można cofnąć."
+            "DZIKIE MODYFIKATORY", "Wstrząs ekranu przy uderzeniu", "Tej operacji nie można cofnąć.",
+            "GOOGLE PLAY POŁĄCZONE", "GOOGLE PLAY NIEPOŁĄCZONE"
         ),
         KavvoroLanguage.CS to bundle(
             "AKTIVNÍ BĚH", "ÚČET", "ÚČET A CLOUD", "ZVUK", "O MOONSOL STUDIOS",
@@ -139,7 +150,8 @@ internal object UiTranslations {
             "NOVÁ HRA", "ŽÁDNÝ AKTIVNÍ BĚH", "ŽÁDNÁ KLETBA", "VÝKONNOSTNÍ REŽIM", "Omezit efekty pro plynulejší hru", "RESETOVAT POSTUP", "RESETOVAT POSTUP?",
             "OTŘES OBRAZOVKY", "NASTAVENÍ", "ZVUKOVÉ EFEKTY", "ZAČNI ZNOVU, AŽ BUDEŠ PŘIPRAVEN", "NOVÁ HRA",
             "STANDARDNÍ PRAVIDLA", "STÁLÝ POSTUP", "PODMÍNKY", "OBCHODNÍ PODMÍNKY", "ODBLOKOVÁNÍ", "Vibrace při akcích",
-            "DIVOKÉ MODIFIKÁTORY", "Otřes obrazovky při nárazu", "Tuto akci nelze vrátit."
+            "DIVOKÉ MODIFIKÁTORY", "Otřes obrazovky při nárazu", "Tuto akci nelze vrátit.",
+            "GOOGLE PLAY PŘIPOJENO", "GOOGLE PLAY NEPŘIPOJENO"
         ),
         KavvoroLanguage.SV to bundle(
             "AKTIV RUNDA", "KONTO", "KONTO OCH MOLN", "LJUD", "OM MOONSOL STUDIOS",
@@ -149,7 +161,8 @@ internal object UiTranslations {
             "NYTT SPEL", "INGEN AKTIV RUNDA", "INGEN FÖRBANNELSE", "PRESTANDALÄGE", "Minska effekter för smidigare spel", "ÅTERSTÄLL FRAMSTEG", "ÅTERSTÄLLA FRAMSTEG?",
             "SKÄRMSKAKNING", "INSTÄLLNINGAR", "LJUDEFFEKTER", "BÖRJA OM NÄR DU ÄR REDO", "NYTT SPEL",
             "STANDARDREGLER", "JÄMN UTVECKLING", "VILLKOR", "VILLKOR", "UPPLÅSNINGAR", "Vibration vid åtgärder",
-            "VILDA MODIFIERARE", "Skaka skärmen vid kollision", "Detta kan inte ångras."
+            "VILDA MODIFIERARE", "Skaka skärmen vid kollision", "Detta kan inte ångras.",
+            "GOOGLE PLAY ANSLUTET", "GOOGLE PLAY EJ ANSLUTET"
         ),
         KavvoroLanguage.FI to bundle(
             "AKTIIVINEN PELI", "TILI", "TILI JA PILVI", "ÄÄNI", "MOONSOL STUDIOS - TIETOJA",
@@ -159,7 +172,8 @@ internal object UiTranslations {
             "UUSI PELI", "EI AKTIIVISTA PELIÄ", "EI KIROUSTA", "SUORITUSKYKYTILA", "Vähennä tehosteita sujuvampaa peliä varten", "NOLLAA EDISTYMINEN", "NOLLATAANKO EDISTYMINEN?",
             "NÄYTÖN TÄRINÄ", "ASETUKSET", "ÄÄNITEHOSTEET", "ALOITA ALUSTA, KUN OLET VALMIS", "UUSI PELI",
             "VAKIOSÄÄNNÖT", "TASAINEN EDISTYMINEN", "EHDOT", "KÄYTTÖEHDOT", "AVAUKSET", "Värinä toimissa",
-            "VILLIÄ MUUNTAJIA", "Tärisytä näyttöä törmäyksessä", "Tätä ei voi kumota."
+            "VILLIÄ MUUNTAJIA", "Tärisytä näyttöä törmäyksessä", "Tätä ei voi kumota.",
+            "GOOGLE PLAY YHDISTETTY", "GOOGLE PLAY EI YHDISTETTY"
         ),
         KavvoroLanguage.TR to bundle(
             "AKTİF OYUN", "HESAP", "HESAP VE BULUT", "SES", "MOONSOL STUDIOS HAKKINDA",
@@ -169,7 +183,8 @@ internal object UiTranslations {
             "YENİ OYUN", "AKTİF OYUN YOK", "LANET YOK", "PERFORMANS MODU", "Daha akıcı oyun için efektleri azalt", "İLERLEMEYİ SIFIRLA", "İLERLEME SIFIRLANSIN MI?",
             "EKRAN SARSINTISI", "AYARLAR", "SES EFEKTLERİ", "HAZIR OLDUĞUNDA YENİDEN BAŞLA", "YENİ OYUN",
             "STANDART KURALLAR", "DÜZENLİ İLERLEME", "ŞARTLAR", "HİZMET ŞARTLARI", "KİLİT AÇMALAR", "Eylemlerde titreşim",
-            "ÇILGIN DEĞİŞTİRİCİLER", "Darbede ekranı salla", "Bu işlem geri alınamaz."
+            "ÇILGIN DEĞİŞTİRİCİLER", "Darbede ekranı salla", "Bu işlem geri alınamaz.",
+            "GOOGLE PLAY BAĞLI", "GOOGLE PLAY BAĞLI DEĞİL"
         ),
         KavvoroLanguage.RU to bundle(
             "АКТИВНАЯ ИГРА", "АККАУНТ", "АККАУНТ И ОБЛАКО", "ЗВУК", "О MOONSOL STUDIOS",
@@ -179,7 +194,8 @@ internal object UiTranslations {
             "НОВАЯ ИГРА", "НЕТ АКТИВНОЙ ИГРЫ", "БЕЗ ПРОКЛЯТИЯ", "РЕЖИМ ПРОИЗВОДИТЕЛЬНОСТИ", "Уменьшить эффекты для плавной игры", "СБРОСИТЬ ПРОГРЕСС", "СБРОСИТЬ ПРОГРЕСС?",
             "ДРОЖАНИЕ ЭКРАНА", "НАСТРОЙКИ", "ЗВУКОВЫЕ ЭФФЕКТЫ", "НАЧНИТЕ ЗАНОВО, КОГДА БУДЕТЕ ГОТОВЫ", "НОВАЯ ИГРА",
             "СТАНДАРТНЫЕ ПРАВИЛА", "РАВНОМЕРНЫЙ ПРОГРЕСС", "УСЛОВИЯ", "УСЛОВИЯ ИСПОЛЬЗОВАНИЯ", "РАЗБЛОКИРОВКИ", "Вибрация при действиях",
-            "ДИКИЕ МОДИФИКАТОРЫ", "Трясти экран при ударе", "Это действие нельзя отменить."
+            "ДИКИЕ МОДИФИКАТОРЫ", "Трясти экран при ударе", "Это действие нельзя отменить.",
+            "GOOGLE PLAY ПОДКЛЮЧЁН", "GOOGLE PLAY НЕ ПОДКЛЮЧЁН"
         ),
         KavvoroLanguage.UK to bundle(
             "АКТИВНА ГРА", "ОБЛІКОВИЙ ЗАПИС", "ОБЛІКОВИЙ ЗАПИС І ХМАРА", "ЗВУК", "ПРО MOONSOL STUDIOS",
@@ -189,7 +205,8 @@ internal object UiTranslations {
             "НОВА ГРА", "НЕМАЄ АКТИВНОЇ ГРИ", "БЕЗ ПРОКЛЯТТЯ", "РЕЖИМ ПРОДУКТИВНОСТІ", "Зменшити ефекти для плавнішої гри", "СКИНУТИ ПРОГРЕС", "СКИНУТИ ПРОГРЕС?",
             "ТРУСІННЯ ЕКРАНА", "НАЛАШТУВАННЯ", "ЗВУКОВІ ЕФЕКТИ", "ПОЧНІТЬ СПОЧАТКУ, КОЛИ БУДЕТЕ ГОТОВІ", "НОВА ГРА",
             "СТАНДАРТНІ ПРАВИЛА", "СТАЛИЙ ПРОГРЕС", "УМОВИ", "УМОВИ КОРИСТУВАННЯ", "РОЗБЛОКУВАННЯ", "Вібрація під час дій",
-            "ДИКІ МОДИФІКАТОРИ", "Трусіть екран під час удару", "Цю дію неможливо скасувати."
+            "ДИКІ МОДИФІКАТОРИ", "Трусіть екран під час удару", "Цю дію неможливо скасувати.",
+            "GOOGLE PLAY ПІДКЛЮЧЕНО", "GOOGLE PLAY НЕ ПІДКЛЮЧЕНО"
         ),
         KavvoroLanguage.AR to bundle(
             "جولة نشطة", "الحساب", "الحساب والسحابة", "الصوت", "حول MOONSOL STUDIOS",
@@ -199,7 +216,8 @@ internal object UiTranslations {
             "لعبة جديدة", "لا توجد جولة نشطة", "بلا لعنة", "وضع الأداء", "تقليل المؤثرات للعب أكثر سلاسة", "إعادة ضبط التقدم", "إعادة ضبط التقدم؟",
             "اهتزاز الشاشة", "الإعدادات", "المؤثرات الصوتية", "ابدأ من جديد عندما تكون مستعدًا", "لعبة جديدة",
             "القواعد القياسية", "تقدم ثابت", "الشروط", "الشروط والأحكام", "عمليات الفتح", "اهتزاز عند الإجراءات",
-            "معدلات فوضوية", "اهتز الشاشة عند الاصطدام", "لا يمكن التراجع عن هذا الإجراء."
+            "معدلات فوضوية", "اهتز الشاشة عند الاصطدام", "لا يمكن التراجع عن هذا الإجراء.",
+            "تم الاتصال بـ Google Play", "Google Play غير متصل"
         ),
         KavvoroLanguage.HI to bundle(
             "सक्रिय रन", "खाता", "खाता और क्लाउड", "ऑडियो", "MOONSOL STUDIOS के बारे में",
@@ -209,7 +227,8 @@ internal object UiTranslations {
             "नया गेम", "कोई सक्रिय रन नहीं", "कोई अभिशाप नहीं", "परफॉर्मेंस मोड", "गेम को सुगम बनाने के लिए प्रभाव कम करें", "प्रगति रीसेट करें", "प्रगति रीसेट करें?",
             "स्क्रीन हिलना", "सेटिंग्स", "साउंड इफेक्ट्स", "तैयार होने पर नए सिरे से शुरू करें", "नया गेम",
             "मानक नियम", "स्थिर प्रगति", "शर्तें", "नियम और शर्तें", "अनलॉक", "क्रियाओं पर कंपन",
-            "वाइल्ड मॉडिफ़ायर", "टक्कर पर स्क्रीन हिलाएँ", "इसे पूर्ववत नहीं किया जा सकता।"
+            "वाइल्ड मॉडिफ़ायर", "टक्कर पर स्क्रीन हिलाएँ", "इसे पूर्ववत नहीं किया जा सकता।",
+            "Google Play कनेक्ट है", "Google Play कनेक्ट नहीं है"
         ),
         KavvoroLanguage.TH to bundle(
             "รอบที่กำลังเล่น", "บัญชี", "บัญชีและคลาวด์", "เสียง", "เกี่ยวกับ MOONSOL STUDIOS",
@@ -219,7 +238,8 @@ internal object UiTranslations {
             "เกมใหม่", "ไม่มีรอบที่กำลังเล่น", "ไม่มีคำสาป", "โหมดประสิทธิภาพ", "ลดเอฟเฟกต์เพื่อการเล่นที่ลื่นไหล", "รีเซ็ตความคืบหน้า", "รีเซ็ตความคืบหน้าไหม",
             "สั่นหน้าจอ", "การตั้งค่า", "เอฟเฟกต์เสียง", "เริ่มใหม่เมื่อพร้อม", "เกมใหม่",
             "กฎมาตรฐาน", "ความคืบหน้าแบบต่อเนื่อง", "ข้อกำหนด", "ข้อกำหนดและเงื่อนไข", "การปลดล็อก", "สั่นเมื่อทำงาน",
-            "ตัวปรับแต่งสุดโหด", "สั่นหน้าจอเมื่อกระแทก", "การดำเนินการนี้ย้อนกลับไม่ได้"
+            "ตัวปรับแต่งสุดโหด", "สั่นหน้าจอเมื่อกระแทก", "การดำเนินการนี้ย้อนกลับไม่ได้",
+            "เชื่อมต่อ Google Play แล้ว", "ยังไม่ได้เชื่อมต่อ Google Play"
         ),
         KavvoroLanguage.ID to bundle(
             "PERMAINAN AKTIF", "AKUN", "AKUN DAN CLOUD", "SUARA", "TENTANG MOONSOL STUDIOS",
@@ -229,7 +249,8 @@ internal object UiTranslations {
             "PERMAINAN BARU", "TIDAK ADA PERMAINAN AKTIF", "TANPA KUTUKAN", "MODE PERFORMA", "Kurangi efek agar permainan lebih lancar", "RESET PROGRES", "RESET PROGRES?",
             "GOYANGAN LAYAR", "PENGATURAN", "EFEK SUARA", "MULAI DARI AWAL SAAT SIAP", "PERMAINAN BARU",
             "ATURAN STANDAR", "PROGRES STABIL", "KETENTUAN", "SYARAT DAN KETENTUAN", "PEMBUKAAN", "Getaran saat beraksi",
-            "MODIFIKATOR LIAR", "Goyangkan layar saat benturan", "Tindakan ini tidak dapat dibatalkan."
+            "MODIFIKATOR LIAR", "Goyangkan layar saat benturan", "Tindakan ini tidak dapat dibatalkan.",
+            "GOOGLE PLAY TERHUBUNG", "GOOGLE PLAY TIDAK TERHUBUNG"
         ),
         KavvoroLanguage.VI to bundle(
             "VÁN ĐANG CHƠI", "TÀI KHOẢN", "TÀI KHOẢN VÀ ĐÁM MÂY", "ÂM THANH", "VỀ MOONSOL STUDIOS",
@@ -239,7 +260,8 @@ internal object UiTranslations {
             "VÁN MỚI", "KHÔNG CÓ VÁN ĐANG CHƠI", "KHÔNG CÓ LỜI NGUYỀN", "CHẾ ĐỘ HIỆU NĂNG", "Giảm hiệu ứng để chơi mượt hơn", "ĐẶT LẠI TIẾN TRÌNH", "ĐẶT LẠI TIẾN TRÌNH?",
             "RUNG MÀN HÌNH", "CÀI ĐẶT", "HIỆU ỨNG ÂM THANH", "BẮT ĐẦU LẠI KHI SẴN SÀNG", "VÁN MỚI",
             "LUẬT TIÊU CHUẨN", "TIẾN TRÌNH ỔN ĐỊNH", "ĐIỀU KHOẢN", "ĐIỀU KHOẢN DỊCH VỤ", "MỞ KHÓA", "Rung khi thao tác",
-            "BỘ BIẾN ĐỔI HỖN LOẠN", "Rung màn hình khi va chạm", "Thao tác này không thể hoàn tác."
+            "BỘ BIẾN ĐỔI HỖN LOẠN", "Rung màn hình khi va chạm", "Thao tác này không thể hoàn tác.",
+            "GOOGLE PLAY ĐÃ KẾT NỐI", "GOOGLE PLAY CHƯA KẾT NỐI"
         ),
         KavvoroLanguage.JA to bundle(
             "プレイ中", "アカウント", "アカウントとクラウド", "オーディオ", "MOONSOL STUDIOSについて",
@@ -249,7 +271,8 @@ internal object UiTranslations {
             "新しいゲーム", "アクティブなプレイなし", "呪いなし", "パフォーマンスモード", "滑らかなプレイのため効果を減らす", "進行状況をリセット", "進行状況をリセットしますか？",
             "画面揺れ", "設定", "サウンドエフェクト", "準備ができたら最初から開始", "新しいゲーム",
             "標準ルール", "安定した進行", "規約", "利用規約", "アンロック", "操作時の振動",
-            "ワイルドモディファイア", "衝撃時に画面を揺らす", "この操作は取り消せません。"
+            "ワイルドモディファイア", "衝撃時に画面を揺らす", "この操作は取り消せません。",
+            "Google Play に接続済み", "Google Play 未接続"
         ),
         KavvoroLanguage.KO to bundle(
             "진행 중인 게임", "계정", "계정 및 클라우드", "오디오", "MOONSOL STUDIOS 소개",
@@ -259,7 +282,8 @@ internal object UiTranslations {
             "새 게임", "진행 중인 게임 없음", "저주 없음", "성능 모드", "더 부드러운 플레이를 위해 효과 줄이기", "진행 상황 초기화", "진행 상황을 초기화할까요?",
             "화면 흔들림", "설정", "음향 효과", "준비되면 새로 시작", "새 게임",
             "기본 규칙", "꾸준한 진행", "약관", "서비스 약관", "잠금 해제", "동작 시 진동",
-            "와일드 변형", "충돌 시 화면 흔들기", "이 작업은 취소할 수 없습니다."
+            "와일드 변형", "충돌 시 화면 흔들기", "이 작업은 취소할 수 없습니다.",
+            "Google Play 연결됨", "Google Play 연결되지 않음"
         ),
         KavvoroLanguage.ZH to bundle(
             "进行中的游戏", "账户", "账户与云端", "音频", "关于 MOONSOL STUDIOS",
@@ -269,7 +293,8 @@ internal object UiTranslations {
             "新游戏", "没有进行中的游戏", "无诅咒", "性能模式", "减少效果以获得更流畅的游戏", "重置进度", "要重置进度吗？",
             "屏幕震动", "设置", "音效", "准备好后重新开始", "新游戏",
             "标准规则", "稳定推进", "条款", "服务条款", "解锁内容", "操作时振动",
-            "狂野修正", "碰撞时震动屏幕", "此操作无法撤销。"
+            "狂野修正", "碰撞时震动屏幕", "此操作无法撤销。",
+            "Google Play 已连接", "Google Play 未连接"
         ),
         KavvoroLanguage.ZH_TW to bundle(
             "進行中的遊戲", "帳戶", "帳戶與雲端", "音訊", "關於 MOONSOL STUDIOS",
@@ -279,7 +304,8 @@ internal object UiTranslations {
             "新遊戲", "沒有進行中的遊戲", "無詛咒", "效能模式", "減少效果以獲得更流暢的遊戲", "重設進度", "要重設進度嗎？",
             "螢幕震動", "設定", "音效", "準備好後重新開始", "新遊戲",
             "標準規則", "穩定推進", "條款", "服務條款", "解鎖內容", "操作時震動",
-            "狂野修正", "碰撞時震動螢幕", "此操作無法復原。"
+            "狂野修正", "碰撞時震動螢幕", "此操作無法復原。",
+            "Google Play 已連線", "Google Play 未連線"
         )
     )
 

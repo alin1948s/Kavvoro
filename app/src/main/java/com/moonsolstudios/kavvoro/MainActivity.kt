@@ -16,6 +16,7 @@ import com.moonsolstudios.kavvoro.ads.InterstitialAdController
 import com.moonsolstudios.kavvoro.ads.RewardedAdController
 import com.moonsolstudios.kavvoro.billing.PlayBillingController
 import com.moonsolstudios.kavvoro.playgames.PlayGamesLeaderboardController
+import com.moonsolstudios.kavvoro.playgames.PlayGamesAccountController
 import com.moonsolstudios.kavvoro.privacy.AgeGroup
 import com.moonsolstudios.kavvoro.privacy.AgeProfileStore
 import com.moonsolstudios.kavvoro.privacy.PrivacyAdsController
@@ -26,6 +27,8 @@ class MainActivity : ComponentActivity() {
     private var gameView: ChaosGameView? = null
     private var billingController: PlayBillingController? = null
     private var privacyAdsController: PrivacyAdsController? = null
+    private var accountController: PlayGamesAccountController? = null
+    private var accountStarted = false
     private val firstFrameStartupGate = FirstFrameStartupGate()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,6 +60,7 @@ class MainActivity : ComponentActivity() {
         val rewardedAds = RewardedAdController(this, BuildConfig.ADMOB_REWARDED_CONTINUE_ID)
         val privacy = PrivacyAdsController(this, ads, rewardedAds)
         val billing = PlayBillingController(this)
+        val account = PlayGamesAccountController(this)
 
         val view = ChaosGameView(
             context = this,
@@ -73,7 +77,8 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             },
-            leaderboardBridge = PlayGamesLeaderboardController(this),
+            leaderboardBridge = PlayGamesLeaderboardController(this, account),
+            accountBridge = account,
             privacyBridge = privacy,
             purchaseBridge = billing,
             onFirstFrameRendered = {
@@ -82,6 +87,8 @@ class MainActivity : ComponentActivity() {
                         return@runOnce
                     }
                     reportFullyDrawn()
+                    accountStarted = true
+                    account.start { state -> gameView?.updateAccountState(state) }
                     privacy.start(ageGroup)
                     billing.start()
                 }
@@ -102,6 +109,7 @@ class MainActivity : ComponentActivity() {
         }
         billingController = billing
         privacyAdsController = privacy
+        accountController = account
         gameView = view
         setContentView(view)
         hideSystemBars()
@@ -111,6 +119,9 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         hideSystemBars()
         gameView?.resumeGame()
+        if (accountStarted) {
+            accountController?.refresh()
+        }
         billingController?.refreshPurchases()
     }
 
@@ -123,6 +134,8 @@ class MainActivity : ComponentActivity() {
         firstFrameStartupGate.cancel()
         privacyAdsController?.close()
         privacyAdsController = null
+        accountStarted = false
+        accountController = null
         billingController?.close()
         billingController = null
         gameView?.releaseGame()
