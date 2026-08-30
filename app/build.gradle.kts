@@ -20,7 +20,7 @@ android {
 
     // The hosted legal pages under /web are the canonical source. Include that same
     // tree in the APK so the in-game reader remains available without a network
-    // connection and cannot drift from the published copy.
+    // connection while keeping one source of truth at build/release time.
     sourceSets {
         getByName("main") {
             assets.directories.add(rootProject.file("web").absolutePath)
