@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.ClipData
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
@@ -87,6 +88,7 @@ import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.i18n.KavvoroLanguage
 import com.moonsolstudios.kavvoro.i18n.TutorialCopy
 import com.moonsolstudios.kavvoro.repository.BallSkinCatalog
+import com.moonsolstudios.kavvoro.repository.AccountProgressStore
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.BEST_STREAK_KEY
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.DEFAULT_SKIN_ID
@@ -134,7 +136,8 @@ class ChaosGameView(
     private val physics = PhysicsEngine()
     private val replay = ReplayRecorder()
     private val audio = KavvoroSoundEngine(context.applicationContext)
-    private val prefs = context.getSharedPreferences("kavvoro_progress", Context.MODE_PRIVATE)
+    private val accountProgressStore = AccountProgressStore(context)
+    private var prefs: SharedPreferences = accountProgressStore.activePreferences()
     private var sfxMuted = prefs.getBoolean(SFX_MUTED_KEY, false)
     private var musicMuted = prefs.getBoolean(MUSIC_MUTED_KEY, false)
     private val ballSkins = BallSkinCatalog.ALL_SKINS
@@ -220,9 +223,7 @@ class ChaosGameView(
     private var selectedSkinId = prefs.getString(SELECTED_SKIN_KEY, DEFAULT_SKIN_ID) ?: DEFAULT_SKIN_ID
     private var collectionFocusSkinId = selectedSkinId
     private val premiumPricesBySkin = mutableMapOf<String, String>()
-    private val progressRepository by lazy {
-        GameProgressRepository(prefs, ballSkins, premiumPricesBySkin, ::t)
-    }
+    private var progressRepository = GameProgressRepository(prefs, ballSkins, premiumPricesBySkin, ::t)
     private var rewardMessage = ""
     private var collectionMessage = ""
     private var collectionMessageTimer = 0f
@@ -541,13 +542,55 @@ class ChaosGameView(
         return true
     }
 
-    fun updateAccountState(next: AccountState) {
+    fun updateAccountState(next: AccountState, profileId: String? = accountBridge.profileId) {
         post {
             synchronized(lock) {
+                val nextPrefs = when (next) {
+                    AccountState.SIGNED_IN -> accountProgressStore.onSignedIn(profileId)
+                    AccountState.SIGNED_OUT,
+                    AccountState.UNAVAILABLE -> accountProgressStore.onSignedOut()
+                    AccountState.CONNECTING -> null
+                }
+                if (nextPrefs != null && nextPrefs !== prefs) {
+                    prefs = nextPrefs
+                    progressRepository = GameProgressRepository(prefs, ballSkins, premiumPricesBySkin, ::t)
+                    reloadProfileState()
+                }
                 accountState = next
                 postInvalidate()
             }
         }
+    }
+
+    private fun reloadProfileState() {
+        sfxMuted = prefs.getBoolean(SFX_MUTED_KEY, false)
+        musicMuted = prefs.getBoolean(MUSIC_MUTED_KEY, false)
+        settingsMasterVolume = prefs.getInt(GameProgressRepository.SETTINGS_MASTER_VOLUME_KEY, 100).coerceIn(0, 100)
+        settingsMusicVolume = prefs.getInt(GameProgressRepository.SETTINGS_MUSIC_VOLUME_KEY, 100).coerceIn(0, 100)
+        settingsSfxVolume = prefs.getInt(GameProgressRepository.SETTINGS_SFX_VOLUME_KEY, 100).coerceIn(0, 100)
+        settingsHapticEnabled = prefs.getBoolean(GameProgressRepository.SETTINGS_HAPTIC_KEY, true)
+        settingsScreenShake = prefs.getBoolean(GameProgressRepository.SETTINGS_SCREEN_SHAKE_KEY, true)
+        settingsPerformanceMode = prefs.getBoolean(GameProgressRepository.SETTINGS_PERFORMANCE_KEY, false)
+        streak = prefs.getInt("streak_classic", prefs.getInt("clear_streak", 0))
+        selectedSkinId = prefs.getString(SELECTED_SKIN_KEY, DEFAULT_SKIN_ID) ?: DEFAULT_SKIN_ID
+        if (ballSkins.none { it.id == selectedSkinId && progressRepository.isSkinUnlocked(it) }) {
+            selectedSkinId = DEFAULT_SKIN_ID
+        }
+        collectionFocusSkinId = selectedSkinId
+        selectedMenuMode = GameMode.CLASSIC
+        gameMode = GameMode.CLASSIC
+        levelIndex = progressRepository.modeProgress(gameMode)
+        menuState = MenuState.MODES
+        settingsResetConfirm = false
+        if (screen == Screen.GAME) {
+            screen = Screen.MENU
+        }
+        state = GameState.READY
+        audio.setSfxMuted(sfxMuted)
+        audio.setMusicMuted(musicMuted)
+        audio.setVolumes(settingsMasterVolume, settingsMusicVolume, settingsSfxVolume)
+        isHapticFeedbackEnabled = settingsHapticEnabled
+        configureStage(viewWidth, viewHeight, reset = true)
     }
 
     override fun performClick(): Boolean {

@@ -22,6 +22,8 @@ The app currently integrates:
 - Google Play Billing.
 - Local age group storage for ad treatment.
 - Local gameplay progress, HYPE, unlocks, settings, and purchases entitlement cache.
+  Gameplay data is isolated in an opaque local slot per Play Games player ID;
+  this is device-local storage, not Saved Games or cross-device cloud sync.
 - Share-video export through Android share sheet.
 
 ## Current App Behavior

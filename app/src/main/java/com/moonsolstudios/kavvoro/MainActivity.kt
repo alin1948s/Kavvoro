@@ -88,7 +88,7 @@ class MainActivity : ComponentActivity() {
                     }
                     reportFullyDrawn()
                     accountStarted = true
-                    account.start { state -> gameView?.updateAccountState(state) }
+                    account.start { state -> gameView?.updateAccountState(state, account.profileId) }
                     privacy.start(ageGroup)
                     billing.start()
                 }

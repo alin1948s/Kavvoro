@@ -275,13 +275,18 @@ first frame. After the first frame, the game observes silent authentication and
 shows the result in Settings and Leaderboards. If authentication is unavailable,
 the game remains playable offline and Account/Leaderboards expose an explicit
 retry action. Play Games is used for platform features (leaderboards and score
-submission); local progress is not presented as cloud save.
+submission). Local gameplay progress is stored in an opaque, per-player
+SharedPreferences slot selected by the Play Games player ID; it is not a cloud
+save and is not synchronized between devices. The first authenticated player
+inherits any existing guest progress, while later accounts receive an isolated
+slot. When authentication is unavailable, the current progress remains available
+locally and leaderboard actions stay gated behind sign-in.
 
 The Account row is intentionally kept in Settings as the canonical platform-
 account entry point. Do not add a blocking login dialog or a permanent Home
 login CTA. If cloud save or cross-platform identity is added later, introduce a
-separate backend identity flow instead of treating the Play Games player ID as
-the game's primary account.
+separate backend identity flow; the current player ID is only a local storage
+namespace and must not be treated as a backend account.
 
 ## Build
 

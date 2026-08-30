@@ -14,6 +14,8 @@ enum class AccountState {
 interface AccountBridge {
     val configured: Boolean
     val state: AccountState
+    /** Stable Play Games player ID used to select the local progress slot. */
+    val profileId: String?
 
     fun start(onStateChanged: (AccountState) -> Unit)
 
@@ -26,6 +28,7 @@ interface AccountBridge {
         val NONE = object : AccountBridge {
             override val configured: Boolean = false
             override val state: AccountState = AccountState.UNAVAILABLE
+            override val profileId: String? = null
             override fun start(onStateChanged: (AccountState) -> Unit) = onStateChanged(state)
             override fun refresh() = Unit
             override fun retry() = Unit

@@ -1,6 +1,7 @@
 package com.moonsolstudios.kavvoro.playgames
 
 import android.app.Activity
+import android.util.Log
 import android.widget.Toast
 import com.google.android.gms.games.PlayGames
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
@@ -24,6 +25,12 @@ class PlayGamesAccountController(
         AccountState.UNAVAILABLE
     }
 
+    @Volatile
+    private var currentProfileId: String? = null
+
+    override val profileId: String?
+        get() = currentProfileId
+
     private var stateListener: ((AccountState) -> Unit)? = null
 
     override val state: AccountState
@@ -42,13 +49,12 @@ class PlayGamesAccountController(
         publish(AccountState.CONNECTING)
         PlayGames.getGamesSignInClient(activity).isAuthenticated
             .addOnCompleteListener(activity) { task ->
-                publish(
-                    if (task.isSuccessful && task.result.isAuthenticated) {
-                        AccountState.SIGNED_IN
-                    } else {
-                        AccountState.SIGNED_OUT
-                    }
-                )
+                if (task.isSuccessful && task.result.isAuthenticated) {
+                    loadProfileId { publish(AccountState.SIGNED_IN) }
+                } else {
+                    currentProfileId = null
+                    publish(AccountState.SIGNED_OUT)
+                }
             }
     }
 
@@ -61,8 +67,9 @@ class PlayGamesAccountController(
         PlayGames.getGamesSignInClient(activity).signIn()
             .addOnCompleteListener(activity) { task ->
                 if (task.isSuccessful && task.result.isAuthenticated) {
-                    publish(AccountState.SIGNED_IN)
+                    loadProfileId { publish(AccountState.SIGNED_IN) }
                 } else {
+                    currentProfileId = null
                     publish(AccountState.SIGNED_OUT)
                     Toast.makeText(
                         activity,
@@ -86,16 +93,21 @@ class PlayGamesAccountController(
         PlayGames.getGamesSignInClient(activity).isAuthenticated
             .addOnCompleteListener(activity) { task ->
                 if (task.isSuccessful && task.result.isAuthenticated) {
-                    publish(AccountState.SIGNED_IN)
-                    onAuthenticated()
+                    loadProfileId {
+                        publish(AccountState.SIGNED_IN)
+                        onAuthenticated()
+                    }
                 } else {
                     publish(AccountState.CONNECTING)
                     PlayGames.getGamesSignInClient(activity).signIn()
                         .addOnCompleteListener(activity) { signInTask ->
                             if (signInTask.isSuccessful && signInTask.result.isAuthenticated) {
-                                publish(AccountState.SIGNED_IN)
-                                onAuthenticated()
+                                loadProfileId {
+                                    publish(AccountState.SIGNED_IN)
+                                    onAuthenticated()
+                                }
                             } else {
+                                currentProfileId = null
                                 publish(AccountState.SIGNED_OUT)
                                 onFailure()
                             }
@@ -107,5 +119,24 @@ class PlayGamesAccountController(
     private fun publish(next: AccountState) {
         currentState = next
         stateListener?.invoke(next)
+    }
+
+    private fun loadProfileId(onLoaded: () -> Unit) {
+        PlayGames.getPlayersClient(activity).currentPlayerId
+            .addOnCompleteListener(activity) { task ->
+                currentProfileId = if (task.isSuccessful) {
+                    task.result?.takeIf { it.isNotBlank() }
+                } else {
+                    null
+                }
+                if (currentProfileId == null) {
+                    Log.w(TAG, "Play Games authenticated without a player ID; using guest progress")
+                }
+                onLoaded()
+            }
+    }
+
+    private companion object {
+        const val TAG = "KavvoroAccount"
     }
 }
