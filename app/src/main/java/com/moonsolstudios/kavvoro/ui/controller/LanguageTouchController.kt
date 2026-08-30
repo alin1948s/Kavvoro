@@ -22,7 +22,7 @@ object LanguageTouchController {
         itemRects: List<RectF>
     ): Int {
         if (y < viewportTop || y > viewportBottom) return -1
-        val displayCount = KavvoroLanguage.entries.size
+        val displayCount = itemRects.size
         return (0 until displayCount).firstOrNull { itemRects.getOrNull(it)?.contains(x, y) == true } ?: -1
     }
 

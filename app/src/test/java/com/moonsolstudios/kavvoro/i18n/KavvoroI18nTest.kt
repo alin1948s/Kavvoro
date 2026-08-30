@@ -7,8 +7,22 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.util.Locale
 
 class KavvoroI18nTest {
+    @Test
+    fun languageSelectorExposesOnlyConcreteSupportedLanguages() {
+        assertEquals(24, KavvoroLanguage.selectableLanguages.size)
+        assertTrue(KavvoroLanguage.SYSTEM !in KavvoroLanguage.selectableLanguages)
+    }
+
+    @Test
+    fun deviceLocaleDetectionProvidesTheDefaultLanguageWithoutSystemOption() {
+        assertEquals(KavvoroLanguage.RO, KavvoroI18n.deviceLanguage(Locale.forLanguageTag("ro-RO")))
+        assertEquals(KavvoroLanguage.ZH_TW, KavvoroI18n.deviceLanguage(Locale.forLanguageTag("zh-TW")))
+        assertEquals(KavvoroLanguage.EN, KavvoroI18n.deviceLanguage(Locale.forLanguageTag("xx-XX")))
+    }
+
     @Test
     fun voiceLocaleMappingMatchesTheShippedAssetInventory() {
         val englishFallbacks = setOf(

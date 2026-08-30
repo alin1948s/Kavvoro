@@ -355,7 +355,7 @@ object LanguageSelectorRenderer {
         // ── Language Grid (2 columns) ──
         canvas.save()
         canvas.clipRect(0f, viewportTop, canvas.width.toFloat(), viewportBottom)
-        val displayLanguages = KavvoroLanguage.entries
+        val displayLanguages = KavvoroLanguage.selectableLanguages
         displayLanguages.forEachIndexed { index, language ->
             val rect = itemRects.getOrNull(index) ?: return@forEachIndexed
             if (rect.bottom >= viewportTop && rect.top <= viewportBottom) {

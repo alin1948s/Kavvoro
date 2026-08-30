@@ -271,7 +271,7 @@ class ChaosGameView(
     private val leaderboardItemRects = mutableListOf<RectF>()
     private val languageBackButton = RectF()
     private val languageFooterRect = RectF()
-    private val languageItemRects = MutableList(KavvoroLanguage.entries.size) { RectF() }
+    private val languageItemRects = MutableList(KavvoroLanguage.selectableLanguages.size) { RectF() }
     private var activeLanguageIndex = -1
     private var languageScroll = 0f
     private var languageMaxScroll = 0f
@@ -3057,8 +3057,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
                 )
             },
             languageFlagBitmap = { language ->
-                if (language == KavvoroLanguage.SYSTEM) null
-                else worldBitmap("flag_badge_${language.code}")
+                worldBitmap("flag_badge_${language.code}")
             },
             langRadioBitmap = { isSelected ->
                 worldBitmap(if (isSelected) "lang_radio_selected" else "lang_radio_unselected")
@@ -3091,7 +3090,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             languageMaxScroll = languageMaxScroll,
             languageBackButton = languageBackButton,
             languageItemRects = languageItemRects,
-            displayLanguages = KavvoroLanguage.entries,
+            displayLanguages = KavvoroLanguage.selectableLanguages,
             viewportTop = languageViewportTop(),
             viewportBottom = languageViewportBottom(),
             context = context,

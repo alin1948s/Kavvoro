@@ -33,9 +33,10 @@ object ScreenLayoutManager {
         val columns = 2
         val itemWidth = (contentWidth - gapX * (columns - 1)) / columns
         val itemHeight = (itemWidth / 3.08f).coerceIn(44f * dp, 60f * dp)
-        val displayCount = KavvoroLanguage.entries.size
+        val displayCount = KavvoroLanguage.selectableLanguages.size
 
         while (languageItemRects.size < displayCount) languageItemRects.add(RectF())
+        while (languageItemRects.size > displayCount) languageItemRects.removeAt(languageItemRects.lastIndex)
         for (index in 0 until displayCount) {
             val row = index / columns
             val column = index % columns

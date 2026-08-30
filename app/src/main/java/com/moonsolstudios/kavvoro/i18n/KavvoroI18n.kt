@@ -36,6 +36,10 @@ enum class KavvoroLanguage(
     ZH_TW("zh_tw", "繁體中文", "ZHT");
 
     companion object {
+        /** Languages exposed in the in-game selector. SYSTEM remains a legacy
+         * value so installs that stored it can still migrate to the device locale. */
+        val selectableLanguages: List<KavvoroLanguage> = entries.filterNot { it == SYSTEM }
+
         fun fromCode(code: String?): KavvoroLanguage {
             return entries.firstOrNull { it.code == code } ?: SYSTEM
         }
@@ -48,13 +52,19 @@ object KavvoroI18n {
 
     fun selected(context: Context): KavvoroLanguage {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return KavvoroLanguage.fromCode(prefs.getString(PREF_KEY, KavvoroLanguage.SYSTEM.code))
+        val stored = KavvoroLanguage.fromCode(prefs.getString(PREF_KEY, null))
+        return when (stored) {
+            KavvoroLanguage.SYSTEM -> deviceLanguage()
+            else -> stored
+        }
     }
 
     fun active(context: Context): KavvoroLanguage {
-        val selected = selected(context)
-        if (selected != KavvoroLanguage.SYSTEM) return selected
-        val language = Locale.getDefault().language.lowercase(Locale.US)
+        return selected(context)
+    }
+
+    internal fun deviceLanguage(locale: Locale = Locale.getDefault()): KavvoroLanguage {
+        val language = locale.language.lowercase(Locale.US)
         return when (language) {
             "ro" -> KavvoroLanguage.RO
             "es" -> KavvoroLanguage.ES
@@ -78,8 +88,8 @@ object KavvoroI18n {
             "ja" -> KavvoroLanguage.JA
             "ko" -> KavvoroLanguage.KO
             "zh" -> {
-                val script = Locale.getDefault().script.lowercase(Locale.US)
-                val country = Locale.getDefault().country.uppercase(Locale.US)
+                val script = locale.script.lowercase(Locale.US)
+                val country = locale.country.uppercase(Locale.US)
                 if (script.contains("hant") || country in listOf("TW", "HK", "MO")) {
                     KavvoroLanguage.ZH_TW
                 } else {
@@ -91,13 +101,14 @@ object KavvoroI18n {
     }
 
     fun setSelected(context: Context, language: KavvoroLanguage) {
-        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-            .edit { putString(PREF_KEY, language.code) }
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
+            if (language == KavvoroLanguage.SYSTEM) remove(PREF_KEY)
+            else putString(PREF_KEY, language.code)
+        }
     }
 
     fun label(context: Context, language: KavvoroLanguage): String {
-        if (language != KavvoroLanguage.SYSTEM) return language.nativeName
-        return "${t(context, "SYSTEM")} (${active(context).shortCode})"
+        return if (language == KavvoroLanguage.SYSTEM) deviceLanguage().nativeName else language.nativeName
     }
 
     fun t(context: Context, english: String): String {
