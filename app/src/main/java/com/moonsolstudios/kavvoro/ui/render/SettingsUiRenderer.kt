@@ -8,6 +8,7 @@ import android.graphics.RadialGradient
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import com.moonsolstudios.kavvoro.model.SettingsButton
 
 /**
  * Procedural renderer for Settings screen components (sliders, toggles, backdrop, section headers).
@@ -408,7 +409,7 @@ object SettingsUiRenderer {
         settingsViewportBottom: Float,
         compact: Boolean,
         settingsHeaderGearButton: RectF,
-        activeSettingsButtonOrdinal: Int,
+        activeSettingsButton: SettingsButton,
         settingsMasterButton: RectF,
         settingsMasterSlider: RectF,
         settingsMasterVolume: Int,
@@ -447,8 +448,8 @@ object SettingsUiRenderer {
         val left = pageContentLeft
         val right = pageContentRight
         drawBrandTitle(canvas, left, safeTop24)
-        HomeUiRenderer.drawTopActionCard(canvas, settingsHeaderGearButton, activeSettingsButtonOrdinal == 1, 1f, paint, dp)
-        drawGearButton(canvas, settingsHeaderGearButton, activeSettingsButtonOrdinal == 1, paint, dp)
+        HomeUiRenderer.drawTopActionCard(canvas, settingsHeaderGearButton, activeSettingsButton == SettingsButton.HEADER_GEAR, 1f, paint, dp)
+        drawGearButton(canvas, settingsHeaderGearButton, activeSettingsButton == SettingsButton.HEADER_GEAR, paint, dp)
 
         textPaint.shader = null
         textPaint.textAlign = Paint.Align.CENTER
@@ -462,15 +463,15 @@ object SettingsUiRenderer {
         canvas.clipRect(0f, settingsViewportTop, viewWidth, settingsViewportBottom)
         drawSectionLabel(canvas, "AUDIO", left, settingsMasterButton.top - 24f * dp, compact, 0xFF45F2FF.toInt(), dp)
         drawCardFrame(canvas, left, right, settingsMasterButton.top - 7f * dp, settingsHapticToggle.bottom + 7f * dp, paint, dp)
-        drawSliderRow(canvas, settingsMasterButton, settingsMasterSlider, "MASTER VOLUME", settingsMasterVolume, 0xFF45F2FF.toInt(), "ui_sound", activeSettingsButtonOrdinal == 3, compact, paint, dp, fitText, drawAudioIconAsset)
-        drawSliderRow(canvas, settingsMusicButton, settingsMusicSlider, "MUSIC VOLUME", settingsMusicVolume, 0xFF45F2FF.toInt(), "ui_music", activeSettingsButtonOrdinal == 4, compact, paint, dp, fitText, drawAudioIconAsset)
-        drawSliderRow(canvas, settingsSfxButton, settingsSfxSlider, "SOUND EFFECTS", settingsSfxVolume, 0xFF45F2FF.toInt(), "ui_sound", activeSettingsButtonOrdinal == 5, compact, paint, dp, fitText, drawAudioIconAsset)
-        drawToggleRow(canvas, settingsHapticToggle, "HAPTIC FEEDBACK", "Vibration on actions", settingsHapticEnabled, 0xFF45F2FF.toInt(), activeSettingsButtonOrdinal == 6, 0, compact, paint, dp, fitText)
+        drawSliderRow(canvas, settingsMasterButton, settingsMasterSlider, "MASTER VOLUME", settingsMasterVolume, 0xFF45F2FF.toInt(), "ui_sound", activeSettingsButton == SettingsButton.MASTER_VOLUME, compact, paint, dp, fitText, drawAudioIconAsset)
+        drawSliderRow(canvas, settingsMusicButton, settingsMusicSlider, "MUSIC VOLUME", settingsMusicVolume, 0xFF45F2FF.toInt(), "ui_music", activeSettingsButton == SettingsButton.MUSIC_VOLUME, compact, paint, dp, fitText, drawAudioIconAsset)
+        drawSliderRow(canvas, settingsSfxButton, settingsSfxSlider, "SOUND EFFECTS", settingsSfxVolume, 0xFF45F2FF.toInt(), "ui_sound", activeSettingsButton == SettingsButton.SFX_VOLUME, compact, paint, dp, fitText, drawAudioIconAsset)
+        drawToggleRow(canvas, settingsHapticToggle, "HAPTIC FEEDBACK", "Vibration on actions", settingsHapticEnabled, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.HAPTIC, 0, compact, paint, dp, fitText)
 
         drawSectionLabel(canvas, "GAMEPLAY", left, settingsShakeToggle.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
         drawCardFrame(canvas, left, right, settingsShakeToggle.top - 7f * dp, settingsPerformanceToggle.bottom + 7f * dp, paint, dp)
-        drawToggleRow(canvas, settingsShakeToggle, "SCREEN SHAKE", "Shake the screen on impact", settingsScreenShake, 0xFF45F2FF.toInt(), activeSettingsButtonOrdinal == 7, 1, compact, paint, dp, fitText)
-        drawToggleRow(canvas, settingsPerformanceToggle, "PERFORMANCE MODE", "Reduce effects for smoother gameplay", settingsPerformanceMode, 0xFF45F2FF.toInt(), activeSettingsButtonOrdinal == 8, 2, compact, paint, dp, fitText)
+        drawToggleRow(canvas, settingsShakeToggle, "SCREEN SHAKE", "Shake the screen on impact", settingsScreenShake, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.SCREEN_SHAKE, 1, compact, paint, dp, fitText)
+        drawToggleRow(canvas, settingsPerformanceToggle, "PERFORMANCE MODE", "Reduce effects for smoother gameplay", settingsPerformanceMode, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.PERFORMANCE, 2, compact, paint, dp, fitText)
 
         drawSectionLabel(canvas, "LANGUAGE", left, settingsLanguageButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
         drawNavRow(canvas, settingsLanguageButton, "LANGUAGE", selectedLanguageLabel, 0xFF45F2FF.toInt(), 0, true, compact, paint, dp, fitText)
@@ -485,7 +486,7 @@ object SettingsUiRenderer {
         drawNavRow(canvas, settingsAboutButton, "ABOUT KAVVORO", "v$versionName", 0xFF45F2FF.toInt(), 4, false, compact, paint, dp, fitText)
 
         drawResetRow(canvas, settingsResetButton, compact, paint, dp, fitText)
-        drawBackHomeButton(canvas, settingsBackButton, activeSettingsButtonOrdinal == 13, "BACK TO HOME", compact, paint, dp) // BACK
+        drawBackHomeButton(canvas, settingsBackButton, activeSettingsButton == SettingsButton.BACK, "BACK TO HOME", compact, paint, dp)
         canvas.restore()
 
         if (settingsResetConfirm) {

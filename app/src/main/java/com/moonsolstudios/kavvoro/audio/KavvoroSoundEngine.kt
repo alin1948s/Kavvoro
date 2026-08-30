@@ -51,6 +51,12 @@ class KavvoroSoundEngine(context: Context) {
     private var musicMuted = false
     @Volatile
     private var paused = false
+    @Volatile
+    private var masterVolume = 1f
+    @Volatile
+    private var musicVolume = 1f
+    @Volatile
+    private var sfxVolume = 1f
     private var languageCode = "en"
     private var activeSelectionStream = 0
     private var pendingSelectionSampleId = 0
@@ -176,6 +182,20 @@ class KavvoroSoundEngine(context: Context) {
     }
 
     @Synchronized
+    fun setVolumes(masterPercent: Int, musicPercent: Int, sfxPercent: Int) {
+        masterVolume = masterPercent.coerceIn(0, 100) / 100f
+        musicVolume = musicPercent.coerceIn(0, 100) / 100f
+        sfxVolume = sfxPercent.coerceIn(0, 100) / 100f
+        val output = musicOutputVolume()
+        try {
+            musicPlayer?.setVolume(output, output)
+            fadingMusicPlayer?.setVolume(output, output)
+        } catch (_: IllegalStateException) {
+            // The platform released a player while the setting was changing.
+        }
+    }
+
+    @Synchronized
     fun setPaused(isPaused: Boolean) {
         if (paused == isPaused) return
         paused = isPaused
@@ -201,13 +221,14 @@ class KavvoroSoundEngine(context: Context) {
 
     private fun play(sound: Int, volume: Float, rate: Float, priority: Int): Int {
         if (released || sfxMuted || sound !in loadedSounds) return 0
-        return soundPool.play(sound, volume, volume, priority, 0, rate.coerceIn(0.5f, 2f))
+        val output = volume * masterVolume * sfxVolume
+        return soundPool.play(sound, output, output, priority, 0, rate.coerceIn(0.5f, 2f))
     }
 
     private fun fadeOutSelectionStream(streamId: Int) {
         if (streamId == 0) return
         selectionFadeRunnables[streamId]?.let(selectionFadeHandler::removeCallbacks)
-        val steps = SelectionPreviewFade.steps(SELECTION_PREVIEW_VOLUME)
+        val steps = SelectionPreviewFade.steps(SELECTION_PREVIEW_VOLUME * masterVolume * sfxVolume)
         var stepIndex = 0
         fadingSelectionStreams += streamId
         val fade = object : Runnable {
@@ -314,7 +335,7 @@ class KavvoroSoundEngine(context: Context) {
                 try {
                     player.isLooping = true
                     val shouldCrossfade = crossfade && oldPlayer != null
-                    val initialVolume = if (shouldCrossfade) 0f else MUSIC_VOLUME
+                    val initialVolume = if (shouldCrossfade) 0f else musicOutputVolume()
                     player.setVolume(initialVolume, initialVolume)
                     player.start()
                     musicPlayer = player
@@ -360,8 +381,9 @@ class KavvoroSoundEngine(context: Context) {
                 val fadeIn = fadeInSteps[stepIndex]
                 val fadeOut = 1f - fadeIn
                 try {
-                    oldPlayer.setVolume(MUSIC_VOLUME * fadeOut, MUSIC_VOLUME * fadeOut)
-                    newPlayer.setVolume(MUSIC_VOLUME * fadeIn, MUSIC_VOLUME * fadeIn)
+                    val output = musicOutputVolume()
+                    oldPlayer.setVolume(output * fadeOut, output * fadeOut)
+                    newPlayer.setVolume(output * fadeIn, output * fadeIn)
                 } catch (_: IllegalStateException) {
                     cancelMusicTransition(restoreActiveVolume = true)
                     return
@@ -372,7 +394,8 @@ class KavvoroSoundEngine(context: Context) {
                     musicTransitionRunnable = null
                     releaseMediaPlayer(oldPlayer)
                     try {
-                        newPlayer.setVolume(MUSIC_VOLUME, MUSIC_VOLUME)
+                        val output = musicOutputVolume()
+                        newPlayer.setVolume(output, output)
                     } catch (_: IllegalStateException) {
                         // The player was released by the platform while transitioning.
                     }
@@ -395,7 +418,8 @@ class KavvoroSoundEngine(context: Context) {
         releaseMediaPlayer(fadingPlayer)
         if (restoreActiveVolume) {
             try {
-                musicPlayer?.setVolume(MUSIC_VOLUME, MUSIC_VOLUME)
+                val output = musicOutputVolume()
+                musicPlayer?.setVolume(output, output)
             } catch (_: IllegalStateException) {
                 // The player was released by the platform while transitioning.
             }
@@ -413,6 +437,8 @@ class KavvoroSoundEngine(context: Context) {
             player.release()
         }
     }
+
+    private fun musicOutputVolume(): Float = MUSIC_VOLUME * masterVolume * musicVolume
 
     companion object {
         private const val SELECTION_PREVIEW_VOLUME = 0.86f

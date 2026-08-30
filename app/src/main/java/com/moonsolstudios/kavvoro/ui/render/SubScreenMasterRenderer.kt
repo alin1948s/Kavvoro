@@ -12,6 +12,7 @@ import com.moonsolstudios.kavvoro.model.CollectionFilter
 import com.moonsolstudios.kavvoro.model.LayoutMode
 import com.moonsolstudios.kavvoro.model.MenuButton
 import com.moonsolstudios.kavvoro.model.MenuState
+import com.moonsolstudios.kavvoro.model.SettingsButton
 
 object SubScreenMasterRenderer {
 
@@ -293,7 +294,7 @@ object SubScreenMasterRenderer {
         settingsViewportBottom: Float,
         compact: Boolean,
         settingsHeaderGearButton: RectF,
-        activeSettingsButtonOrdinal: Int,
+        activeSettingsButton: SettingsButton,
         settingsMasterButton: RectF,
         settingsMasterSlider: RectF,
         settingsMasterVolume: Int,
@@ -343,7 +344,7 @@ object SubScreenMasterRenderer {
             settingsViewportBottom = settingsViewportBottom,
             compact = compact,
             settingsHeaderGearButton = settingsHeaderGearButton,
-            activeSettingsButtonOrdinal = activeSettingsButtonOrdinal,
+            activeSettingsButton = activeSettingsButton,
             settingsMasterButton = settingsMasterButton,
             settingsMasterSlider = settingsMasterSlider,
             settingsMasterVolume = settingsMasterVolume,

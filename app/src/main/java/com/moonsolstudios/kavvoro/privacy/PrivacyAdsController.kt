@@ -79,9 +79,17 @@ class PrivacyAdsController(
             .show()
     }
 
-    private fun openPrivacyPolicy() {
+    override fun openPrivacyPolicy() {
+        openExternalPage(PRIVACY_POLICY_URL)
+    }
+
+    override fun openTermsOfService() {
+        openExternalPage(TERMS_OF_SERVICE_URL)
+    }
+
+    private fun openExternalPage(url: String) {
         try {
-            activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)))
+            activity.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
         } catch (_: ActivityNotFoundException) {
             Toast.makeText(activity, t("Privacy policy is temporarily unavailable."), Toast.LENGTH_SHORT).show()
         }
@@ -150,5 +158,6 @@ class PrivacyAdsController(
 
     companion object {
         const val PRIVACY_POLICY_URL = "https://brainroot-chaos-kavaroo.web.app/privacy/"
+        const val TERMS_OF_SERVICE_URL = "https://brainroot-chaos-kavaroo.web.app/terms/"
     }
 }

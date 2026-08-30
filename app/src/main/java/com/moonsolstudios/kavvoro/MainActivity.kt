@@ -1,6 +1,5 @@
 package com.moonsolstudios.kavvoro
 
-import android.app.Activity
 import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.Bundle
@@ -11,6 +10,8 @@ import android.view.Window
 import android.view.WindowInsets
 import android.view.WindowInsetsController
 import android.view.WindowManager
+import androidx.activity.ComponentActivity
+import androidx.activity.OnBackPressedCallback
 import com.moonsolstudios.kavvoro.ads.InterstitialAdController
 import com.moonsolstudios.kavvoro.ads.RewardedAdController
 import com.moonsolstudios.kavvoro.billing.PlayBillingController
@@ -21,7 +22,7 @@ import com.moonsolstudios.kavvoro.privacy.PrivacyAdsController
 import com.moonsolstudios.kavvoro.startup.FirstFrameStartupGate
 import com.moonsolstudios.kavvoro.ui.ChaosGameView
 
-class MainActivity : Activity() {
+class MainActivity : ComponentActivity() {
     private var gameView: ChaosGameView? = null
     private var billingController: PlayBillingController? = null
     private var privacyAdsController: PrivacyAdsController? = null
@@ -32,6 +33,14 @@ class MainActivity : Activity() {
         requestWindowFeature(Window.FEATURE_NO_TITLE)
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (gameView?.navigateBack() == true) return
+                isEnabled = false
+                onBackPressedDispatcher.onBackPressed()
+                isEnabled = true
+            }
+        })
         hideSystemBars()
 
         val savedAgeGroup = AgeProfileStore.read(this) ?: AgeGroup.ADULT

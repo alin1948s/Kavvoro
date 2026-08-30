@@ -21,7 +21,9 @@ import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.ViewConfiguration
 import android.util.Log
+import android.widget.Toast
 import androidx.core.content.FileProvider
+import androidx.core.content.edit
 import com.moonsolstudios.kavvoro.BuildConfig
 import com.moonsolstudios.kavvoro.R
 import com.moonsolstudios.kavvoro.audio.KavvoroSoundEngine
@@ -49,8 +51,11 @@ import com.moonsolstudios.kavvoro.engine.STAGE_WIDTH
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.i18n.KavvoroLanguage
 import com.moonsolstudios.kavvoro.i18n.TutorialCopy
+import com.moonsolstudios.kavvoro.layout.ScreenLayoutManager
+import com.moonsolstudios.kavvoro.repository.GameProgressRepository
 import com.moonsolstudios.kavvoro.share.ReplaySharePayload
 import com.moonsolstudios.kavvoro.share.ReplayVideoExporter
+import com.moonsolstudios.kavvoro.ui.controller.SettingsTouchController
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.PI
@@ -377,6 +382,39 @@ class ChaosGameView(
     private var languageTouchY = 0f
     private var languageLastY = 0f
     private var languageDragging = false
+    private var languageReturnScreen = Screen.MENU
+    private var settingsScroll = 0f
+    private var settingsMaxScroll = 0f
+    private var settingsTouchY = 0f
+    private var settingsLastY = 0f
+    private var settingsDragging = false
+    private var activeSettingsButton = SettingsButton.NONE
+    private var settingsResetConfirm = false
+    private var settingsMasterVolume = prefs.getInt(GameProgressRepository.SETTINGS_MASTER_VOLUME_KEY, 100).coerceIn(0, 100)
+    private var settingsMusicVolume = prefs.getInt(GameProgressRepository.SETTINGS_MUSIC_VOLUME_KEY, 100).coerceIn(0, 100)
+    private var settingsSfxVolume = prefs.getInt(GameProgressRepository.SETTINGS_SFX_VOLUME_KEY, 100).coerceIn(0, 100)
+    private var settingsHapticEnabled = prefs.getBoolean(GameProgressRepository.SETTINGS_HAPTIC_KEY, true)
+    private var settingsScreenShake = prefs.getBoolean(GameProgressRepository.SETTINGS_SCREEN_SHAKE_KEY, true)
+    private var settingsPerformanceMode = prefs.getBoolean(GameProgressRepository.SETTINGS_PERFORMANCE_KEY, false)
+    private val settingsHeaderGearButton = RectF()
+    private val settingsMasterButton = RectF()
+    private val settingsMasterSlider = RectF()
+    private val settingsMusicButton = RectF()
+    private val settingsMusicSlider = RectF()
+    private val settingsSfxButton = RectF()
+    private val settingsSfxSlider = RectF()
+    private val settingsHapticToggle = RectF()
+    private val settingsShakeToggle = RectF()
+    private val settingsPerformanceToggle = RectF()
+    private val settingsLanguageButton = RectF()
+    private val settingsAccountButton = RectF()
+    private val settingsPrivacyButton = RectF()
+    private val settingsTermsButton = RectF()
+    private val settingsAboutButton = RectF()
+    private val settingsResetButton = RectF()
+    private val settingsBackButton = RectF()
+    private val settingsResetCancelButton = RectF()
+    private val settingsResetConfirmButton = RectF()
     private val homeButton = RectF()
     private val restartButton = RectF()
     private val sfxButton = RectF()
@@ -397,6 +435,8 @@ class ChaosGameView(
         textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
         audio.setSfxMuted(sfxMuted)
         audio.setMusicMuted(musicMuted)
+        audio.setVolumes(settingsMasterVolume, settingsMusicVolume, settingsSfxVolume)
+        isHapticFeedbackEnabled = settingsHapticEnabled
         audio.setLanguageCode(KavvoroI18n.audioLanguageCode(context))
         syncMusicTrack()
         configureStage(width.coerceAtLeast(1), height.coerceAtLeast(1), reset = false)
@@ -432,6 +472,47 @@ class ChaosGameView(
         pauseGame()
         audio.release()
         recycleScaledBackgrounds()
+    }
+
+    fun navigateBack(): Boolean = synchronized(lock) {
+        when (screen) {
+            Screen.GAME -> {
+                exitToMenu()
+                true
+            }
+            Screen.COLLECTION,
+            Screen.LEADERBOARDS -> {
+                screen = Screen.MENU
+                menuState = MenuState.MODES
+                backgroundShader = null
+                triggerScreenTransition(0xFF8AA6FF.toInt())
+                true
+            }
+            Screen.SETTINGS -> {
+                if (settingsResetConfirm) {
+                    settingsResetConfirm = false
+                } else {
+                    navigateToMenuFromSettings()
+                }
+                true
+            }
+            Screen.LANGUAGE -> {
+                screen = languageReturnScreen
+                backgroundShader = null
+                triggerScreenTransition(0xFF45F2FF.toInt())
+                true
+            }
+            Screen.MENU -> {
+                if (menuState == MenuState.MODE_ACTION) {
+                    menuState = MenuState.MODES
+                    triggerScreenTransition(0xFF8AA6FF.toInt())
+                    true
+                } else {
+                    false
+                }
+            }
+            Screen.AD -> false
+        }
     }
 
     fun updatePremiumPrices(pricesByProductId: Map<String, String>) {
@@ -495,6 +576,8 @@ class ChaosGameView(
                 handleLeaderboardTouch(event)
             } else if (screen == Screen.LANGUAGE) {
                 handleLanguageTouch(event)
+            } else if (screen == Screen.SETTINGS) {
+                pendingAction = handleSettingsTouch(event)
             } else if (screen == Screen.AD) {
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN -> {
@@ -862,7 +945,8 @@ class ChaosGameView(
         RenderProfile.HIGH -> 1f
     }
 
-    private fun performanceLite(): Boolean = renderProfile == RenderProfile.LOW || adaptiveQuality < 0.64f
+    private fun performanceLite(): Boolean =
+        settingsPerformanceMode || renderProfile == RenderProfile.LOW || adaptiveQuality < 0.64f
 
     private fun richEffects(): Boolean = renderProfile != RenderProfile.LOW && adaptiveQuality >= 0.8f
 
@@ -939,7 +1023,12 @@ class ChaosGameView(
             leaderboardMessage = ""
         }
 
-        if (screen == Screen.MENU || screen == Screen.COLLECTION || screen == Screen.LEADERBOARDS) {
+        if (screen == Screen.MENU ||
+            screen == Screen.COLLECTION ||
+            screen == Screen.LEADERBOARDS ||
+            screen == Screen.LANGUAGE ||
+            screen == Screen.SETTINGS
+        ) {
             if (screen == Screen.MENU) updateMenuBallPhysics(dt)
             ball = Point2(
                 x = 5f + sin(menuPulse * 0.9f) * 2.4f,
@@ -1520,9 +1609,10 @@ class ChaosGameView(
                 syncLeaderboards()
             }
 
-            MenuButton.SETTINGS,
+            MenuButton.SETTINGS -> openSettings()
             MenuButton.PRIVACY -> privacyBridge.showPrivacyOptions()
             MenuButton.LANGUAGE -> {
+                languageReturnScreen = Screen.MENU
                 screen = Screen.LANGUAGE
                 activeMenuButton = MenuButton.NONE
                 activeLanguageIndex = -1
@@ -1543,6 +1633,16 @@ class ChaosGameView(
 
             MenuButton.NONE -> Unit
         }
+    }
+
+    private fun openSettings() {
+        screen = Screen.SETTINGS
+        settingsScroll = 0f
+        settingsDragging = false
+        settingsResetConfirm = false
+        activeSettingsButton = SettingsButton.NONE
+        backgroundShader = null
+        triggerScreenTransition(0xFF45F2FF.toInt())
     }
 
     private fun playSelectedMode() {
@@ -1793,6 +1893,11 @@ class ChaosGameView(
         }
         if (screen == Screen.LANGUAGE) {
             drawLanguageSelector(canvas)
+            drawScreenTransition(canvas)
+            return
+        }
+        if (screen == Screen.SETTINGS) {
+            drawSettings(canvas)
             drawScreenTransition(canvas)
             return
         }
@@ -3682,6 +3787,258 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         }
     }
 
+    private fun drawSettings(canvas: Canvas) {
+        val compact = pageContentWidth() < dp(430f)
+        SubScreenMasterRenderer.drawSettings(
+            canvas = canvas,
+            layoutSettings = ::layoutSettings,
+            viewWidth = viewWidth.toFloat(),
+            viewHeight = viewHeight.toFloat(),
+            safeTop24 = dp(20f),
+            safeTop112 = dp(104f),
+            safeTop132 = dp(126f),
+            safeCenterX = viewWidth * 0.5f,
+            pageContentLeft = pageContentLeft(),
+            pageContentRight = pageContentRight(),
+            settingsViewportTop = settingsViewportTop(),
+            settingsViewportBottom = settingsViewportBottom(),
+            compact = compact,
+            settingsHeaderGearButton = settingsHeaderGearButton,
+            activeSettingsButton = activeSettingsButton,
+            settingsMasterButton = settingsMasterButton,
+            settingsMasterSlider = settingsMasterSlider,
+            settingsMasterVolume = settingsMasterVolume,
+            settingsMusicButton = settingsMusicButton,
+            settingsMusicSlider = settingsMusicSlider,
+            settingsMusicVolume = settingsMusicVolume,
+            settingsSfxButton = settingsSfxButton,
+            settingsSfxSlider = settingsSfxSlider,
+            settingsSfxVolume = settingsSfxVolume,
+            settingsHapticToggle = settingsHapticToggle,
+            settingsHapticEnabled = settingsHapticEnabled,
+            settingsShakeToggle = settingsShakeToggle,
+            settingsScreenShake = settingsScreenShake,
+            settingsPerformanceToggle = settingsPerformanceToggle,
+            settingsPerformanceMode = settingsPerformanceMode,
+            settingsLanguageButton = settingsLanguageButton,
+            selectedLanguageLabel = KavvoroI18n.label(context, KavvoroI18n.selected(context)),
+            settingsAccountButton = settingsAccountButton,
+            settingsPrivacyButton = settingsPrivacyButton,
+            settingsTermsButton = settingsTermsButton,
+            settingsAboutButton = settingsAboutButton,
+            versionName = BuildConfig.VERSION_NAME,
+            settingsResetButton = settingsResetButton,
+            settingsBackButton = settingsBackButton,
+            settingsResetConfirm = settingsResetConfirm,
+            settingsResetCancelButton = settingsResetCancelButton,
+            settingsResetConfirmButton = settingsResetConfirmButton,
+            paint = paint,
+            dp = uiDensity,
+            fitText = ::fitText,
+            drawBrandTitle = ::drawSettingsBrandTitle,
+            drawUiButtonFrame = ::drawUiButtonFrame,
+            drawAudioIconAsset = ::drawAudioIconAsset
+        )
+    }
+
+    private fun drawSettingsBrandTitle(canvas: Canvas, left: Float, top: Float) {
+        val brand = worldBitmap("brand_kavvoro")
+        if (brand != null) {
+            val width = min(pageContentWidth() * 0.38f, dp(176f))
+            val height = width * brand.height / brand.width.toFloat()
+            scratch.set(left, top, left + width, top + height)
+            paint.alpha = 255
+            paint.isFilterBitmap = true
+            canvas.drawBitmap(brand, null, scratch, paint)
+            return
+        }
+        textPaint.textAlign = Paint.Align.LEFT
+        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
+        textPaint.textSize = dp(22f)
+        textPaint.color = 0xFFF7F4FF.toInt()
+        canvas.drawText("KAVVORO", left, top + dp(24f), textPaint)
+    }
+
+    private fun layoutSettings() {
+        val result = ScreenLayoutManager.layoutSettings(
+            left = pageContentLeft(),
+            right = pageContentRight(),
+            contentWidth = pageContentWidth(),
+            actionTop = dp(18f),
+            viewportTop = settingsViewportTop(),
+            viewportBottom = settingsViewportBottom(),
+            compact = pageContentWidth() < dp(430f),
+            settingsScroll = settingsScroll,
+            dp = uiDensity,
+            headerGearButton = settingsHeaderGearButton,
+            masterButton = settingsMasterButton,
+            musicButton = settingsMusicButton,
+            sfxButton = settingsSfxButton,
+            hapticToggle = settingsHapticToggle,
+            shakeToggle = settingsShakeToggle,
+            performanceToggle = settingsPerformanceToggle,
+            languageButton = settingsLanguageButton,
+            accountButton = settingsAccountButton,
+            privacyButton = settingsPrivacyButton,
+            termsButton = settingsTermsButton,
+            aboutButton = settingsAboutButton,
+            resetButton = settingsResetButton,
+            backButton = settingsBackButton,
+            masterSlider = settingsMasterSlider,
+            musicSlider = settingsMusicSlider,
+            sfxSlider = settingsSfxSlider
+        )
+        settingsScroll = result.first
+        settingsMaxScroll = result.second
+    }
+
+    private fun handleSettingsTouch(event: MotionEvent): (() -> Unit)? {
+        var deferredAction: (() -> Unit)? = null
+        SettingsTouchController.handleTouch(
+            event = event,
+            settingsResetConfirm = settingsResetConfirm,
+            settingsResetCancelButton = settingsResetCancelButton,
+            settingsResetConfirmButton = settingsResetConfirmButton,
+            onResetCancelled = { settingsResetConfirm = false },
+            onResetConfirmed = ::resetGameDataFromSettings,
+            layoutSettings = ::layoutSettings,
+            settingsTouchY = settingsTouchY,
+            setTouchY = { settingsTouchY = it },
+            settingsLastY = settingsLastY,
+            setLastY = { settingsLastY = it },
+            settingsDragging = settingsDragging,
+            setDragging = { settingsDragging = it },
+            activeSettingsButton = activeSettingsButton,
+            setActiveButton = { activeSettingsButton = it },
+            settingsScroll = settingsScroll,
+            setScroll = { settingsScroll = it },
+            settingsMaxScroll = settingsMaxScroll,
+            tutorialTouchSlop = tutorialTouchSlop,
+            buttonAt = ::settingsButtonAt,
+            updateSlider = ::updateSettingsSlider,
+            handleAction = { deferredAction = handleSettingsAction(it) },
+            requestPostInvalidate = { postInvalidate() }
+        )
+        return deferredAction
+    }
+
+    private fun settingsButtonAt(x: Float, y: Float): SettingsButton {
+        if (settingsHeaderGearButton.contains(x, y)) return SettingsButton.HEADER_GEAR
+        if (y < settingsViewportTop() || y > settingsViewportBottom()) return SettingsButton.NONE
+        return SettingsTouchController.buttonAt(
+            x = x,
+            y = y,
+            resetConfirmButton = settingsResetConfirmButton,
+            backButton = settingsBackButton,
+            headerGearButton = settingsHeaderGearButton,
+            masterSlider = settingsMasterSlider,
+            masterButton = settingsMasterButton,
+            musicSlider = settingsMusicSlider,
+            musicButton = settingsMusicButton,
+            sfxSlider = settingsSfxSlider,
+            sfxButton = settingsSfxButton,
+            hapticToggle = settingsHapticToggle,
+            shakeToggle = settingsShakeToggle,
+            performanceToggle = settingsPerformanceToggle,
+            languageButton = settingsLanguageButton,
+            accountButton = settingsAccountButton,
+            privacyButton = settingsPrivacyButton,
+            termsButton = settingsTermsButton,
+            aboutButton = settingsAboutButton,
+            resetButton = settingsResetButton
+        )
+    }
+
+    private fun updateSettingsSlider(button: SettingsButton, x: Float) {
+        SettingsTouchController.updateSlider(
+            button = button,
+            x = x,
+            masterSlider = settingsMasterSlider,
+            musicSlider = settingsMusicSlider,
+            sfxSlider = settingsSfxSlider,
+            onMasterChanged = { settingsMasterVolume = it },
+            onMusicChanged = { settingsMusicVolume = it },
+            onSfxChanged = { settingsSfxVolume = it }
+        )
+        prefs.edit {
+            putInt(GameProgressRepository.SETTINGS_MASTER_VOLUME_KEY, settingsMasterVolume)
+            putInt(GameProgressRepository.SETTINGS_MUSIC_VOLUME_KEY, settingsMusicVolume)
+            putInt(GameProgressRepository.SETTINGS_SFX_VOLUME_KEY, settingsSfxVolume)
+        }
+        audio.setVolumes(settingsMasterVolume, settingsMusicVolume, settingsSfxVolume)
+    }
+
+    private fun handleSettingsAction(button: SettingsButton): (() -> Unit)? {
+        if (button != SettingsButton.NONE && settingsHapticEnabled) {
+            performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+        }
+        when (button) {
+            SettingsButton.BACK -> navigateToMenuFromSettings()
+            SettingsButton.HEADER_GEAR,
+            SettingsButton.MASTER_VOLUME,
+            SettingsButton.MUSIC_VOLUME,
+            SettingsButton.SFX_VOLUME,
+            SettingsButton.NONE -> Unit
+            SettingsButton.HAPTIC -> {
+                settingsHapticEnabled = !settingsHapticEnabled
+                isHapticFeedbackEnabled = settingsHapticEnabled
+                prefs.edit { putBoolean(GameProgressRepository.SETTINGS_HAPTIC_KEY, settingsHapticEnabled) }
+            }
+            SettingsButton.SCREEN_SHAKE -> {
+                settingsScreenShake = !settingsScreenShake
+                prefs.edit { putBoolean(GameProgressRepository.SETTINGS_SCREEN_SHAKE_KEY, settingsScreenShake) }
+            }
+            SettingsButton.PERFORMANCE -> {
+                settingsPerformanceMode = !settingsPerformanceMode
+                prefs.edit { putBoolean(GameProgressRepository.SETTINGS_PERFORMANCE_KEY, settingsPerformanceMode) }
+            }
+            SettingsButton.LANGUAGE -> {
+                languageReturnScreen = Screen.SETTINGS
+                screen = Screen.LANGUAGE
+                activeLanguageIndex = -1
+                backgroundShader = null
+                triggerScreenTransition(0xFF45F2FF.toInt())
+            }
+            SettingsButton.ACCOUNT -> return {
+                Toast.makeText(context, t("PLAY GAMES UNAVAILABLE"), Toast.LENGTH_SHORT).show()
+            }
+            SettingsButton.PRIVACY -> return { privacyBridge.openPrivacyPolicy() }
+            SettingsButton.TERMS -> return { privacyBridge.openTermsOfService() }
+            SettingsButton.ABOUT -> return {
+                Toast.makeText(context, "Kavvoro ${BuildConfig.VERSION_NAME}", Toast.LENGTH_SHORT).show()
+            }
+            SettingsButton.RESET -> settingsResetConfirm = true
+        }
+        return null
+    }
+
+    private fun resetGameDataFromSettings() {
+        SettingsTouchController.resetGameData(prefs)
+        settingsResetConfirm = false
+        selectedSkinId = DEFAULT_SKIN_ID
+        collectionFocusSkinId = DEFAULT_SKIN_ID
+        selectedMenuMode = GameMode.CLASSIC
+        gameMode = GameMode.CLASSIC
+        menuState = MenuState.MODES
+        streak = 0
+        levelIndex = 1
+        configureStage(viewWidth, viewHeight, reset = true)
+        navigateToMenuFromSettings()
+    }
+
+    private fun navigateToMenuFromSettings() {
+        screen = Screen.MENU
+        menuState = MenuState.MODES
+        settingsResetConfirm = false
+        activeSettingsButton = SettingsButton.NONE
+        backgroundShader = null
+        triggerScreenTransition(0xFF8AA6FF.toInt())
+    }
+
+    private fun settingsViewportTop(): Float = dp(142f)
+
+    private fun settingsViewportBottom(): Float = viewHeight - dp(12f)
+
     private fun drawLanguageSelector(canvas: Canvas) {
         drawBackground(canvas)
         layoutLanguageSelector()
@@ -3792,9 +4149,10 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
                 val released = activeLanguageIndex
                 activeLanguageIndex = -1
                 if (!languageDragging && released == LANGUAGE_BACK_INDEX && languageBackButton.contains(event.x, event.y)) {
-                    screen = Screen.MENU
+                    screen = languageReturnScreen
                     backgroundShader = null
                     performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
+                    triggerScreenTransition(0xFF45F2FF.toInt())
                     return
                 }
                 val language = KavvoroLanguage.entries.getOrNull(released) ?: return
