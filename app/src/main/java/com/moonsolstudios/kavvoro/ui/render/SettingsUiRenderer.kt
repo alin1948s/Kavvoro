@@ -263,7 +263,7 @@ object SettingsUiRenderer {
         textPaint.typeface = Typeface.create("sans", Typeface.BOLD)
         textPaint.textSize = 18f * dp
         textPaint.color = 0xFFFF4D8D.toInt()
-        canvas.drawText("RESET GAME DATA?", box.centerX(), box.top + 40f * dp, textPaint)
+        canvas.drawText("RESET PROGRESS?", box.centerX(), box.top + 40f * dp, textPaint)
         textPaint.typeface = Typeface.create("sans", Typeface.NORMAL)
         textPaint.textSize = 11f * dp
         textPaint.color = 0xCCDDE4EF.toInt()
@@ -388,10 +388,10 @@ object SettingsUiRenderer {
         textPaint.typeface = Typeface.create("sans", Typeface.NORMAL)
         textPaint.textSize = (if (compact) 10f else 13f) * dp
         textPaint.color = 0xFFFF4D8D.toInt()
-        canvas.drawText("RESET GAME DATA", rect.left + 62f * dp, rect.top + 23f * dp, textPaint)
+        canvas.drawText("RESET PROGRESS", rect.left + 62f * dp, rect.top + 23f * dp, textPaint)
         textPaint.textSize = (if (compact) 8f else 10f) * dp
         textPaint.color = 0xAAB5C0D0.toInt()
-        canvas.drawText("This will delete all your progress", rect.left + 62f * dp, rect.top + 41f * dp, textPaint)
+        canvas.drawText("Clears gameplay only", rect.left + 62f * dp, rect.top + 41f * dp, textPaint)
         drawChevron(canvas, rect.right - 24f * dp, rect.centerY(), 0xFFFF4D8D.toInt(), paint, dp)
     }
 
@@ -484,7 +484,7 @@ object SettingsUiRenderer {
         drawCardFrame(canvas, left, right, settingsPrivacyButton.top, settingsAboutButton.bottom, paint, dp)
         drawNavRow(canvas, settingsPrivacyButton, "PRIVACY POLICY", "", 0xFF45F2FF.toInt(), 2, false, compact, paint, dp, fitText)
         drawNavRow(canvas, settingsTermsButton, "TERMS OF SERVICE", "", 0xFF45F2FF.toInt(), 3, false, compact, paint, dp, fitText)
-        drawNavRow(canvas, settingsDataDeletionButton, "DATA DELETION", "Manage stored data and requests", 0xFFFFCF4A.toInt(), 5, false, compact, paint, dp, fitText)
+        drawNavRow(canvas, settingsDataDeletionButton, "DATA DELETION", "Erase all local app data", 0xFFFFCF4A.toInt(), 5, false, compact, paint, dp, fitText)
         drawNavRow(canvas, settingsAboutButton, "ABOUT MOONSOL STUDIOS", "Kavvoro v$versionName", 0xFF45F2FF.toInt(), 4, false, compact, paint, dp, fitText)
 
         drawResetRow(canvas, settingsResetButton, compact, paint, dp, fitText)
