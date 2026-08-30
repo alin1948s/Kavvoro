@@ -481,7 +481,7 @@ object SettingsUiRenderer {
         drawSectionLabel(canvas, t("LANGUAGE").uppercase(), left, settingsLanguageButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
         drawNavRow(canvas, settingsLanguageButton, t("LANGUAGE"), selectedLanguageLabel, 0xFF45F2FF.toInt(), 0, true, compact, paint, dp, fitText)
 
-        drawSectionLabel(canvas, t("ACCOUNT & CLOUD").uppercase(), left, settingsAccountButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
+        drawSectionLabel(canvas, t("ACCOUNT").uppercase(), left, settingsAccountButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
         drawNavRow(canvas, settingsAccountButton, t("ACCOUNT"), accountStatusLabel, 0xFF45F2FF.toInt(), 1, true, compact, paint, dp, fitText)
 
         drawSectionLabel(canvas, t("INFO & LEGAL").uppercase(), left, settingsPrivacyButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
