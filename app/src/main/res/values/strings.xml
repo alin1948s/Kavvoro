@@ -1,8 +1,8 @@
 <resources>
     <string name="app_name">Brainrot Chaos: Kavvoro</string>
     <string name="game_services_project_id" translatable="false">101451625405</string>
-    <string name="leaderboard_classic_level_id" translatable="false">Cgklvefz9_kCEAIQAQ</string>
-    <string name="leaderboard_chaos_level_id" translatable="false">Cgklvefz9_kCEAIQAg</string>
-    <string name="leaderboard_classic_streak_id" translatable="false">Cgklvefz9_kCEAIQAw</string>
-    <string name="leaderboard_chaos_streak_id" translatable="false">Cgklvefz9_kCEAIQBA</string>
+    <string name="leaderboard_classic_level_id" translatable="false">CgkIvefz9_kCEAIQAQ</string>
+    <string name="leaderboard_chaos_level_id" translatable="false">CgkIvefz9_kCEAIQAg</string>
+    <string name="leaderboard_classic_streak_id" translatable="false">CgkIvefz9_kCEAIQAw</string>
+    <string name="leaderboard_chaos_streak_id" translatable="false">CgkIvefz9_kCEAIQBA</string>
 </resources>
