@@ -1,5 +1,6 @@
 package com.moonsolstudios.kavvoro.audio
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.MediaPlayer
@@ -263,6 +264,8 @@ class KavvoroSoundEngine(context: Context) {
         fadingSelectionStreams.clear()
     }
 
+    // Localized clips follow a stable generated naming scheme; keep.xml preserves them for shrinking.
+    @SuppressLint("DiscouragedApi")
     private fun getSelectionResourceId(lang: String, index: Int): Int {
         if (lang != "en" && lang in supportedAudioLanguageCodes) {
             val resId = appContext.resources.getIdentifier(

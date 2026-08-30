@@ -7,7 +7,6 @@ import com.moonsolstudios.kavvoro.model.GameMode
 import com.moonsolstudios.kavvoro.model.LayoutMode
 import com.moonsolstudios.kavvoro.model.MenuButton
 import com.moonsolstudios.kavvoro.model.MenuState
-import com.moonsolstudios.kavvoro.repository.BrainballRepository
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -21,25 +20,6 @@ object HomeMenuRenderer {
 
     private fun withAlpha(color: Int, alpha: Int): Int =
         (color and 0x00FFFFFF) or ((alpha.coerceIn(0, 255)) shl 24)
-
-    fun isCompactMenuViewport(safeContentWidth: Float, density: Float): Boolean =
-        safeContentWidth / density.coerceAtLeast(0.1f) < 320f
-
-    fun isShortMenuViewport(viewHeight: Int, safeInsetTop: Int, safeInsetBottom: Int, density: Float): Boolean =
-        (viewHeight - safeInsetTop - safeInsetBottom).toFloat() / density.coerceAtLeast(0.1f) < 620f
-
-    fun widthInsetForBackButton(
-        viewHeight: Int,
-        safeInsetTop: Int,
-        safeInsetBottom: Int,
-        safeContentWidth: Float,
-        density: Float,
-        dp: Float
-    ): Float = when {
-        isShortMenuViewport(viewHeight, safeInsetTop, safeInsetBottom, density) -> 0f
-        isCompactMenuViewport(safeContentWidth, density) -> 22f * dp
-        else -> 62f * dp
-    }
 
     fun drawBrandTitle(
         canvas: Canvas,
@@ -429,119 +409,6 @@ object HomeMenuRenderer {
         canvas.drawRoundRect(scratch, 10f * dp, 10f * dp, paint)
         textPaint.color = 0xDEFFFFFF.toInt()
         canvas.drawText(fitText(caption, captionWidth - 18f * dp), captionX, captionY, textPaint)
-    }
-
-    fun updateMenuPreviewGeometry(
-        homePreview: Boolean,
-        menuStartButtonTop: Float,
-        menuActionStartButtonTop: Float,
-        menuHeroTop: Float,
-        menuHeroBottom: Float,
-        safeTop76: Float,
-        safeTop188: Float,
-        safeBottom78: Float,
-        compactMenuViewport: Boolean,
-        contentWidth: Float,
-        homeScale: Float,
-        centerX: Float,
-        homeContentLeft: Float,
-        skin: BallSkin,
-        menuPulse: Float,
-        menuBallOffsetX: Float,
-        menuBallOffsetY: Float,
-        viewWidth: Float,
-        heroRect: RectF,
-        portalBackRect: RectF,
-        portalFrontRect: RectF,
-        platformRect: RectF,
-        characterRect: RectF,
-        menuPreviewBounds: RectF,
-        layoutMode: LayoutMode,
-        dp: Float,
-        worldBitmap: (String) -> Bitmap?
-    ): Triple<Float, Float, Float> {
-        val controlsTop = if (homePreview) menuStartButtonTop else menuActionStartButtonTop
-        val previewTop = if (homePreview) menuHeroTop else safeTop188
-        val previewBottom = if (homePreview) menuHeroBottom else controlsTop - (if (compactMenuViewport) 42f else 22f) * dp
-
-        if (homePreview) {
-            val availableHeroH = (previewBottom - previewTop).coerceAtLeast(120f * dp)
-            val targetHeroWidth = min(contentWidth * 0.96f, 620f * dp)
-            val heroHeight = min(targetHeroWidth * 0.92f, availableHeroH)
-            val heroWidth = heroHeight / 0.92f
-            val heroStageTop = previewTop + (availableHeroH - heroHeight) * 0.5f
-
-            heroRect.set(
-                centerX - heroWidth * 0.5f,
-                heroStageTop,
-                centerX + heroWidth * 0.5f,
-                heroStageTop + heroHeight
-            )
-
-            val portalWidth = when (layoutMode) {
-                LayoutMode.COMPACT -> min(contentWidth * 0.76f, heroRect.height() * 0.78f)
-                LayoutMode.MEDIUM -> min(contentWidth * 0.70f, heroRect.height() * 0.76f)
-                LayoutMode.TABLET -> min(contentWidth * 0.52f, 480f * dp)
-            }
-            val portalBackBitmap = worldBitmap("home_portal_back")
-            val portalAspect = portalBackBitmap?.let { it.width.toFloat() / it.height.toFloat() } ?: (1254f / 1225f)
-            val portalHeight = portalWidth / portalAspect
-            val portalCx = homeContentLeft + contentWidth * 0.5f
-            val portalCy = heroRect.centerY() - 10f * homeScale * dp
-
-            portalBackRect.set(
-                portalCx - portalWidth * 0.5f,
-                portalCy - portalHeight * 0.5f,
-                portalCx + portalWidth * 0.5f,
-                portalCy + portalHeight * 0.5f
-            )
-            portalFrontRect.set(portalBackRect)
-
-            val platformBitmap = worldBitmap("home_portal_platform")
-            val platformAspect = platformBitmap?.let { it.width.toFloat() / it.height.toFloat() } ?: (2075f / 524f)
-            val platformWidth = portalBackRect.width() * 0.88f
-            val platformHeight = platformWidth / platformAspect
-            val platformCy = portalBackRect.centerY() + portalBackRect.height() * 0.38f
-
-            platformRect.set(
-                portalBackRect.centerX() - platformWidth * 0.5f,
-                platformCy - platformHeight * 0.5f,
-                portalBackRect.centerX() + platformWidth * 0.5f,
-                platformCy + platformHeight * 0.5f
-            )
-
-            val brainball = BrainballRepository.getById(skin.id)
-            val characterVisualWidth = portalBackRect.width() * 0.54f * brainball.homeScale
-            val finalCharacterWidth = min(characterVisualWidth, 260f * dp)
-
-            val floatX = sin(menuPulse * 1.3f) * 3f * homeScale * dp
-            val floatY = sin(menuPulse * 1.8f) * 3f * homeScale * dp
-            val characterCx = portalBackRect.centerX() + floatX + menuBallOffsetX
-            val characterCy = portalBackRect.centerY() + floatY + menuBallOffsetY
-
-            characterRect.set(
-                characterCx - finalCharacterWidth * 0.5f,
-                characterCy - finalCharacterWidth * 0.5f,
-                characterCx + finalCharacterWidth * 0.5f,
-                characterCy + finalCharacterWidth * 0.5f
-            )
-
-            val menuPreviewCenterX = portalCx
-            val menuPreviewCenterY = portalCy
-            val menuPreviewRadius = portalWidth * 0.5f
-            menuPreviewBounds.set(10f * dp, safeTop76, viewWidth - 10f * dp, safeBottom78)
-            return Triple(menuPreviewCenterX, menuPreviewCenterY, menuPreviewRadius)
-        }
-
-        val radius = min(viewWidth * 0.2f, (previewBottom - previewTop) * 0.36f).coerceIn(
-            (if (compactMenuViewport) 40f else 52f) * dp,
-            (if (compactMenuViewport) 54f else 78f) * dp
-        )
-        val menuPreviewCenterX = centerX
-        val menuPreviewCenterY = (previewTop + previewBottom) * 0.5f
-        val menuPreviewRadius = radius
-        menuPreviewBounds.set(10f * dp, safeTop76, viewWidth - 10f * dp, safeBottom78)
-        return Triple(menuPreviewCenterX, menuPreviewCenterY, menuPreviewRadius)
     }
 
     fun drawMenuScreen(

@@ -12,7 +12,6 @@ plugins {
     id("com.android.application")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
-    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 android {
@@ -69,7 +68,6 @@ android {
 
     buildFeatures {
         buildConfig = true
-        compose = true
     }
 
     compileOptions {
@@ -86,16 +84,8 @@ android {
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
-    implementation("androidx.fragment:fragment:1.9.0")
-    implementation(platform("androidx.compose:compose-bom:2024.09.00"))
-    implementation("androidx.compose.ui:ui")
-    implementation("androidx.compose.ui:ui-graphics")
-    implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.activity:activity-compose:1.9.2")
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    implementation("androidx.activity:activity-ktx:1.9.2")
     implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
-    implementation("com.google.firebase:firebase-analytics")
     implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.android.gms:play-services-ads:25.4.0")
     implementation("com.google.android.gms:play-services-games-v2:21.0.0")

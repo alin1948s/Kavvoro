@@ -1,7 +1,6 @@
 package com.moonsolstudios.kavvoro.ui.home
 
 import android.graphics.RectF
-import com.moonsolstudios.kavvoro.model.Brainball
 import com.moonsolstudios.kavvoro.model.LayoutMode
 import kotlin.math.max
 import kotlin.math.min
@@ -82,8 +81,7 @@ class HomeLayoutCalculator {
         displayDensity: Float,
         brandAspect: Float = 2095f / 499f,
         portalAspect: Float = 1254f / 1225f,
-        platformAspect: Float = 2075f / 524f,
-        brainball: Brainball? = null
+        platformAspect: Float = 2075f / 524f
     ) {
         screenWidth = width.coerceAtLeast(1f)
         screenHeight = height.coerceAtLeast(1f)
@@ -236,8 +234,7 @@ class HomeLayoutCalculator {
         )
 
         // Brainball sizing and placement - centered inside portal
-        val bb = brainball ?: Brainball("kavvoro", "Kavvoro", 0)
-        val characterSize = portalRect.width() * 0.54f * bb.homeScale
+        val characterSize = portalRect.width() * 0.54f
         val characterCx = portalRect.centerX()
         val characterCy = portalRect.centerY()
 

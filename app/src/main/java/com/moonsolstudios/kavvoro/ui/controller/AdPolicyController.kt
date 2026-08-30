@@ -5,10 +5,10 @@ import com.moonsolstudios.kavvoro.model.GameMode
 
 object AdPolicyController {
 
-    const val FAILS_BEFORE_CONTINUE_AD = 3
+    const val FAILS_BEFORE_CONTINUE_AD = 4
 
     fun failContinueCountKey(mode: GameMode, levelIndex: Int): String =
-        "fail_continue_count_${mode.name.lowercase()}_$levelIndex"
+        "fail_continue_${mode.name.lowercase()}_$levelIndex"
 
     fun failContinueCount(prefs: SharedPreferences, mode: GameMode, levelIndex: Int): Int =
         prefs.getInt(failContinueCountKey(mode, levelIndex), 0)

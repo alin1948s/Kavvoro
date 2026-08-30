@@ -7,6 +7,7 @@ import android.view.MotionEvent
 import com.moonsolstudios.kavvoro.audio.KavvoroSoundEngine
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.i18n.KavvoroLanguage
+import com.moonsolstudios.kavvoro.ui.HapticFeedbackCompat
 import kotlin.math.abs
 
 object LanguageTouchController {
@@ -21,7 +22,7 @@ object LanguageTouchController {
         itemRects: List<RectF>
     ): Int {
         if (y < viewportTop || y > viewportBottom) return -1
-        val displayCount = KavvoroLanguage.entries.size - 1
+        val displayCount = KavvoroLanguage.entries.size
         return (0 until displayCount).firstOrNull { itemRects.getOrNull(it)?.contains(x, y) == true } ?: -1
     }
 
@@ -86,7 +87,7 @@ object LanguageTouchController {
                 if (languageDragging || !rect.contains(event.x, event.y)) return
                 KavvoroI18n.setSelected(context, language)
                 audio.setLanguageCode(KavvoroI18n.audioLanguageCode(context))
-                performHaptic(HapticFeedbackConstants.CONFIRM)
+                performHaptic(HapticFeedbackCompat.confirm)
             }
         }
     }

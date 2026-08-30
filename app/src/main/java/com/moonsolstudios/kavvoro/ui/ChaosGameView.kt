@@ -1,10 +1,10 @@
 package com.moonsolstudios.kavvoro.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.ClipData
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.BlurMaskFilter
 import android.graphics.Canvas
 import android.graphics.Color
@@ -13,7 +13,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
-import android.os.Build
 import android.os.SystemClock
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
@@ -30,6 +29,7 @@ import com.moonsolstudios.kavvoro.audio.KavvoroSoundEngine
 import com.moonsolstudios.kavvoro.audio.MusicTrack
 import com.moonsolstudios.kavvoro.audio.SoundEvent
 import com.moonsolstudios.kavvoro.billing.PremiumCatalog
+import com.moonsolstudios.kavvoro.billing.PurchaseBridge
 import com.moonsolstudios.kavvoro.model.*
 import com.moonsolstudios.kavvoro.ui.home.HomeLayoutCalculator
 import com.moonsolstudios.kavvoro.ui.render.*
@@ -37,6 +37,7 @@ import com.moonsolstudios.kavvoro.engine.CurseType
 import com.moonsolstudios.kavvoro.engine.BallPower
 import com.moonsolstudios.kavvoro.engine.Hazard
 import com.moonsolstudios.kavvoro.engine.HazardMotion
+import com.moonsolstudios.kavvoro.engine.GameplayScoreCalculator
 import com.moonsolstudios.kavvoro.engine.LevelDirector
 import com.moonsolstudios.kavvoro.engine.LevelSpec
 import com.moonsolstudios.kavvoro.engine.PhysicsEngine
@@ -52,9 +53,23 @@ import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.i18n.KavvoroLanguage
 import com.moonsolstudios.kavvoro.i18n.TutorialCopy
 import com.moonsolstudios.kavvoro.layout.ScreenLayoutManager
+import com.moonsolstudios.kavvoro.repository.BallSkinCatalog
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository
+import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.BEST_STREAK_KEY
+import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.DEFAULT_SKIN_ID
+import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.HYPE_BANK_KEY
+import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.MUSIC_MUTED_KEY
+import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.SELECTED_SKIN_KEY
+import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.SFX_MUTED_KEY
+import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.SHARE_COUNT_KEY
 import com.moonsolstudios.kavvoro.share.ReplaySharePayload
 import com.moonsolstudios.kavvoro.share.ReplayVideoExporter
+import com.moonsolstudios.kavvoro.ui.controller.LanguageTouchController
+import com.moonsolstudios.kavvoro.ui.controller.LeaderboardTouchController
+import com.moonsolstudios.kavvoro.ui.controller.AdaptiveQualityController
+import com.moonsolstudios.kavvoro.ui.controller.AdPolicyController
+import com.moonsolstudios.kavvoro.ui.controller.CollectionTouchController
+import com.moonsolstudios.kavvoro.ui.controller.GameLoopDirector
 import com.moonsolstudios.kavvoro.ui.controller.SettingsTouchController
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
@@ -66,6 +81,8 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
 
+// This SurfaceView is created programmatically because its runtime bridges cannot be inflated from XML.
+@SuppressLint("ViewConstructor")
 class ChaosGameView(
     context: Context,
     private val adBridge: AdBridge = AdBridge.NONE,
@@ -81,175 +98,22 @@ class ChaosGameView(
     private val path = Path()
     private val scratch = RectF()
     private val scratch2 = RectF()
-    private val scratch3 = RectF()
     private val physics = PhysicsEngine()
     private val replay = ReplayRecorder()
     private val audio = KavvoroSoundEngine(context.applicationContext)
     private val prefs = context.getSharedPreferences("kavvoro_progress", Context.MODE_PRIVATE)
     private var sfxMuted = prefs.getBoolean(SFX_MUTED_KEY, false)
     private var musicMuted = prefs.getBoolean(MUSIC_MUTED_KEY, false)
-    private val ballSkins = listOf(
-        BallSkin("prism_king", "VORO PRIME", "unlimited aura final boss", 0xFFF7F4FF.toInt(), 0xFF8AA6FF.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.PRISM, UnlockRule(UnlockType.PREMIUM, 0, "Premium 0.99 local price"), BallPower.PRISM_SHIELD),
-        BallSkin("void_zero", "KAV ZERO", "taxed the void at 3am", 0xFF07090F.toInt(), 0xFFFF4D8D.toInt(), 0xFF45F2FF.toInt(), SkinStyle.VOID, UnlockRule(UnlockType.PREMIUM, 0, "Premium 0.99 local price"), BallPower.VOID_PHASE),
-        BallSkin("chrome_lux", "CHROME VORO", "sigma mirror from ohio", 0xFFE6EDF7.toInt(), 0xFF1DE8C8.toInt(), 0xFFFF4D8D.toInt(), SkinStyle.CHROME, UnlockRule(UnlockType.PREMIUM, 0, "Premium 0.99 local price"), BallPower.CHROME_RICOCHET),
-        BallSkin("plasma_crown", "NOVA KAV", "galaxy rizz meltdown", 0xFFFFCF4A.toInt(), 0xFFC15CFF.toInt(), 0xFFFF8C42.toInt(), SkinStyle.PLASMA, UnlockRule(UnlockType.PREMIUM, 0, "Premium 0.99 local price"), BallPower.PLASMA_SURGE),
-        BallSkin("nodlo", "KAVVORO", "the original brainrot specimen", 0xFFF7F4FF.toInt(), 0xFF1DE8C8.toInt(), 0xFF1DE8C8.toInt(), SkinStyle.CLASSIC, UnlockRule(UnlockType.DEFAULT, 0, "Unlocked")),
-        BallSkin("curse_grad", "VORO GRAD", "graduated brain academy", 0xFF8AA6FF.toInt(), 0xFFFFCF4A.toInt(), 0xFF8AA6FF.toInt(), SkinStyle.CROWN, UnlockRule(UnlockType.TUTORIAL_CLEAR, 10, "Clear tutorial L10")),
-        BallSkin("blop_13", "BLOP VORO", "emotionally aerodynamic", 0xFF64E572.toInt(), 0xFF07090F.toInt(), 0xFF64E572.toInt(), SkinStyle.BLOP, UnlockRule(UnlockType.CLASSIC_LEVEL, 25, "Clear Classic L25")),
-        BallSkin("fizz_nana", "FIZZ KAV", "battery ate the charger", 0xFFFFCF4A.toInt(), 0xFF07090F.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.ZAP, UnlockRule(UnlockType.BEST_STREAK, 15, "Reach streak 15")),
-        BallSkin("lala_glitch", "LALA VORO", "wifi password was wrong", 0xFFFF4D8D.toInt(), 0xFF45F2FF.toInt(), 0xFFFF4D8D.toInt(), SkinStyle.GLITCH, UnlockRule(UnlockType.CHAOS_LEVEL, 25, "Clear Chaos L25")),
-        BallSkin("womp_loop", "WOMP KAV", "looping the same thought", 0xFF8AA6FF.toInt(), 0xFFFFCF4A.toInt(), 0xFF8AA6FF.toInt(), SkinStyle.LOOP, UnlockRule(UnlockType.BEST_STREAK, 25, "Reach streak 25")),
-        BallSkin("mimi_static", "MIMI VORO", "staring aggressively in 4k", 0xFFC15CFF.toInt(), 0xFFF7F4FF.toInt(), 0xFFC15CFF.toInt(), SkinStyle.STATIC, UnlockRule(UnlockType.CLASSIC_LEVEL, 40, "Clear Classic L40")),
-        BallSkin("zaza_volt", "ZAZA KAV", "too fast for homework", 0xFFFF8C42.toInt(), 0xFF07090F.toInt(), 0xFFFF8C42.toInt(), SkinStyle.ZAP, UnlockRule(UnlockType.BEST_STREAK, 35, "Reach streak 35")),
-        BallSkin("tik_rift", "TIKKAV RIFT", "the wind owes him money", 0xFF45F2FF.toInt(), 0xFF431934.toInt(), 0xFF45F2FF.toInt(), SkinStyle.RIFT, UnlockRule(UnlockType.CLASSIC_LEVEL, 55, "Clear Classic L55")),
-        BallSkin("byte_baba", "BYTE VORO", "born in the share button", 0xFFF7F4FF.toInt(), 0xFFFF4D8D.toInt(), 0xFFF7F4FF.toInt(), SkinStyle.BYTE, UnlockRule(UnlockType.SHARE_COUNT, 5, "Share five replays")),
-        BallSkin("globo_wobble", "GLOBO KAV", "gravity's unemployed cousin", 0xFF1DE8C8.toInt(), 0xFFFFCF4A.toInt(), 0xFF1DE8C8.toInt(), SkinStyle.WOBBLE, UnlockRule(UnlockType.CHAOS_LEVEL, 30, "Clear Chaos L30")),
-        BallSkin("rift_baba", "ELDER VORO", "ancient forbidden yapping", 0xFF431934.toInt(), 0xFFFFCF4A.toInt(), 0xFFFF4D8D.toInt(), SkinStyle.RIFT, UnlockRule(UnlockType.CHAOS_LEVEL, 50, "Clear Chaos L50")),
-        BallSkin("king_static", "KING KAV", "maximum aura no evidence", 0xFFFFCF4A.toInt(), 0xFFFF4D8D.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.CROWN, UnlockRule(UnlockType.BEST_STREAK, 25, "Reach streak 25"))
-    ) + lateGameBallSkins()
-
-    private fun lateGameBallSkins(): List<BallSkin> = listOf(
-        BallSkin("nibbi_kav", "NIBBI KAV", "forgot why it entered", 0xFF7EE787.toInt(), 0xFF1F2937.toInt(), 0xFF7EE787.toInt(), SkinStyle.BLOP, UnlockRule(UnlockType.CLASSIC_LEVEL, 35, "Clear Classic L35")),
-        BallSkin("voro_rizz", "VORO RIZZ", "unlicensed aura dealer", 0xFFFF7AB2.toInt(), 0xFF231942.toInt(), 0xFFFF7AB2.toInt(), SkinStyle.LOOP, UnlockRule(UnlockType.CHAOS_LEVEL, 40, "Clear Chaos L40")),
-        BallSkin("bongo_kav", "BONGO KAV", "thinks in drum noises", 0xFFFFA94D.toInt(), 0xFF101820.toInt(), 0xFFFFA94D.toInt(), SkinStyle.WOBBLE, UnlockRule(UnlockType.HYPE_COST, 7_500, "Unlock with 7500 HYPE")),
-        BallSkin("glitch_nona", "GLITCH NONA", "buffering since birth", 0xFFB765FF.toInt(), 0xFF45F2FF.toInt(), 0xFFB765FF.toInt(), SkinStyle.GLITCH, UnlockRule(UnlockType.CLASSIC_LEVEL, 50, "Clear Classic L50")),
-        BallSkin("sloppi_voro", "SLOPPI VORO", "microwaved premium water", 0xFF65E6A7.toInt(), 0xFF342A21.toInt(), 0xFF65E6A7.toInt(), SkinStyle.BLOP, UnlockRule(UnlockType.HYPE_COST, 14_000, "Unlock with 14000 HYPE")),
-        BallSkin("kav_kaboom", "KAV KABOOM", "volume permanently maximum", 0xFFFF5757.toInt(), 0xFFFFCF4A.toInt(), 0xFFFF5757.toInt(), SkinStyle.ZAP, UnlockRule(UnlockType.SHARE_COUNT, 10, "Share ten replays")),
-        BallSkin("drippi_mim", "DRIPPI MIM", "wearing invisible sneakers", 0xFF45F2FF.toInt(), 0xFFFF4D8D.toInt(), 0xFF45F2FF.toInt(), SkinStyle.CHROME, UnlockRule(UnlockType.HYPE_COST, 22_000, "Unlock with 22000 HYPE")),
-        BallSkin("nappa_voro", "NAPPA VORO", "sleeping at full speed", 0xFF8AA6FF.toInt(), 0xFF2B2440.toInt(), 0xFF8AA6FF.toInt(), SkinStyle.STATIC, UnlockRule(UnlockType.CLASSIC_LEVEL, 75, "Clear Classic L75")),
-        BallSkin("yappa_kav", "YAPPA KAV", "podcast with no microphone", 0xFFFF8C42.toInt(), 0xFFC15CFF.toInt(), 0xFFFF8C42.toInt(), SkinStyle.LOOP, UnlockRule(UnlockType.CHAOS_LEVEL, 75, "Clear Chaos L75")),
-        BallSkin("turbo_blob", "TURBO BLOB", "zero brakes many opinions", 0xFF64E572.toInt(), 0xFFFFCF4A.toInt(), 0xFF64E572.toInt(), SkinStyle.WOBBLE, UnlockRule(UnlockType.BEST_STREAK, 50, "Reach streak 50")),
-        BallSkin("wifi_voro", "WIFI VORO", "connected without internet", 0xFF45F2FF.toInt(), 0xFF07090F.toInt(), 0xFF45F2FF.toInt(), SkinStyle.RIFT, UnlockRule(UnlockType.CLASSIC_LEVEL, 100, "Clear Classic L100")),
-        BallSkin("cringe_kav", "CRINGE KAV", "weaponized secondhand shame", 0xFFFF4D8D.toInt(), 0xFFFFCF4A.toInt(), 0xFFFF4D8D.toInt(), SkinStyle.GLITCH, UnlockRule(UnlockType.CHAOS_LEVEL, 100, "Clear Chaos L100")),
-        BallSkin("kav_404", "KAV 404", "thought process not found", 0xFFF7F4FF.toInt(), 0xFFFF5757.toInt(), 0xFFF7F4FF.toInt(), SkinStyle.BYTE, UnlockRule(UnlockType.SHARE_COUNT, 20, "Share twenty replays")),
-        BallSkin("pasta_voro", "PASTA VORO", "certified sauce technician", 0xFFFFCF4A.toInt(), 0xFFFF4D8D.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.LOOP, UnlockRule(UnlockType.HYPE_COST, 34_000, "Unlock with 34000 HYPE")),
-        BallSkin("laggi_kav", "LAGGI KAV", "arrived three frames late", 0xFFC15CFF.toInt(), 0xFF45F2FF.toInt(), 0xFFC15CFF.toInt(), SkinStyle.STATIC, UnlockRule(UnlockType.CLASSIC_LEVEL, 125, "Clear Classic L125")),
-        BallSkin("moggo_voro", "MOGGO VORO", "jawline rendered separately", 0xFF1DE8C8.toInt(), 0xFF431934.toInt(), 0xFF1DE8C8.toInt(), SkinStyle.PRISM, UnlockRule(UnlockType.CHAOS_LEVEL, 125, "Clear Chaos L125")),
-        BallSkin("brain_bean", "BRAIN BEAN", "one bean two braincells", 0xFF64E572.toInt(), 0xFFC15CFF.toInt(), 0xFF64E572.toInt(), SkinStyle.BLOP, UnlockRule(UnlockType.HYPE_COST, 55_000, "Unlock with 55000 HYPE"), BallPower.MINOR_RICOCHET),
-        BallSkin("aura_thief", "AURA THIEF", "borrowed everything forever", 0xFF07090F.toInt(), 0xFFFFCF4A.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.VOID, UnlockRule(UnlockType.CLASSIC_LEVEL, 150, "Clear Classic L150")),
-        BallSkin("gigi_glitch", "GIGI GLITCH", "reality needs an update", 0xFFFF4D8D.toInt(), 0xFF45F2FF.toInt(), 0xFFFF4D8D.toInt(), SkinStyle.GLITCH, UnlockRule(UnlockType.CHAOS_LEVEL, 150, "Clear Chaos L150")),
-        BallSkin("noodle_kav", "NOODLE KAV", "structurally just vibes", 0xFFFFCF4A.toInt(), 0xFF64E572.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.WOBBLE, UnlockRule(UnlockType.SHARE_COUNT, 30, "Share thirty replays")),
-        BallSkin("sleepy_voro", "SLEEPY VORO", "dreaming in leaderboard points", 0xFF8AA6FF.toInt(), 0xFF07090F.toInt(), 0xFF8AA6FF.toInt(), SkinStyle.STATIC, UnlockRule(UnlockType.HYPE_COST, 85_000, "Unlock with 85000 HYPE"), BallPower.MINOR_PHASE),
-        BallSkin("panic_bean", "PANIC BEAN", "calm mode sold separately", 0xFFFF8C42.toInt(), 0xFFFF4D8D.toInt(), 0xFFFF8C42.toInt(), SkinStyle.ZAP, UnlockRule(UnlockType.CLASSIC_LEVEL, 200, "Clear Classic L200")),
-        BallSkin("bossy_blop", "BOSSY BLOP", "promoted itself during lunch", 0xFF64E572.toInt(), 0xFFFFCF4A.toInt(), 0xFF64E572.toInt(), SkinStyle.CROWN, UnlockRule(UnlockType.CHAOS_LEVEL, 200, "Clear Chaos L200")),
-        BallSkin("quantum_kav", "QUANTUM KAV", "winning and crashing together", 0xFF45F2FF.toInt(), 0xFFC15CFF.toInt(), 0xFF45F2FF.toInt(), SkinStyle.PRISM, UnlockRule(UnlockType.HYPE_COST, 130_000, "Unlock with 130000 HYPE"), BallPower.MINOR_SURGE),
-        BallSkin("wobble_ceo", "WOBBLE CEO", "owns three fake companies", 0xFFFFCF4A.toInt(), 0xFF1DE8C8.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.WOBBLE, UnlockRule(UnlockType.CLASSIC_LEVEL, 250, "Clear Classic L250")),
-        BallSkin("error_voro", "ERROR VORO", "too forbidden to compile", 0xFFFF5757.toInt(), 0xFF07090F.toInt(), 0xFFFF5757.toInt(), SkinStyle.BYTE, UnlockRule(UnlockType.CHAOS_LEVEL, 250, "Clear Chaos L250")),
-        BallSkin("golden_yap", "GOLDEN YAP", "talking in legendary subtitles", 0xFFFFCF4A.toInt(), 0xFFF7F4FF.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.CROWN, UnlockRule(UnlockType.SHARE_COUNT, 50, "Share fifty replays")),
-        BallSkin("void_junior", "VOID JUNIOR", "small void huge confidence", 0xFF18111F.toInt(), 0xFFFF4D8D.toInt(), 0xFFC15CFF.toInt(), SkinStyle.VOID, UnlockRule(UnlockType.BEST_STREAK, 150, "Reach streak 150")),
-        BallSkin("kav_maxx", "KAV MAXX", "every slider set to illegal", 0xFFF7F4FF.toInt(), 0xFFFF5757.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.PLASMA, UnlockRule(UnlockType.CLASSIC_LEVEL, 300, "Clear Classic L300")),
-        BallSkin("rift_rizzler", "RIFT RIZZLER", "gravity follows his account", 0xFF431934.toInt(), 0xFF45F2FF.toInt(), 0xFFFF4D8D.toInt(), SkinStyle.RIFT, UnlockRule(UnlockType.CHAOS_LEVEL, 300, "Clear Chaos L300")),
-        BallSkin("ultra_nona", "ULTRA NONA", "recharges from pure yapping", 0xFFC15CFF.toInt(), 0xFFFFCF4A.toInt(), 0xFFC15CFF.toInt(), SkinStyle.PLASMA, UnlockRule(UnlockType.BEST_STREAK, 200, "Reach streak 200"), BallPower.MINOR_SURGE),
-        BallSkin("aura_titan", "AURA TITAN", "phases through awkward moments", 0xFFF7F4FF.toInt(), 0xFF8AA6FF.toInt(), 0xFF45F2FF.toInt(), SkinStyle.PRISM, UnlockRule(UnlockType.CLASSIC_LEVEL, 400, "Clear Classic L400"), BallPower.MINOR_PHASE),
-        BallSkin("final_voro", "FINAL VORO", "bounces beyond the lore", 0xFFFFCF4A.toInt(), 0xFFFF4D8D.toInt(), 0xFFF7F4FF.toInt(), SkinStyle.CROWN, UnlockRule(UnlockType.CHAOS_LEVEL, 400, "Clear Chaos L400"), BallPower.MINOR_RICOCHET)
-    )
-
-    private val brainballArtResources = mapOf(
-        "prism_king" to R.drawable.brainball_prism_king,
-        "void_zero" to R.drawable.brainball_void_zero,
-        "chrome_lux" to R.drawable.brainball_chrome_lux,
-        "plasma_crown" to R.drawable.brainball_plasma_crown,
-        "nodlo" to R.drawable.brainball_nodlo,
-        "curse_grad" to R.drawable.brainball_curse_grad,
-        "blop_13" to R.drawable.brainball_blop_13,
-        "fizz_nana" to R.drawable.brainball_fizz_nana,
-        "lala_glitch" to R.drawable.brainball_lala_glitch,
-        "womp_loop" to R.drawable.brainball_womp_loop,
-        "mimi_static" to R.drawable.brainball_mimi_static,
-        "zaza_volt" to R.drawable.brainball_zaza_volt,
-        "tik_rift" to R.drawable.brainball_tik_rift,
-        "byte_baba" to R.drawable.brainball_byte_baba,
-        "globo_wobble" to R.drawable.brainball_globo_wobble,
-        "rift_baba" to R.drawable.brainball_rift_baba,
-        "king_static" to R.drawable.brainball_king_static,
-        "nibbi_kav" to R.drawable.brainball_nibbi_kav,
-        "voro_rizz" to R.drawable.brainball_voro_rizz,
-        "bongo_kav" to R.drawable.brainball_bongo_kav,
-        "glitch_nona" to R.drawable.brainball_glitch_nona,
-        "sloppi_voro" to R.drawable.brainball_sloppi_voro,
-        "kav_kaboom" to R.drawable.brainball_kav_kaboom,
-        "drippi_mim" to R.drawable.brainball_drippi_mim,
-        "nappa_voro" to R.drawable.brainball_nappa_voro,
-        "yappa_kav" to R.drawable.brainball_yappa_kav,
-        "turbo_blob" to R.drawable.brainball_turbo_blob,
-        "wifi_voro" to R.drawable.brainball_wifi_voro,
-        "cringe_kav" to R.drawable.brainball_cringe_kav,
-        "kav_404" to R.drawable.brainball_kav_404,
-        "pasta_voro" to R.drawable.brainball_pasta_voro,
-        "laggi_kav" to R.drawable.brainball_laggi_kav,
-        "moggo_voro" to R.drawable.brainball_moggo_voro,
-        "brain_bean" to R.drawable.brainball_brain_bean,
-        "aura_thief" to R.drawable.brainball_aura_thief,
-        "gigi_glitch" to R.drawable.brainball_gigi_glitch,
-        "noodle_kav" to R.drawable.brainball_noodle_kav,
-        "sleepy_voro" to R.drawable.brainball_sleepy_voro,
-        "panic_bean" to R.drawable.brainball_panic_bean,
-        "bossy_blop" to R.drawable.brainball_bossy_blop,
-        "quantum_kav" to R.drawable.brainball_quantum_kav,
-        "wobble_ceo" to R.drawable.brainball_wobble_ceo,
-        "error_voro" to R.drawable.brainball_error_voro,
-        "golden_yap" to R.drawable.brainball_golden_yap,
-        "void_junior" to R.drawable.brainball_void_junior,
-        "kav_maxx" to R.drawable.brainball_kav_maxx,
-        "rift_rizzler" to R.drawable.brainball_rift_rizzler,
-        "ultra_nona" to R.drawable.brainball_ultra_nona,
-        "aura_titan" to R.drawable.brainball_aura_titan,
-        "final_voro" to R.drawable.brainball_final_voro
-    )
-    private val brainballBitmaps = mutableMapOf<String, Bitmap>()
-    private val worldArtResources = mapOf(
-        "bg_menu" to R.drawable.world_bg_menu,
-        "bg_tutorial" to R.drawable.world_bg_tutorial,
-        "bg_tutorial_classic" to R.drawable.world_bg_tutorial_classic,
-        "bg_tutorial_chaos" to R.drawable.world_bg_tutorial_chaos,
-        "bg_classic" to R.drawable.world_bg_classic,
-        "bg_chaos" to R.drawable.world_bg_chaos,
-        "bg_endgame" to R.drawable.world_bg_endgame,
-        "boost_rift_pull" to R.drawable.boost_rift_pull,
-        "boost_pulse" to R.drawable.boost_pulse,
-        "boost_prism" to R.drawable.boost_prism,
-        "boost_void" to R.drawable.boost_void,
-        "boost_rebound" to R.drawable.boost_rebound,
-        "boost_plasma" to R.drawable.boost_plasma,
-        "boost_chain" to R.drawable.boost_chain,
-        "boost_recharge" to R.drawable.boost_recharge,
-        "boost_goal" to R.drawable.boost_goal,
-        "hazard_static" to R.drawable.world_hazard_static,
-        "hazard_glitch" to R.drawable.world_hazard_glitch,
-        "hazard_void" to R.drawable.world_hazard_void,
-        "reactor_out" to R.drawable.world_reactor_out,
-        "reactor_in" to R.drawable.world_reactor_in,
-        "portal_goal" to R.drawable.world_portal_goal,
-        "platform_classic" to R.drawable.world_platform_classic,
-        "platform_chaos" to R.drawable.world_platform_chaos,
-        "danger_beacon" to R.drawable.world_danger_beacon,
-        "ui_home" to R.drawable.ui_icon_home,
-        "ui_retry" to R.drawable.ui_icon_retry,
-        "ui_share" to R.drawable.ui_icon_share,
-        "ui_next" to R.drawable.ui_icon_next,
-        "ui_back" to R.drawable.ui_icon_back,
-        "ui_restore" to R.drawable.ui_icon_restore,
-        "ui_sound" to R.drawable.ui_icon_sound,
-        "ui_music" to R.drawable.ui_icon_music,
-        "home_background" to R.drawable.home_background,
-        "home_portal_back" to R.drawable.home_portal_back,
-        "home_platform" to R.drawable.home_platform,
-        "home_portal_platform" to R.drawable.home_portal_platform,
-        "home_portal_front" to R.drawable.home_portal_front,
-        "home_portal_front_fx" to R.drawable.home_portal_front_fx,
-        "home_play_cta_frame" to R.drawable.home_play_cta_frame,
-        "home_rift_status_frame" to R.drawable.home_rift_status_frame,
-        "brand_kavvoro" to R.drawable.brand_kavvoro
-    )
-    private val worldBitmaps = mutableMapOf<String, Bitmap>()
-    private val scaledBackgroundBitmaps = mutableMapOf<String, Bitmap>()
-
+    private val ballSkins = BallSkinCatalog.ALL_SKINS
+    private val languageTypeface by lazy {
+        androidx.core.content.res.ResourcesCompat.getFont(context, R.font.oxanium)
+    }
     @Volatile
     private var running = false
     private var loopThread: Thread? = null
     private var lastFrameNanos = 0L
-    private val renderProfile = detectRenderProfile()
-    private var adaptiveQuality = initialAdaptiveQuality()
+    private val renderProfile = AdaptiveQualityController.detectRenderProfile()
+    private var adaptiveQuality = AdaptiveQualityController.initialAdaptiveQuality(renderProfile)
     private var consecutiveSlowFrames = 0
 
     private var viewWidth = 1
@@ -323,6 +187,9 @@ class ChaosGameView(
     private var selectedSkinId = prefs.getString(SELECTED_SKIN_KEY, DEFAULT_SKIN_ID) ?: DEFAULT_SKIN_ID
     private var collectionFocusSkinId = selectedSkinId
     private val premiumPricesBySkin = mutableMapOf<String, String>()
+    private val progressRepository by lazy {
+        GameProgressRepository(prefs, ballSkins, premiumPricesBySkin, ::t)
+    }
     private var rewardMessage = ""
     private var collectionMessage = ""
     private var collectionMessageTimer = 0f
@@ -352,9 +219,7 @@ class ChaosGameView(
     private val menuLeaderboardButton = RectF()
     private val menuVaultButton = RectF()
     private val menuPrivacyButton = RectF()
-    private val menuLanguageButton = RectF()
     private val menuSfxButton = RectF()
-    private val menuMusicButton = RectF()
     private val menuPreviewBounds = RectF()
     private val menuStatsRects = List(4) { RectF() }
     private val menuHeroRect = RectF()
@@ -375,6 +240,7 @@ class ChaosGameView(
     private val leaderboardBackButton = RectF()
     private val leaderboardItemRects = mutableListOf<RectF>()
     private val languageBackButton = RectF()
+    private val languageFooterRect = RectF()
     private val languageItemRects = MutableList(KavvoroLanguage.entries.size) { RectF() }
     private var activeLanguageIndex = -1
     private var languageScroll = 0f
@@ -633,6 +499,12 @@ class ChaosGameView(
             }
         }
         pendingAction?.invoke()
+        if (event.actionMasked == MotionEvent.ACTION_UP) performClick()
+        return true
+    }
+
+    override fun performClick(): Boolean {
+        super.performClick()
         return true
     }
 
@@ -724,7 +596,7 @@ class ChaosGameView(
         tutorialStartButton.setEmpty()
         resetTutorialGesture()
         stateElapsed = 0f
-        performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        performHapticFeedback(HapticFeedbackCompat.confirm)
         audio.playEvent(SoundEvent.UI_TAP, selectedBallIndex())
         return true
     }
@@ -889,69 +761,41 @@ class ChaosGameView(
         post(onFirstFrameRendered)
     }
 
-    private fun lockRenderCanvas(): Canvas? {
-        return try {
-            holder.lockCanvas()
-        } catch (_: Exception) {
-            null
-        }
+    private fun lockRenderCanvas(): Canvas? = try {
+        GameLoopDirector.lockRenderCanvas(holder)
+    } catch (_: Exception) {
+        null
     }
 
     private fun adjustAdaptiveQuality(frameTimeMs: Float) {
-        val target = targetFrameMillis().toFloat()
-        consecutiveSlowFrames = if (frameTimeMs > target * 1.18f) consecutiveSlowFrames + 1 else 0
-        val floor = qualityFloor()
-        val ceiling = qualityCeiling()
-        adaptiveQuality = when {
-            frameTimeMs > target * 1.8f -> adaptiveQuality - 0.16f
-            frameTimeMs > target * 1.32f -> adaptiveQuality - 0.085f
-            consecutiveSlowFrames >= 3 -> adaptiveQuality - 0.05f
-            frameTimeMs < target * 0.58f -> adaptiveQuality + if (renderProfile == RenderProfile.LOW) 0.004f else 0.012f
-            frameTimeMs < target * 0.78f -> adaptiveQuality + if (renderProfile == RenderProfile.HIGH) 0.006f else 0.002f
-            else -> adaptiveQuality
-        }.coerceIn(floor, ceiling)
+        val result = AdaptiveQualityController.adjustAdaptiveQuality(
+            frameTimeMs = frameTimeMs,
+            profile = renderProfile,
+            currentAdaptiveQuality = adaptiveQuality,
+            currentSlowFrames = consecutiveSlowFrames,
+            targetMillis = targetFrameMillis()
+        )
+        adaptiveQuality = result.adaptiveQuality
+        consecutiveSlowFrames = result.consecutiveSlowFrames
     }
 
-    private fun targetFrameMillis(): Long {
-        return when {
-            exportingShare -> 33L
-            screenTransitionTimer > 0f -> if (renderProfile == RenderProfile.LOW) 42L else 22L
-            screen == Screen.GAME && state == GameState.SIMULATING -> when (renderProfile) {
-                RenderProfile.LOW -> 33L
-                RenderProfile.BALANCED -> 18L
-                RenderProfile.HIGH -> 16L
-            }
-            screen == Screen.GAME -> if (renderProfile == RenderProfile.LOW) 42L else 22L
-            screen == Screen.MENU -> if (renderProfile == RenderProfile.LOW) 50L else 33L
-            else -> if (renderProfile == RenderProfile.LOW) 50L else 33L
-        }
-    }
-
-    private fun initialAdaptiveQuality(): Float = when (renderProfile) {
-        RenderProfile.LOW -> 0.38f
-        RenderProfile.BALANCED -> 0.72f
-        RenderProfile.HIGH -> 0.88f
-    }
-
-    private fun qualityFloor(): Float = when (renderProfile) {
-        RenderProfile.LOW -> 0.3f
-        RenderProfile.BALANCED -> 0.5f
-        RenderProfile.HIGH -> 0.56f
-    }
-
-    private fun qualityCeiling(): Float = when (renderProfile) {
-        RenderProfile.LOW -> 0.5f
-        RenderProfile.BALANCED -> 0.84f
-        RenderProfile.HIGH -> 1f
-    }
+    private fun targetFrameMillis(): Long =
+        AdaptiveQualityController.targetFrameMillis(
+            profile = renderProfile,
+            screen = screen,
+            state = state,
+            screenTransitionTimer = screenTransitionTimer,
+            exportingShare = exportingShare
+        )
 
     private fun performanceLite(): Boolean =
-        settingsPerformanceMode || renderProfile == RenderProfile.LOW || adaptiveQuality < 0.64f
+        AdaptiveQualityController.isPerformanceLite(settingsPerformanceMode, renderProfile, adaptiveQuality)
 
-    private fun richEffects(): Boolean = renderProfile != RenderProfile.LOW && adaptiveQuality >= 0.8f
+    private fun richEffects(): Boolean =
+        AdaptiveQualityController.isRichEffects(renderProfile, adaptiveQuality)
 
-    private fun fullEffects(): Boolean = renderProfile == RenderProfile.HIGH && adaptiveQuality >= 0.94f
-
+    private fun fullEffects(): Boolean =
+        AdaptiveQualityController.isFullEffects(renderProfile, adaptiveQuality)
     private fun syncMusicTrack() {
         val track = when (screen) {
             Screen.MENU,
@@ -973,16 +817,19 @@ class ChaosGameView(
 
     private fun isTutorialLevel(levelNumber: Int): Boolean = levelNumber <= TUTORIAL_LAST_LEVEL
 
-    private fun shouldShowLevelAd(mode: GameMode, levelNumber: Int): Boolean {
-        if (isTutorialLevel(levelNumber)) return false
-        val firstAdLevel = TUTORIAL_LAST_LEVEL + AD_LEVEL_INTERVAL + 1
-        if (levelNumber < firstAdLevel) return false
-        if ((levelNumber - firstAdLevel) % AD_LEVEL_INTERVAL != 0) return false
-        return prefs.getInt(levelAdKey(mode), 0) != levelNumber
-    }
+    private fun shouldShowLevelAd(mode: GameMode, levelNumber: Int): Boolean =
+        AdPolicyController.shouldShowLevelAd(
+            prefs = prefs,
+            mode = mode,
+            levelNumber = levelNumber,
+            isTutorialLevel = ::isTutorialLevel,
+            tutorialLastLevel = TUTORIAL_LAST_LEVEL,
+            adLevelInterval = AD_LEVEL_INTERVAL,
+            levelAdKey = ::levelAdKey
+        )
 
     private fun markLevelAdShown(mode: GameMode, levelNumber: Int) {
-        prefs.edit().putInt(levelAdKey(mode), levelNumber).apply()
+        AdPolicyController.markLevelAdShown(prefs, mode, levelNumber, ::levelAdKey)
     }
 
     private fun configureStage(width: Int, height: Int, reset: Boolean) {
@@ -1066,14 +913,14 @@ class ChaosGameView(
                     powerMessage = t("PRISM SHIELD SAID NOT TODAY").uppercase()
                     powerMessageTimer = 2.4f
                     audio.playEvent(SoundEvent.POWER, selectedBallIndex())
-                    performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+                    performHapticFeedback(HapticFeedbackCompat.confirm)
                 }
                 if (frame.portalTriggered) {
                     powerMessage = t("PORTAL SLINGSHOT").uppercase()
                     powerMessageTimer = 1.6f
                     pulseFeedbackCooldown = 0.35f
                     audio.playEvent(SoundEvent.POWER, selectedBallIndex(), 1f)
-                    hapticSequence(HapticFeedbackConstants.CONFIRM to 0L, HapticFeedbackConstants.CLOCK_TICK to 95L)
+                    hapticSequence(HapticFeedbackCompat.confirm to 0L, HapticFeedbackConstants.CLOCK_TICK to 95L)
                 }
                 if (frame.pulseIntensity >= 0.42f && pulseFeedbackCooldown <= 0f) {
                     powerMessage = t(if (levelHasCurse(CurseType.PULSE_STORM)) "PULSE STORM GRABBED YOU" else "BOOST FIELD ONLINE").uppercase()
@@ -1178,7 +1025,7 @@ class ChaosGameView(
             audio.playEvent(SoundEvent.POWER, selectedBallIndex())
         }
         physics.reset(level, selectedPower)
-        performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        performHapticFeedback(HapticFeedbackCompat.confirm)
     }
 
     private fun updateRiftEnergy(dt: Float) {
@@ -1202,7 +1049,7 @@ class ChaosGameView(
                 riftAnchor = null
                 riftTapReleaseTimer = 0f
                 audio.playEvent(SoundEvent.RIFT_OFF, selectedBallIndex(), 0f)
-                performHapticFeedback(HapticFeedbackConstants.REJECT)
+                performHapticFeedback(HapticFeedbackCompat.reject)
             } else if (riftTapReleaseTimer <= 0f) {
                 releaseRiftControl(withHaptic = false)
             }
@@ -1265,12 +1112,31 @@ class ChaosGameView(
             val score = replay.buildScore(level, inkUsed, simElapsed)
             lastScore = score
             streak += 1
-            lastRiftBreak = shouldTriggerRiftBreak(score)
-            lastRiftBreakBonus = if (lastRiftBreak) calculateRiftBreakBonus(score) else 0
+            lastRiftBreak = GameplayScoreCalculator.shouldTriggerRiftBreak(
+                riftEnergy = riftEnergy,
+                maxChain = maxChain,
+                gameMode = gameMode,
+                seconds = score.seconds,
+                timeLimitSeconds = level.timeLimitSeconds,
+                rank = score.rank
+            )
+            lastRiftBreakBonus = if (lastRiftBreak) {
+                GameplayScoreCalculator.calculateRiftBreakBonus(score.rank, riftEnergy, maxChain, gameMode)
+            } else {
+                0
+            }
             lastRiftBreakReason = if (lastRiftBreak) riftBreakReason(score) else ""
             lastDailyBonus = claimDailyRiftBonus()
-            lastStreakMilestoneBonus = calculateStreakMilestoneBonus()
-            lastHypeScore = calculateHypeScore(score) + lastRiftBreakBonus + lastDailyBonus + lastStreakMilestoneBonus
+            lastStreakMilestoneBonus = GameplayScoreCalculator.calculateStreakMilestoneBonus(streak)
+            lastHypeScore = GameplayScoreCalculator.calculateHypeScore(
+                rank = score.rank,
+                gameMode = gameMode,
+                seconds = score.seconds,
+                inkUsed = score.inkUsed,
+                inkLimit = level.inkLimit,
+                streak = streak,
+                maxChain = maxChain
+            ) + lastRiftBreakBonus + lastDailyBonus + lastStreakMilestoneBonus
             if (lastRiftBreak) {
                 riftBreakTimer = 2.15f
                 powerMessage = "${t("RIFT BREAK").uppercase()}  +$lastRiftBreakBonus"
@@ -1284,13 +1150,13 @@ class ChaosGameView(
             audio.playEvent(if (newSkin != null) SoundEvent.UNLOCK else if (lastRiftBreak) SoundEvent.POWER else SoundEvent.GOAL, selectedBallIndex())
             if (newSkin != null) {
                 hapticSequence(
-                    HapticFeedbackConstants.CONFIRM to 0L,
+                    HapticFeedbackCompat.confirm to 0L,
                     HapticFeedbackConstants.LONG_PRESS to 90L,
                     HapticFeedbackConstants.CLOCK_TICK to 180L
                 )
             } else {
                 hapticSequence(
-                    HapticFeedbackConstants.CONFIRM to 0L,
+                    HapticFeedbackCompat.confirm to 0L,
                     HapticFeedbackConstants.CLOCK_TICK to 110L
                 )
             }
@@ -1298,7 +1164,7 @@ class ChaosGameView(
             lastScore = null
             audio.playEvent(SoundEvent.FAIL, selectedBallIndex())
             hapticSequence(
-                HapticFeedbackConstants.REJECT to 0L,
+                HapticFeedbackCompat.reject to 0L,
                 HapticFeedbackConstants.CLOCK_TICK to 120L
             )
         }
@@ -1372,7 +1238,7 @@ class ChaosGameView(
         backgroundShader = null
         resetRound()
         triggerScreenTransition(level.accent)
-        performHapticFeedback(HapticFeedbackConstants.CONFIRM)
+        performHapticFeedback(HapticFeedbackCompat.confirm)
     }
 
     private fun createLevel(): LevelSpec {
@@ -1433,51 +1299,6 @@ class ChaosGameView(
         }
     }
 
-    private fun calculateHypeScore(score: RunScore): Int {
-        val rankBonus = when (score.rank) {
-            "S" -> 900
-            "A" -> 650
-            "B" -> 420
-            else -> 250
-        }
-        val modeBonus = when (gameMode) {
-            GameMode.CHAOS -> 360
-            GameMode.CLASSIC -> 120
-        }
-        val speedBonus = ((9f - score.seconds).coerceAtLeast(0f) * 72f).roundToInt()
-        val inkBonus = ((1f - (score.inkUsed / level.inkLimit).coerceIn(0f, 1f)) * 520f).roundToInt()
-        return rankBonus + modeBonus + speedBonus + inkBonus + streak * 80 + maxChain * 120
-    }
-
-    private fun currentHudHypeScore(): Int {
-        if (state == GameState.WON && lastHypeScore > 0) return lastHypeScore
-        if (state == GameState.LOST) return 0
-        val modeBonus = if (gameMode == GameMode.CHAOS) 360 else 120
-        val levelBonus = (level.index * if (gameMode == GameMode.CHAOS) 16 else 10).coerceAtMost(520)
-        val paceRatio = ((level.timeLimitSeconds - simElapsed).coerceAtLeast(0f) / level.timeLimitSeconds.coerceAtLeast(1f))
-            .coerceIn(0f, 1f)
-        val paceBonus = (paceRatio * 360f).roundToInt()
-        val energyBonus = (riftEnergy.coerceIn(0f, 1f) * 420f).roundToInt()
-        val chainBonus = (maxChain * 120 + chainCount * 34).coerceAtMost(920)
-        return 220 + modeBonus + levelBonus + paceBonus + energyBonus + streak * 80 + chainBonus
-    }
-
-    private fun shouldTriggerRiftBreak(score: RunScore): Boolean {
-        val lowEnergyFinish = riftEnergy <= 0.24f
-        val comboSpike = maxChain >= if (gameMode == GameMode.CHAOS) 3 else 4
-        val clutchTimer = score.seconds >= level.timeLimitSeconds * 0.72f && riftEnergy <= 0.36f
-        val cleanHighRank = (score.rank == "S" || score.rank == "A") && maxChain >= 2 && riftEnergy <= 0.42f
-        return lowEnergyFinish || comboSpike || clutchTimer || cleanHighRank
-    }
-
-    private fun calculateRiftBreakBonus(score: RunScore): Int {
-        val rankBonus = if (score.rank == "S") 220 else if (score.rank == "A") 140 else 80
-        val energyBonus = ((1f - riftEnergy.coerceIn(0f, 1f)) * 420f).roundToInt()
-        val chainBonus = (maxChain * 65).coerceAtMost(520)
-        val modeBonus = if (gameMode == GameMode.CHAOS) 180 else 90
-        return 360 + rankBonus + energyBonus + chainBonus + modeBonus
-    }
-
     private fun riftBreakReason(score: RunScore): String {
         return when {
             riftEnergy <= 0.18f -> t("LOW ENERGY FINISH").uppercase()
@@ -1486,11 +1307,6 @@ class ChaosGameView(
             gameMode == GameMode.CHAOS -> t("CHAOS CONTROL").uppercase()
             else -> t("CLEAN RIFT SNAP").uppercase()
         }
-    }
-
-    private fun calculateStreakMilestoneBonus(): Int {
-        if (streak <= 0 || streak % 5 != 0) return 0
-        return 250 + (streak * 18).coerceAtMost(900)
     }
 
     private fun toggleSfxMuted() {
@@ -1687,15 +1503,6 @@ class ChaosGameView(
         }
     }
 
-    private fun selectMode(mode: GameMode) {
-        selectedMenuMode = mode
-        if (modeProgress(mode) <= 1) {
-            startRun(mode, continueProgress = false)
-        } else {
-            menuState = MenuState.MODE_ACTION
-        }
-    }
-
     private fun exitToMenu() {
         if (state == GameState.WON || state == GameState.LOST) {
             breakStreak()
@@ -1730,7 +1537,7 @@ class ChaosGameView(
         if (previousLevel == 10) {
             powerMessage = "${gameMode.menuTitle()} ARENA UPGRADED"
             powerMessageTimer = 2.4f
-            hapticSequence(HapticFeedbackConstants.CONFIRM to 0L, HapticFeedbackConstants.CLOCK_TICK to 120L)
+            hapticSequence(HapticFeedbackCompat.confirm to 0L, HapticFeedbackConstants.CLOCK_TICK to 120L)
             triggerScreenTransition(if (gameMode == GameMode.CHAOS) 0xFFFF4D8D.toInt() else 0xFF1DE8C8.toInt())
         } else {
             triggerScreenTransition(level.accent)
@@ -1812,46 +1619,28 @@ class ChaosGameView(
         }
     }
 
-    private fun continueRequiresAd(): Boolean {
-        return shouldShowLevelAd(gameMode, level.index) || shouldShowFailContinueAd()
-    }
+    private fun continueRequiresAd(): Boolean =
+        AdPolicyController.continueRequiresAd(prefs, gameMode, level.index, ::shouldShowLevelAd)
 
-    private fun continueAdReason(): String {
-        return if (shouldShowLevelAd(gameMode, level.index)) {
-            "${t("LEVEL").uppercase()} ${level.index} ${t("CHECKPOINT").uppercase()}"
-        } else {
-            "${t("FAILED").uppercase()} ${FAILS_BEFORE_CONTINUE_AD}X"
-        }
-    }
+    private fun continueAdReason(): String =
+        AdPolicyController.continueAdReason(prefs, gameMode, level.index, ::shouldShowLevelAd, ::t)
 
     private fun recordFreeContinue() {
-        val used = failContinueCountForCurrentLevel()
-        prefs.edit().putInt(failContinueCountKey(gameMode, level.index), used + 1).apply()
+        AdPolicyController.recordFreeContinue(prefs, gameMode, level.index)
     }
 
     private fun recordAdContinue() {
         clearFailContinueCount()
     }
 
-    private fun shouldShowFailContinueAd(): Boolean {
-        return failContinueCountForCurrentLevel() + 1 >= FAILS_BEFORE_CONTINUE_AD
-    }
-
-    private fun failContinueCountForCurrentLevel(): Int {
-        return prefs.getInt(failContinueCountKey(gameMode, level.index), 0)
-    }
-
     private fun clearFailContinueCount() {
-        prefs.edit().putInt(failContinueCountKey(gameMode, level.index), 0).apply()
+        AdPolicyController.clearFailContinueCount(prefs, gameMode, level.index)
     }
 
     private fun breakStreak() {
         if (streak == 0) return
         streak = 0
-        prefs.edit()
-            .putInt(streakKey(gameMode), 0)
-            .putInt("clear_streak", 0)
-            .apply()
+        progressRepository.breakStreak(gameMode)
     }
 
     private fun triggerScreenTransition(accent: Int = selectedBallSkin().lineColor) {
@@ -1980,6 +1769,35 @@ class ChaosGameView(
     }
 
     private fun drawBackground(canvas: Canvas) {
+        if (screen == Screen.LANGUAGE) {
+            AtmosphereRenderer.drawBackground(
+                canvas = canvas,
+                screen = screen,
+                menuState = menuState,
+                gameMode = gameMode,
+                selectedMenuMode = selectedMenuMode,
+                levelIndex = level.index,
+                viewWidth = viewWidth.toFloat(),
+                viewHeight = viewHeight.toFloat(),
+                safeInsetLeft = 0f,
+                safeInsetRight = 0f,
+                safeInsetBottom = 0f,
+                safeTop14 = dp(14f),
+                stageLeft = stageLeft,
+                scale = scale,
+                stageWidth = STAGE_WIDTH,
+                stateElapsed = stateElapsed,
+                performanceLite = performanceLite(),
+                richEffects = richEffects(),
+                bgMenuBitmap = null,
+                backgroundBitmap = null,
+                paint = paint,
+                dp = uiDensity,
+                worldToScreen = ::worldToScreen,
+                drawCenterCrop = AssetResourceManager::drawCenterCrop
+            )
+            return
+        }
         if (screen == Screen.MENU) {
             val homeBg = worldBitmap("home_background")
             if (homeBg != null) {
@@ -2363,58 +2181,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         menuPreviewBounds.set(dp(10f), dp(76f), viewWidth - dp(10f), viewHeight - dp(78f))
     }
 
-    private fun drawMenuChevron(canvas: Canvas, x: Float, y: Float, accent: Int) {
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1.8f)
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.color = withAlpha(accent, 210)
-        canvas.drawLine(x - dp(4f), y - dp(4f), x, y, paint)
-        canvas.drawLine(x, y, x - dp(4f), y + dp(4f), paint)
-        paint.strokeCap = Paint.Cap.BUTT
-    }
-
-    private fun drawMascotFace(
-        canvas: Canvas,
-        cx: Float,
-        cy: Float,
-        radius: Float,
-        accent: Int,
-        name: String,
-        glitch: Boolean
-    ) {
-        paint.style = Paint.Style.FILL
-        paint.color = 0xFFF7F4FF.toInt()
-        scratch.set(cx - radius, cy - radius * 0.86f, cx + radius, cy + radius * 0.9f)
-        canvas.drawRoundRect(scratch, radius * 0.34f, radius * 0.34f, paint)
-
-        paint.color = accent
-        canvas.drawRoundRect(cx - radius * 0.48f, cy - radius * 1.18f, cx + radius * 0.48f, cy - radius * 0.84f, radius * 0.14f, radius * 0.14f, paint)
-        paint.strokeWidth = radius * 0.1f
-        paint.style = Paint.Style.STROKE
-        paint.strokeCap = Paint.Cap.ROUND
-        canvas.drawLine(cx - radius * 0.48f, cy - radius * 1.1f, cx - radius * 0.72f, cy - radius * 1.32f, paint)
-        canvas.drawLine(cx + radius * 0.48f, cy - radius * 1.1f, cx + radius * 0.72f, cy - radius * 1.32f, paint)
-        paint.strokeCap = Paint.Cap.BUTT
-
-        paint.style = Paint.Style.FILL
-        paint.color = 0xFF07090F.toInt()
-        val eyeShift = if (glitch) sin(menuPulse * 3.2f) * radius * 0.08f else 0f
-        canvas.drawCircle(cx - radius * 0.34f + eyeShift, cy - radius * 0.16f, radius * 0.15f, paint)
-        scratch.set(cx + radius * 0.18f - eyeShift, cy - radius * 0.3f, cx + radius * 0.52f - eyeShift, cy + radius * 0.04f)
-        canvas.drawRoundRect(scratch, radius * 0.07f, radius * 0.07f, paint)
-
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = radius * 0.08f
-        scratch.set(cx - radius * 0.38f, cy + radius * 0.1f, cx + radius * 0.38f, cy + radius * 0.46f)
-        canvas.drawArc(scratch, 12f, 156f, false, paint)
-
-        textPaint.textAlign = Paint.Align.CENTER
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = (radius * 0.32f).coerceAtLeast(dp(7f))
-        textPaint.color = accent
-        canvas.drawText(name.take(10), cx, cy + radius * 1.32f, textPaint)
-    }
-
     private fun drawBallSkin(
         canvas: Canvas,
         cx: Float,
@@ -2679,85 +2445,39 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         }
     }
 
-    private fun brainballBitmap(skin: BallSkin): Bitmap? {
-        brainballBitmaps[skin.id]?.let { return it }
-        val resource = brainballArtResources[skin.id] ?: return null
-        return BitmapFactory.decodeResource(resources, resource)?.also { brainballBitmaps[skin.id] = it }
-    }
+    private fun brainballBitmap(skin: BallSkin): Bitmap? =
+        AssetResourceManager.brainballBitmap(skin, resources)
 
-    private fun worldBitmap(key: String): Bitmap? {
-        worldBitmaps[key]?.let { return it }
-        val resource = worldArtResources[key] ?: return null
-        val bitmap = if (key.startsWith("bg_") || key == "home_background") {
-            try {
-                BitmapFactory.decodeResource(
-                    resources,
-                    resource,
-                    BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.RGB_565 }
-                )
-            } catch (_: Exception) {
-                null
-            }
-        } else {
-            try {
-                BitmapFactory.decodeResource(resources, resource)
-            } catch (_: Exception) {
-                null
-            }
-        } ?: try {
-            val drawable = androidx.core.content.res.ResourcesCompat.getDrawable(resources, resource, context.theme)
-            if (drawable != null) {
-                val w = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 512
-                val h = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 128
-                val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-                val c = Canvas(bmp)
-                drawable.setBounds(0, 0, w, h)
-                drawable.draw(c)
-                bmp
-            } else null
-        } catch (_: Exception) {
-            null
-        }
-        return bitmap?.also { worldBitmaps[key] = it }
-    }
+    private fun worldBitmap(key: String): Bitmap? =
+        AssetResourceManager.worldBitmap(key, resources, context)
 
-    private fun backgroundBitmap(key: String): Bitmap? {
-        val cacheKey = "$key:${viewWidth}x$viewHeight"
-        scaledBackgroundBitmaps[cacheKey]?.takeIf { !it.isRecycled }?.let { return it }
-        val source = worldBitmap(key) ?: return null
-        return try {
-            Bitmap.createScaledBitmap(source, viewWidth, viewHeight, renderProfile != RenderProfile.LOW)
-                .also { scaledBackgroundBitmaps[cacheKey] = it }
-        } catch (_: OutOfMemoryError) {
-            source
-        } catch (_: IllegalArgumentException) {
-            source
-        }
-    }
+    private fun backgroundBitmap(key: String): Bitmap? =
+        AssetResourceManager.backgroundBitmap(
+            key = key,
+            viewWidth = viewWidth,
+            viewHeight = viewHeight,
+            isLowProfile = renderProfile == RenderProfile.LOW,
+            resources = resources,
+            context = context
+        )
 
     private fun recycleScaledBackgrounds() {
-        scaledBackgroundBitmaps.values.forEach { bitmap ->
-            if (!bitmap.isRecycled) bitmap.recycle()
-        }
-        scaledBackgroundBitmaps.clear()
+        AssetResourceManager.recycleScaledBackgrounds()
     }
 
     private fun drawWorldAsset(canvas: Canvas, key: String, bounds: RectF, alpha: Int = 255) {
-        val bitmap = worldBitmap(key) ?: return
-        paint.alpha = alpha.coerceIn(0, 255)
-        paint.isFilterBitmap = true
-        canvas.drawBitmap(bitmap, null, bounds, paint)
-        paint.alpha = 255
+        AssetResourceManager.drawWorldAsset(
+            canvas = canvas,
+            key = key,
+            bounds = bounds,
+            alpha = alpha,
+            paint = paint,
+            resources = resources,
+            context = context
+        )
     }
 
-    private fun powerIconKey(power: BallPower): String = when (power) {
-        BallPower.PRISM_SHIELD -> "boost_prism"
-        BallPower.VOID_PHASE, BallPower.MINOR_PHASE -> "boost_void"
-        BallPower.CHROME_RICOCHET, BallPower.MINOR_RICOCHET -> "boost_rebound"
-        BallPower.PLASMA_SURGE, BallPower.MINOR_SURGE -> "boost_plasma"
-        BallPower.NONE -> "boost_rift_pull"
-    }
-
+    private fun powerIconKey(power: BallPower): String = AssetResourceManager.powerIconKey(power)
     private fun drawBrainballLock(canvas: Canvas, cx: Float, cy: Float, radius: Float) {
         val lockCx = cx + radius * 0.5f
         val lockCy = cy + radius * 0.46f
@@ -2784,593 +2504,60 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
 
 
     private fun drawCollection(canvas: Canvas) {
-        drawCollectionBackdrop(canvas)
-        layoutCollection()
-
-        val left = pageContentLeft() + dp(2f)
-        val top = dp(22f)
-        textPaint.shader = null
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(8.5f)
-        textPaint.color = 0xFFFF4D8D.toInt()
-        canvas.drawText("KAVVORO  /  ${t("VAULT").uppercase()}", left, top + dp(8f), textPaint)
-        textPaint.textSize = dp(29f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(fitText(t("COLLECTION").uppercase(), collectionBackButton.left - left - dp(10f)), left, top + dp(42f), textPaint)
-
-        val owned = unlockedSkinCount()
-        val metaTop = top + dp(54f)
-        drawCollectionStatChip(canvas, left, metaTop, t("OWNED").uppercase(), "$owned/${ballSkins.size}", 0xFF1DE8C8.toInt())
-        drawCollectionStatChip(canvas, left + dp(103f), metaTop, t("STREAK").uppercase(), "x${bestStreak()}", 0xFFC15CFF.toInt())
-        if (collectionRestoreButton.left - left >= dp(308f)) {
-            drawCollectionStatChip(canvas, left + dp(206f), metaTop, t("HYPE BANK").uppercase(), formatHypeAmount(hypeBalance()), 0xFFFFCF4A.toInt())
-        }
-
-        drawCollectionBackButton(canvas)
-        drawCollectionRestoreButton(canvas)
-        drawCollectionLoadout(canvas)
-        drawCollectionFilters(canvas)
-
-        val viewportTop = collectionViewportTop()
-        val viewportBottom = collectionViewportBottom()
-        canvas.save()
-        canvas.clipRect(0f, viewportTop, viewWidth.toFloat(), viewportBottom)
-        ballSkins.forEachIndexed { index, skin ->
-            val rect = collectionItemRects.getOrNull(index) ?: return@forEachIndexed
-            if (rect.bottom >= viewportTop && rect.top <= viewportBottom) {
-                drawCollectionItem(canvas, rect, index, skin)
-            }
-        }
-        canvas.restore()
-
-        val footer = collectionMessage.ifBlank {
-            nextRewardText()?.let { "${t("NEXT MUTATION").uppercase()} / $it" } ?: t("VAULT COMPLETE / MAXIMUM BRAIN ACHIEVED")
-        }
-        drawStatusMessage(canvas, footer, selectedBallSkin().lineColor, collectionMessage.isNotBlank())
-    }
-
-    private fun drawCollectionBackdrop(canvas: Canvas) {
-        paint.shader = LinearGradient(
-            0f,
-            0f,
-            viewWidth.toFloat(),
-            viewHeight.toFloat(),
-            intArrayOf(0xFF05070D.toInt(), 0xFF0A1018.toInt(), 0xFF07090F.toInt()),
-            floatArrayOf(0f, 0.55f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        paint.style = Paint.Style.FILL
-        canvas.drawRect(0f, 0f, viewWidth.toFloat(), viewHeight.toFloat(), paint)
-        paint.shader = null
-
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1f)
-        paint.color = 0x0FFFFFFF
-        val step = dp(58f)
-        var x = -((menuPulse * dp(4f)) % step)
-        while (x < viewWidth + step) {
-            canvas.drawLine(x, 0f, x, viewHeight.toFloat(), paint)
-            x += step
-        }
-        var y = dp(76f)
-        while (y < viewHeight) {
-            canvas.drawLine(0f, y, viewWidth.toFloat(), y, paint)
-            y += step
-        }
-
-        paint.style = Paint.Style.FILL
-        paint.shader = LinearGradient(
-            0f,
-            0f,
-            0f,
-            viewHeight.toFloat(),
-            intArrayOf(0x0005090F, 0x441DE8C8, 0x001DE8C8),
-            floatArrayOf(0f, 0.34f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        scratch.set(0f, 0f, dp(5f), viewHeight.toFloat())
-        canvas.drawRect(scratch, paint)
-        scratch.set(viewWidth - dp(5f), 0f, viewWidth.toFloat(), viewHeight.toFloat())
-        canvas.drawRect(scratch, paint)
-        paint.shader = null
-
-        paint.style = Paint.Style.STROKE
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.strokeWidth = dp(2.2f)
-        repeat(5) { i ->
-            val yy = dp(150f + i * 132f) + sin(menuPulse * 0.8f + i) * dp(7f)
-            paint.color = withAlpha(if (i % 2 == 0) 0xFF1DE8C8.toInt() else 0xFFFF4D8D.toInt(), 35)
-            canvas.drawLine(dp(16f), yy, viewWidth - dp(16f), yy + dp(if (i % 2 == 0) 12f else -10f), paint)
-        }
-        paint.strokeCap = Paint.Cap.BUTT
-    }
-
-    private fun drawCollectionStatChip(canvas: Canvas, left: Float, top: Float, label: String, value: String, accent: Int) {
-        val width = dp(92f)
-        val height = dp(24f)
-        scratch.set(left, top, left + width, top + height)
-        paint.style = Paint.Style.FILL
-        paint.color = 0xCC0A0F18.toInt()
-        canvas.drawRoundRect(scratch, dp(7f), dp(7f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(0.8f)
-        paint.color = withAlpha(accent, 115)
-        canvas.drawRoundRect(scratch, dp(7f), dp(7f), paint)
-
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(6.7f)
-        textPaint.color = 0x88FFFFFF.toInt()
-        canvas.drawText(label, left + dp(8f), top + dp(9f), textPaint)
-        textPaint.textSize = dp(10f)
-        textPaint.color = accent
-        canvas.drawText(fitText(value, width - dp(16f)), left + dp(8f), top + dp(20f), textPaint)
-    }
-
-    private fun drawCollectionLoadout(canvas: Canvas) {
-        val skin = focusedCollectionSkin()
-        val equipped = selectedBallSkin().id == skin.id
-        val unlocked = isSkinUnlocked(skin)
-        val premium = skin.unlock.type == UnlockType.PREMIUM
-        val hypeReady = skin.unlock.type == UnlockType.HYPE_COST && hypeBalance() >= skin.unlock.value
-        val powered = skin.power != BallPower.NONE
-        val left = pageContentLeft()
-        val top = dp(104f)
-        val right = pageContentRight()
-        val bottom = top + dp(78f)
-        val accent = brainballRarityColor(skin)
-
-        scratch.set(left, top, right, bottom)
-        paint.style = Paint.Style.FILL
-        paint.color = 0xF20A0F18.toInt()
-        canvas.drawRoundRect(scratch, dp(8f), dp(8f), paint)
-        paint.shader = LinearGradient(
-            left,
-            top,
-            right,
-            bottom,
-            intArrayOf(withAlpha(if (powered) 0xFFFFCF4A.toInt() else accent, if (powered) 92 else 64), withAlpha(accent, if (powered) 34 else 0), 0x000A0F18),
-            floatArrayOf(0f, 0.42f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(scratch, dp(8f), dp(8f), paint)
-        paint.shader = null
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (powered) 1.7f else 1.1f)
-        paint.color = withAlpha(if (powered) 0xFFFFCF4A.toInt() else accent, if (powered) 235 else 185)
-        canvas.drawRoundRect(scratch, dp(8f), dp(8f), paint)
-        paint.style = Paint.Style.FILL
-        paint.color = accent
-        canvas.drawRect(left, top, left + dp(4f), bottom, paint)
-
-        drawCollectionAvatar(
+        SubScreenMasterRenderer.drawCollection(
             canvas = canvas,
-            cx = left + dp(43f),
-            cy = (top + bottom) * 0.5f,
-            radius = dp(29f),
-            skin = skin,
-            locked = !unlocked && !premium,
-            selected = equipped,
-            large = true
-        )
-
-        val textLeft = left + dp(84f)
-        val rightColumn = dp(70f)
-        val textMaxWidth = (right - textLeft - rightColumn - dp(10f)).coerceAtLeast(dp(96f))
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(8f)
-        textPaint.color = withAlpha(if (powered) 0xFFFFCF4A.toInt() else accent, 245)
-        val kicker = when {
-            powered -> "${powerTierLabel(skin)}  /  ${ballPowerName(skin.power)}"
-            equipped -> t("EQUIPPED BRAINBALL").uppercase()
-            else -> "${t("INSPECTING").uppercase()} ${brainballRarity(skin)}"
-        }
-        canvas.drawText(
-            fitText(kicker, textMaxWidth),
-            textLeft,
-            top + dp(19f),
-            textPaint
-        )
-        textPaint.textSize = dp(18f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        drawFittedText(canvas, skin.name, textLeft, top + dp(43f), textMaxWidth, 18f, 12f)
-        textPaint.color = 0xAFFFFFFF.toInt()
-        val detail = when {
-            powered && premium -> "${ballPowerDescription(skin.power)} / ${premiumPriceLabel(skin)}"
-            powered -> ballPowerDescription(skin.power)
-            equipped -> "${brainballCardSubtitle(skin)} / ${t("ACTIVE").uppercase()}"
-            unlocked -> "${brainballCardSubtitle(skin)} / ${t("TAP TO EQUIP").uppercase()}"
-            hypeReady -> "${t("READY TO MUTATE").uppercase()} / ${t("TAP TO UNLOCK").uppercase()}"
-            else -> unlockLongLabel(skin).uppercase()
-        }
-        drawFittedText(canvas, detail, textLeft, top + dp(61f), textMaxWidth, 9.3f, 7.2f)
-
-        scratch2.set(right - dp(62f), top + dp(15f), right - dp(12f), bottom - dp(15f))
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(if (powered) skin.lineColor else 0xFFFFCF4A.toInt(), if (powered) 40 else 24)
-        canvas.drawRoundRect(scratch2, dp(7f), dp(7f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(0.9f)
-        paint.color = withAlpha(if (powered) 0xFFFFCF4A.toInt() else 0xFFFFCF4A.toInt(), if (powered) 180 else 70)
-        canvas.drawRoundRect(scratch2, dp(7f), dp(7f), paint)
-        textPaint.textAlign = Paint.Align.CENTER
-        textPaint.textSize = dp(7.4f)
-        textPaint.color = 0x88FFFFFF.toInt()
-        canvas.drawText(if (powered) t("POWER").uppercase() else t("AURA").uppercase(), scratch2.centerX(), scratch2.top + dp(14f), textPaint)
-        if (powered) {
-            scratch3.set(scratch2.centerX() - dp(13f), scratch2.top + dp(18f), scratch2.centerX() + dp(13f), scratch2.top + dp(44f))
-            drawWorldAsset(canvas, powerIconKey(skin.power), scratch3, 245)
-        } else {
-            textPaint.textSize = dp(16f)
-            textPaint.color = 0xFFFFCF4A.toInt()
-            canvas.drawText(brainballAura(skin).toString(), scratch2.centerX(), scratch2.top + dp(35f), textPaint)
-        }
-    }
-
-    private fun drawCollectionFilters(canvas: Canvas) {
-        CollectionFilter.entries.forEachIndexed { index, filter ->
-            val rect = collectionFilterRects.getOrNull(index) ?: return@forEachIndexed
-            if (rect.isEmpty) return@forEachIndexed
-            val selected = filter == collectionFilter
-            val active = activeCollectionIndex == collectionFilterActiveIndex(index)
-            val accent = when (filter) {
-                CollectionFilter.ALL -> 0xFFF7F4FF.toInt()
-                CollectionFilter.SUPERPOWER -> 0xFFFFCF4A.toInt()
-                CollectionFilter.HYPE -> 0xFF1DE8C8.toInt()
-                CollectionFilter.PREMIUM -> 0xFFFF4D8D.toInt()
-                CollectionFilter.COSMETIC -> 0xFF8AA6FF.toInt()
-            }
-            paint.style = Paint.Style.FILL
-            paint.color = when {
-                selected -> withAlpha(accent, 62)
-                active -> withAlpha(accent, 42)
-                else -> 0x9A080C13.toInt()
-            }
-            canvas.drawRoundRect(rect, dp(7f), dp(7f), paint)
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = dp(if (selected) 1.4f else 0.8f)
-            paint.color = withAlpha(accent, if (selected) 220 else 110)
-            canvas.drawRoundRect(rect, dp(7f), dp(7f), paint)
-            if (filter == CollectionFilter.SUPERPOWER) {
-                val icon = dp(13f)
-                scratch.set(rect.left + dp(5f), rect.centerY() - icon * 0.5f, rect.left + dp(5f) + icon, rect.centerY() + icon * 0.5f)
-                drawWorldAsset(canvas, "boost_plasma", scratch, if (selected) 245 else 170)
-            }
-            textPaint.shader = null
-            textPaint.textAlign = Paint.Align.CENTER
-            textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-            textPaint.textSize = dp(8f)
-            textPaint.color = if (selected) 0xFFF7F4FF.toInt() else withAlpha(0xFFF7F4FF.toInt(), 170)
-            val labelLeftPad = if (filter == CollectionFilter.SUPERPOWER) dp(12f) else 0f
-            canvas.drawText(
-                fitText(t(filter.labelKey).uppercase(), rect.width() - dp(10f) - labelLeftPad),
-                rect.centerX() + labelLeftPad * 0.35f,
-                rect.centerY() + dp(3f),
-                textPaint
-            )
-        }
-    }
-
-    private fun drawCollectionBackButton(canvas: Canvas) {
-        drawUiButtonFrame(
-            canvas = canvas,
-            rect = collectionBackButton,
-            active = activeCollectionIndex == COLLECTION_BACK_INDEX,
-            accent = 0xFF45F2FF.toInt(),
-            cornerDp = 7f
-        )
-        drawUiIconAsset(canvas, "ui_back", collectionBackButton, padDp = -1f, alpha = 245)
-    }
-
-    private fun drawCollectionRestoreButton(canvas: Canvas) {
-        val active = activeCollectionIndex == COLLECTION_RESTORE_INDEX
-        drawUiButtonFrame(canvas, collectionRestoreButton, active, 0xFF1DE8C8.toInt(), cornerDp = 5f)
-        val iconSize = dp(19f)
-        scratch.set(
-            collectionRestoreButton.left + dp(2f),
-            collectionRestoreButton.centerY() - iconSize * 0.5f,
-            collectionRestoreButton.left + dp(2f) + iconSize,
-            collectionRestoreButton.centerY() + iconSize * 0.5f
-        )
-        drawWorldAsset(canvas, "ui_restore", scratch, if (active) 255 else 225)
-        textPaint.shader = null
-        textPaint.textAlign = Paint.Align.CENTER
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(7.5f)
-        textPaint.color = 0xFFBDFBF2.toInt()
-        canvas.drawText(t("RESTORE").uppercase(), collectionRestoreButton.centerX() + dp(8f), collectionRestoreButton.centerY() + dp(2.6f), textPaint)
-    }
-
-    private fun drawCollectionItem(canvas: Canvas, rect: RectF, index: Int, skin: BallSkin) {
-        val unlocked = isSkinUnlocked(skin)
-        val selected = selectedBallSkin().id == skin.id
-        val premium = skin.unlock.type == UnlockType.PREMIUM
-        val hypeReady = skin.unlock.type == UnlockType.HYPE_COST && hypeBalance() >= skin.unlock.value
-        val powered = skin.power != BallPower.NONE
-        val active = activeCollectionIndex == index
-
-        val rarity = brainballRarity(skin)
-        val rarityColor = brainballRarityColor(skin)
-        val locked = !unlocked && !premium
-        val corner = dp(8f)
-        paint.style = Paint.Style.FILL
-        paint.color = when {
-            selected -> 0xF20D1320.toInt()
-            premium -> 0xF2181220.toInt()
-            unlocked -> 0xEF0A0F18.toInt()
-            else -> 0xF2070B12.toInt()
-        }
-        canvas.drawRoundRect(rect, corner, corner, paint)
-
-        paint.shader = LinearGradient(
-            rect.left,
-            rect.top,
-            rect.right,
-            rect.bottom,
-            intArrayOf(
-                withAlpha(if (powered) 0xFFFFCF4A.toInt() else rarityColor, if (premium || powered) 78 else 42),
-                withAlpha(if (powered) skin.lineColor else 0xFF0A0F18.toInt(), if (powered) 36 else 0),
-                withAlpha(0xFF07090F.toInt(), 88)
-            ),
-            floatArrayOf(0f, 0.48f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, corner, corner, paint)
-        paint.shader = null
-
-        paint.style = Paint.Style.FILL
-        paint.color = if (powered) 0xFFFFCF4A.toInt() else rarityColor
-        canvas.drawRect(rect.left, rect.top, rect.left + dp(if (selected) 5f else 3f), rect.bottom, paint)
-
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (selected || active) 2f else 1f)
-        paint.color = when {
-            selected -> skin.lineColor
-            premium -> withAlpha(0xFFFFCF4A.toInt(), 210)
-            powered -> withAlpha(0xFFFFCF4A.toInt(), 220)
-            unlocked -> withAlpha(skin.lineColor, 150)
-            else -> 0x44FFFFFF
-        }
-        canvas.drawRoundRect(rect, corner, corner, paint)
-
-        val isSingleColumn = rect.width() > dp(300f)
-        val avatarRadius = min(rect.height() * 0.34f, dp(if (isSingleColumn) 32f else 27f))
-        val avatarCx = rect.left + dp(if (isSingleColumn) 46f else 37f)
-        val avatarCy = rect.centerY() + dp(2f)
-        drawCollectionAvatar(
-            canvas,
-            avatarCx,
-            avatarCy,
-            avatarRadius,
-            skin = skin,
-            locked = locked,
-            selected = selected,
-            large = false
-        )
-        drawCollectionPowerBadge(canvas, avatarCx, avatarCy, avatarRadius, skin, locked)
-
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        val textLeft = rect.left + dp(if (isSingleColumn) 92f else 74f)
-        val textWidth = rect.right - textLeft - dp(11f)
-        if (powered) {
-            val ribbonWidth = if (isSingleColumn) textWidth - dp(68f) else rect.width() * 0.46f
-            drawCollectionPowerRibbon(canvas, textLeft, rect.top + dp(7f), ribbonWidth.coerceAtLeast(dp(72f)), skin, locked)
-        } else {
-            textPaint.textSize = dp(7.5f)
-            textPaint.color = withAlpha(rarityColor, if (unlocked || premium) 240 else 150)
-            val rarityWidth = if (isSingleColumn) textWidth * 0.62f else rect.width() * 0.46f
-            canvas.drawText(fitText(rarity, rarityWidth), textLeft, rect.top + dp(18f), textPaint)
-        }
-
-        scratch2.set(rect.right - dp(70f), rect.top + dp(10f), rect.right - dp(10f), rect.top + dp(31f))
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(if (powered) 0xFFFFCF4A.toInt() else 0xFFFFFFFF.toInt(), if (premium || powered) 30 else 16)
-        canvas.drawRoundRect(scratch2, dp(6f), dp(6f), paint)
-        if (powered) {
-            paint.style = Paint.Style.STROKE
-            paint.strokeWidth = dp(0.7f)
-            paint.color = withAlpha(0xFFFFCF4A.toInt(), 155)
-            canvas.drawRoundRect(scratch2, dp(6f), dp(6f), paint)
-            val icon = dp(13f)
-            scratch3.set(scratch2.left + dp(5f), scratch2.centerY() - icon * 0.5f, scratch2.left + dp(5f) + icon, scratch2.centerY() + icon * 0.5f)
-            drawWorldAsset(canvas, powerIconKey(skin.power), scratch3, if (locked) 145 else 230)
-        }
-        textPaint.textAlign = Paint.Align.CENTER
-        textPaint.textSize = dp(7.4f)
-        textPaint.color = if (premium || powered) 0xFFFFCF4A.toInt() else 0x88FFFFFF.toInt()
-        val chipLabel = if (powered) t("POWER").uppercase() else "${t("AURA").uppercase()} ${brainballAura(skin)}"
-        canvas.drawText(
-            fitText(chipLabel, scratch2.width() - dp(if (powered) 24f else 8f)),
-            scratch2.centerX() + if (powered) dp(8f) else 0f,
-            scratch2.top + dp(14f),
-            textPaint
-        )
-
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.color = if (unlocked || premium) 0xFFF7F4FF.toInt() else 0xAAFFFFFF.toInt()
-        drawFittedText(canvas, skin.name, textLeft, rect.top + dp(44f), textWidth, if (isSingleColumn) 16f else 12.5f, 9.2f)
-
-        textPaint.color = 0xAFFFFFFF.toInt()
-        drawFittedText(canvas, brainballCardSubtitle(skin), textLeft, rect.top + dp(62f), textWidth, if (isSingleColumn) 9.2f else 8.4f, 7.1f)
-
-        val label = when {
-            selected -> t("EQUIPPED").uppercase()
-            unlocked -> t("EQUIP").uppercase()
-            premium && powered -> "${t("GET").uppercase()} ${premiumCompactPriceLabel(skin)} / ${ballPowerName(skin.power)}"
-            premium -> "${t("GET").uppercase()} ${premiumCompactPriceLabel(skin)}"
-            hypeReady && powered -> "${t("UNLOCK").uppercase()} ${unlockShortLabel(skin)} / ${ballPowerName(skin.power)}"
-            hypeReady -> "${t("UNLOCK").uppercase()} ${unlockShortLabel(skin)}"
-            powered -> "${t("NEEDS").uppercase()} ${unlockShortLabel(skin)} / ${ballPowerName(skin.power)}"
-            else -> "${t("NEEDS").uppercase()} ${unlockShortLabel(skin)}"
-        }
-        textPaint.color = when {
-            selected -> skin.lineColor
-            premium || powered -> 0xFFFFCF4A.toInt()
-            hypeReady -> 0xFFFFCF4A.toInt()
-            unlocked -> 0xCCFFFFFF.toInt()
-            else -> withAlpha(skin.lineColor, 210)
-        }
-        textPaint.textSize = dp(8.8f)
-        val statusWidth = (textPaint.measureText(label) + dp(18f)).coerceAtMost(if (isSingleColumn) dp(128f) else textWidth)
-        scratch.set(rect.right - dp(12f) - statusWidth, rect.bottom - dp(30f), rect.right - dp(12f), rect.bottom - dp(9f))
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(if (premium || hypeReady || powered) 0xFFFFCF4A.toInt() else rarityColor, if (unlocked || premium || selected || hypeReady || powered) 42 else 22)
-        canvas.drawRoundRect(scratch, dp(6f), dp(6f), paint)
-        textPaint.textAlign = Paint.Align.CENTER
-        textPaint.textSize = dp(8.8f)
-        canvas.drawText(fitText(label, statusWidth - dp(16f)), scratch.centerX(), rect.bottom - dp(15f), textPaint)
-        textPaint.textAlign = Paint.Align.LEFT
-    }
-
-    private fun drawCollectionPowerRibbon(canvas: Canvas, left: Float, top: Float, width: Float, skin: BallSkin, locked: Boolean) {
-        val height = dp(19f)
-        scratch.set(left, top, left + width, top + height)
-        paint.style = Paint.Style.FILL
-        paint.shader = LinearGradient(
-            scratch.left,
-            scratch.top,
-            scratch.right,
-            scratch.bottom,
-            intArrayOf(withAlpha(0xFFFFCF4A.toInt(), if (locked) 72 else 130), withAlpha(skin.lineColor, if (locked) 34 else 74)),
-            null,
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(scratch, dp(6f), dp(6f), paint)
-        paint.shader = null
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(0.8f)
-        paint.color = withAlpha(0xFFFFCF4A.toInt(), if (locked) 130 else 230)
-        canvas.drawRoundRect(scratch, dp(6f), dp(6f), paint)
-        val icon = dp(13f)
-        scratch2.set(left + dp(4f), top + height * 0.5f - icon * 0.5f, left + dp(4f) + icon, top + height * 0.5f + icon * 0.5f)
-        drawWorldAsset(canvas, powerIconKey(skin.power), scratch2, if (locked) 135 else 230)
-        textPaint.shader = null
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(7.2f)
-        textPaint.color = if (locked) 0xBBFFFFFF.toInt() else 0xFFF7F4FF.toInt()
-        canvas.drawText(
-            fitText(powerTierLabel(skin), width - dp(24f)),
-            left + dp(21f),
-            top + dp(12.8f),
-            textPaint
+            layoutCollection = ::layoutCollection,
+            collectionFilter = collectionFilter,
+            viewWidth = viewWidth.toFloat(),
+            viewHeight = viewHeight.toFloat(),
+            safeTop22 = dp(22f),
+            safeTop54 = dp(54f),
+            safeTop76 = dp(76f),
+            safeTop104 = dp(104f),
+            safeBottom70 = viewHeight - dp(70f),
+            safeBottom16 = viewHeight - dp(16f),
+            pageContentLeft = pageContentLeft(),
+            pageContentRight = pageContentRight(),
+            collectionBackButton = collectionBackButton,
+            collectionRestoreButton = collectionRestoreButton,
+            collectionFilterRects = collectionFilterRects,
+            collectionItemRects = collectionItemRects,
+            activeCollectionIndex = activeCollectionIndex,
+            collectionFilterActiveIndexFn = ::collectionFilterActiveIndex,
+            collectionViewportTop = collectionViewportTop(),
+            collectionViewportBottom = collectionViewportBottom(),
+            menuPulse = menuPulse,
+            ballSkins = ballSkins,
+            selectedSkin = selectedBallSkin(),
+            focusedSkin = focusedCollectionSkin(),
+            unlockedCount = unlockedSkinCount(),
+            bestStreak = bestStreak(),
+            hypeBalance = hypeBalance(),
+            formatHypeAmount = ::formatHypeAmount,
+            isSkinUnlocked = ::isSkinUnlocked,
+            brainballBitmap = ::brainballBitmap,
+            collectionMessage = collectionMessage,
+            nextRewardText = nextRewardText(),
+            paint = paint,
+            dp = uiDensity,
+            t = ::t,
+            fitText = ::fitText,
+            drawFittedText = ::drawFittedText,
+            drawWorldAsset = ::drawWorldAsset,
+            drawUiButtonFrame = ::drawUiButtonFrame,
+            drawUiIconAsset = ::drawUiIconAsset,
+            powerIconKey = ::powerIconKey,
+            ballPowerName = ::ballPowerName,
+            ballPowerDescription = ::ballPowerDescription,
+            unlockShortLabel = ::unlockShortLabel,
+            unlockLongLabel = ::unlockLongLabel,
+            premiumPriceLabel = ::premiumPriceLabel,
+            premiumCompactPriceLabel = ::premiumCompactPriceLabel
         )
     }
 
-    private fun drawCollectionPowerBadge(canvas: Canvas, cx: Float, cy: Float, radius: Float, skin: BallSkin, locked: Boolean) {
-        if (skin.power == BallPower.NONE) return
-        val badgeRadius = radius * 0.42f
-        val bx = cx + radius * 0.72f
-        val by = cy - radius * 0.68f
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(0xFFFFCF4A.toInt(), if (locked) 65 else 120)
-        canvas.drawCircle(bx, by, badgeRadius * 1.55f, paint)
-        paint.color = withAlpha(0xFF07090F.toInt(), if (locked) 190 else 230)
-        canvas.drawCircle(bx, by, badgeRadius * 1.2f, paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1.2f)
-        paint.color = withAlpha(if (locked) 0xFF8AA6FF.toInt() else 0xFFFFCF4A.toInt(), if (locked) 150 else 245)
-        canvas.drawCircle(bx, by, badgeRadius * 1.22f, paint)
-        scratch3.set(bx - badgeRadius, by - badgeRadius, bx + badgeRadius, by + badgeRadius)
-        drawWorldAsset(canvas, powerIconKey(skin.power), scratch3, if (locked) 150 else 245)
-    }
-
-    private fun drawCollectionAvatar(
-        canvas: Canvas,
-        cx: Float,
-        cy: Float,
-        radius: Float,
-        skin: BallSkin,
-        locked: Boolean,
-        selected: Boolean,
-        large: Boolean
-    ) {
-        val accent = brainballRarityColor(skin)
-        val shellRadius = radius * if (large) 1.14f else 1.1f
-
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(accent, if (locked) 42 else 74)
-        canvas.drawCircle(cx, cy, shellRadius, paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (selected) 2.4f else 1.5f)
-        paint.color = withAlpha(if (selected) skin.lineColor else accent, if (locked) 105 else 230)
-        canvas.drawCircle(cx, cy, shellRadius * 0.92f, paint)
-
-        val art = brainballBitmap(skin)
-        val imageRadius = radius * if (large) 0.91f else 0.88f
-        val saveCount = canvas.save()
-        path.reset()
-        path.addCircle(cx, cy, imageRadius, Path.Direction.CW)
-        canvas.clipPath(path)
-        paint.style = Paint.Style.FILL
-        paint.color = 0xFF05070D.toInt()
-        canvas.drawCircle(cx, cy, imageRadius, paint)
-        if (art != null) {
-            paint.alpha = if (locked) 145 else 255
-            paint.isFilterBitmap = true
-            scratch3.set(cx - imageRadius, cy - imageRadius, cx + imageRadius, cy + imageRadius)
-            canvas.drawBitmap(art, null, scratch3, paint)
-            paint.alpha = 255
-        } else {
-            paint.color = if (locked) 0xFF333947.toInt() else skin.primary
-            canvas.drawCircle(cx, cy, imageRadius, paint)
-        }
-        if (locked) {
-            paint.color = 0x6610151E
-            canvas.drawCircle(cx, cy, imageRadius, paint)
-        }
-        canvas.restoreToCount(saveCount)
-
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1.1f)
-        paint.color = withAlpha(0xFFFFFFFF.toInt(), if (locked) 85 else 145)
-        canvas.drawCircle(cx, cy, imageRadius, paint)
-        if (locked) {
-            drawBrainballLock(canvas, cx, cy, radius * 0.88f)
-        }
-    }
-
-    private fun brainballRarity(skin: BallSkin): String = when {
-        skin.power != BallPower.NONE -> powerTierLabel(skin)
-        skin.unlock.type == UnlockType.PREMIUM -> t("MYTHIC BRAINROT").uppercase()
-        skin.unlock.type == UnlockType.DEFAULT -> t("ORIGINAL SPECIMEN").uppercase()
-        skin.style == SkinStyle.CROWN -> t("MAX AURA").uppercase()
-        skin.style == SkinStyle.GLITCH || skin.style == SkinStyle.STATIC -> t("GLITCHED").uppercase()
-        skin.style == SkinStyle.RIFT || skin.style == SkinStyle.VOID -> t("FORBIDDEN").uppercase()
-        skin.style == SkinStyle.ZAP || skin.style == SkinStyle.PLASMA -> t("OVERCLOCKED").uppercase()
-        skin.style == SkinStyle.BLOP || skin.style == SkinStyle.WOBBLE -> t("GOOFY CLASS").uppercase()
-        else -> t("RARE THOUGHT").uppercase()
-    }
-
-    private fun powerTierLabel(skin: BallSkin): String {
-        if (skin.power == BallPower.NONE) return t("NO POWER").uppercase()
-        return when {
-            skin.unlock.type == UnlockType.PREMIUM -> t("MYTHIC SUPERPOWER").uppercase()
-            skin.power == BallPower.MINOR_PHASE || skin.power == BallPower.MINOR_RICOCHET || skin.power == BallPower.MINOR_SURGE -> t("LITE SUPERPOWER").uppercase()
-            else -> t("EARNED SUPERPOWER").uppercase()
-        }
-    }
-
-    private fun brainballRarityColor(skin: BallSkin): Int = when {
-        skin.unlock.type == UnlockType.PREMIUM -> 0xFFFFCF4A.toInt()
-        skin.power != BallPower.NONE -> 0xFF64E572.toInt()
-        skin.style == SkinStyle.CROWN -> 0xFFFFCF4A.toInt()
-        skin.style == SkinStyle.GLITCH || skin.style == SkinStyle.STATIC -> 0xFFC15CFF.toInt()
-        skin.style == SkinStyle.RIFT || skin.style == SkinStyle.VOID -> 0xFFFF4D8D.toInt()
-        else -> skin.lineColor
-    }
-
-    private fun brainballAura(skin: BallSkin): Int {
-        val index = ballSkins.indexOfFirst { it.id == skin.id }.coerceAtLeast(0)
-        return if (skin.unlock.type == UnlockType.PREMIUM) 9999 - index * 111 else 404 + index * 137
-    }
-
-    private fun brainballCardSubtitle(skin: BallSkin): String {
-        return if (skin.power == BallPower.NONE) skin.subtitle.uppercase() else ballPowerName(skin.power)
-    }
+    private fun brainballAura(skin: BallSkin): Int =
+        CollectionTouchController.calculateAura(skin, ballSkins)
 
     private fun ballPowerName(power: BallPower): String = when (power) {
         BallPower.NONE -> t("NO POWER")
@@ -3389,404 +2576,176 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
     }.uppercase()
 
     private fun handleCollectionTouch(event: MotionEvent) {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                layoutCollection()
-                collectionTouchY = event.y
-                collectionLastY = event.y
-                collectionDragging = false
-                activeCollectionIndex = when {
-                    collectionBackButton.contains(event.x, event.y) -> COLLECTION_BACK_INDEX
-                    collectionRestoreButton.contains(event.x, event.y) -> COLLECTION_RESTORE_INDEX
-                    collectionFilterAt(event.x, event.y) >= 0 -> collectionFilterActiveIndex(collectionFilterAt(event.x, event.y))
-                    else -> collectionItemAt(event.x, event.y)
-                }
-            }
-
-            MotionEvent.ACTION_MOVE -> {
-                val dy = event.y - collectionLastY
-                if (kotlin.math.abs(event.y - collectionTouchY) > dp(5f)) {
-                    collectionDragging = true
-                    activeCollectionIndex = -1
-                }
-                collectionScroll = (collectionScroll - dy).coerceIn(0f, collectionMaxScroll)
-                collectionLastY = event.y
-            }
-
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                val released = activeCollectionIndex
-                activeCollectionIndex = -1
-                if (!collectionDragging && released == COLLECTION_BACK_INDEX && collectionBackButton.contains(event.x, event.y)) {
-                    screen = Screen.MENU
-                    backgroundShader = null
-                    performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    return
-                }
-                if (!collectionDragging && released == COLLECTION_RESTORE_INDEX && collectionRestoreButton.contains(event.x, event.y)) {
-                    collectionMessage = t("CHECKING GOOGLE PLAY PURCHASES")
-                    collectionMessageTimer = 3.4f
-                    audio.playEvent(SoundEvent.UI_TAP, selectedBallIndex())
-                    purchaseBridge.restore()
-                    return
-                }
-                val releasedFilter = collectionFilterFromActiveIndex(released)
-                if (!collectionDragging && releasedFilter >= 0 && collectionFilterAt(event.x, event.y) == releasedFilter) {
-                    collectionFilter = CollectionFilter.entries[releasedFilter]
-                    collectionScroll = 0f
-                    collectionMessage = "${t("FILTER").uppercase()} / ${t(collectionFilter.labelKey).uppercase()}"
-                    collectionMessageTimer = 1.7f
-                    audio.playEvent(SoundEvent.UI_TAP, selectedBallIndex())
-                    performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    return
-                }
-                if (!collectionDragging && released >= 0 && collectionItemAt(event.x, event.y) == released) {
-                    handleSkinTap(ballSkins[released])
-                }
-            }
-        }
+        CollectionTouchController.handleTouch(
+            event = event,
+            layoutCollection = ::layoutCollection,
+            collectionTouchY = collectionTouchY,
+            setTouchY = { collectionTouchY = it },
+            collectionLastY = collectionLastY,
+            setLastY = { collectionLastY = it },
+            collectionDragging = collectionDragging,
+            setDragging = { collectionDragging = it },
+            activeCollectionIndex = activeCollectionIndex,
+            setActiveIndex = { activeCollectionIndex = it },
+            collectionScroll = collectionScroll,
+            setScroll = { collectionScroll = it },
+            collectionMaxScroll = collectionMaxScroll,
+            collectionBackButton = collectionBackButton,
+            collectionRestoreButton = collectionRestoreButton,
+            collectionFilterRects = collectionFilterRects,
+            collectionItemRects = collectionItemRects,
+            viewportTop = collectionViewportTop(),
+            viewportBottom = collectionViewportBottom(),
+            ballSkins = ballSkins,
+            onBack = {
+                screen = Screen.MENU
+                backgroundShader = null
+            },
+            onRestore = {
+                collectionMessage = t("CHECKING GOOGLE PLAY PURCHASES")
+                collectionMessageTimer = 3.4f
+                audio.playEvent(SoundEvent.UI_TAP, selectedBallIndex())
+                purchaseBridge.restore()
+            },
+            onFilterSelected = { selectedFilter ->
+                collectionFilter = selectedFilter
+                collectionScroll = 0f
+                collectionMessage = "${t("FILTER").uppercase()} / ${t(collectionFilter.labelKey).uppercase()}"
+                collectionMessageTimer = 1.7f
+                audio.playEvent(SoundEvent.UI_TAP, selectedBallIndex())
+            },
+            onSkinTap = ::handleSkinTap,
+            performHaptic = { performHapticFeedback(it) },
+            dp = uiDensity
+        )
     }
-
     private fun handleSkinTap(skin: BallSkin) {
-        performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-        collectionFocusSkinId = skin.id
-        val skinIndex = ballSkins.indexOf(skin).coerceAtLeast(0)
-        audio.playSelection(skinIndex)
-        if (isSkinUnlocked(skin)) {
-            selectedSkinId = skin.id
-            collectionFocusSkinId = skin.id
-            prefs.edit().putString(SELECTED_SKIN_KEY, skin.id).apply()
-            collectionMessage = "${skin.name} ${t("IS NOW IN YOUR HEAD")} / ${t("AURA").uppercase()} ${brainballAura(skin)}"
-            collectionMessageTimer = 2.4f
-            return
-        }
-
-        if (skin.unlock.type == UnlockType.PREMIUM) {
-            val productId = PremiumCatalog.skinToProductId[skin.id]
-            if (productId != null) {
-                collectionMessage = "${t("OPENING GOOGLE PLAY")} / ${skin.name}"
-                collectionMessageTimer = 3.4f
-                purchaseBridge.purchase(productId)
+        CollectionTouchController.handleSkinTap(
+            skin = skin,
+            ballSkins = ballSkins,
+            isSkinUnlocked = ::isSkinUnlocked,
+            prefs = prefs,
+            hypeBalance = ::hypeBalance,
+            spendHype = ::spendHype,
+            formatHypeAmount = ::formatHypeAmount,
+            unlockLongLabel = ::unlockLongLabel,
+            brainballAura = ::brainballAura,
+            purchaseBridge = purchaseBridge,
+            performHaptic = { performHapticFeedback(it) },
+            hapticSequence = { pulses -> hapticSequence(*pulses) },
+            playSelection = audio::playSelection,
+            playSoundEvent = { event, index -> audio.playEvent(event, index) },
+            t = ::t,
+            onSkinSelected = { selectedSkinId = it },
+            onFocusSkin = { collectionFocusSkinId = it },
+            setMessage = { message, duration ->
+                collectionMessage = message
+                collectionMessageTimer = duration
             }
-            return
-        }
-
-        if (skin.unlock.type == UnlockType.HYPE_COST) {
-            val price = skin.unlock.value.coerceAtLeast(0)
-            val balance = hypeBalance()
-            if (balance >= price) {
-                spendHype(price)
-                selectedSkinId = skin.id
-                collectionFocusSkinId = skin.id
-                prefs.edit()
-                    .putBoolean(earnedSkinKey(skin.id), true)
-                    .putString(SELECTED_SKIN_KEY, skin.id)
-                    .apply()
-                collectionMessage = "${t("UNLOCKED").uppercase()} ${skin.name} / -${formatHypeAmount(price)} ${t("HYPE").uppercase()}"
-                collectionMessageTimer = 3.2f
-                audio.playEvent(SoundEvent.UNLOCK, skinIndex)
-                hapticSequence(
-                    HapticFeedbackConstants.CONFIRM to 0L,
-                    HapticFeedbackConstants.LONG_PRESS to 90L
-                )
-            } else {
-                val missing = (price - balance).coerceAtLeast(0)
-                collectionMessage = "${skin.name} ${t("WANTS MORE HYPE")} / ${formatHypeAmount(balance)} / ${formatHypeAmount(price)}  +${formatHypeAmount(missing)}"
-                collectionMessageTimer = 3.4f
-            }
-            return
-        }
-
-        collectionMessage = "${skin.name} ${t("REFUSES YOU")} / ${unlockLongLabel(skin)}"
-        collectionMessageTimer = 3.4f
+        )
     }
 
     private fun layoutCollection() {
-        val size = dp(40f)
-        val contentLeft = pageContentLeft()
-        val contentRight = pageContentRight()
-        collectionBackButton.set(contentRight - size, dp(22f), contentRight, dp(22f) + size)
-        collectionRestoreButton.set(contentRight - dp(96f), dp(68f), contentRight, dp(88f))
-        layoutCollectionFilters()
-
-        val side = contentLeft
-        val gap = dp(10f)
-        val contentWidth = contentRight - contentLeft
-        val columns = when {
-            contentWidth >= dp(840f) -> 3
-            contentWidth >= dp(560f) -> 2
-            else -> 1
-        }
-        val itemWidth = (contentWidth - gap * (columns - 1)) / columns
-        val itemHeight = dp(
-            when (columns) {
-                1 -> 98f
-                2 -> 110f
-                else -> 94f
-            }
+        val (scroll, maxScroll) = CollectionTouchController.layoutCollection(
+            contentLeft = pageContentLeft(),
+            contentRight = pageContentRight(),
+            safeTop22 = dp(22f),
+            safeTop68 = dp(68f),
+            safeTop88 = dp(88f),
+            safeTop192 = dp(192f),
+            viewportTop = collectionViewportTop(),
+            viewportBottom = collectionViewportBottom(),
+            scroll = collectionScroll,
+            ballSkins = ballSkins,
+            filter = collectionFilter,
+            dp = uiDensity,
+            backButton = collectionBackButton,
+            restoreButton = collectionRestoreButton,
+            filterRects = collectionFilterRects,
+            itemRects = collectionItemRects
         )
-        val top = collectionViewportTop() + dp(4f) - collectionScroll
-
-        while (collectionItemRects.size < ballSkins.size) {
-            collectionItemRects += RectF()
-        }
-        collectionItemRects.forEach { it.setEmpty() }
-        val visibleIndexes = filteredCollectionIndexes()
-        visibleIndexes.forEachIndexed { visibleIndex, skinIndex ->
-            val col = visibleIndex % columns
-            val row = visibleIndex / columns
-            val left = side + col * (itemWidth + gap)
-            val itemTop = top + row * (itemHeight + gap)
-            val rect = collectionItemRects[skinIndex]
-            rect.set(left, itemTop, left + itemWidth, itemTop + itemHeight)
-        }
-        while (collectionItemRects.size > ballSkins.size) {
-            collectionItemRects.removeAt(collectionItemRects.lastIndex)
-        }
-
-        val rows = ((visibleIndexes.size + columns - 1) / columns).coerceAtLeast(1)
-        val contentHeight = rows * itemHeight + (rows - 1) * gap + dp(8f)
-        val viewportHeight = collectionViewportBottom() - collectionViewportTop()
-        collectionMaxScroll = (contentHeight - viewportHeight).coerceAtLeast(0f)
-        collectionScroll = collectionScroll.coerceIn(0f, collectionMaxScroll)
+        collectionScroll = scroll
+        collectionMaxScroll = maxScroll
     }
 
-    private fun layoutCollectionFilters() {
-        val side = pageContentLeft()
-        val contentWidth = pageContentWidth()
-        val gap = dp(5f)
-        val top = dp(192f)
-        val height = dp(28f)
-        val width = (contentWidth - gap * (CollectionFilter.entries.size - 1)) / CollectionFilter.entries.size
-        CollectionFilter.entries.forEachIndexed { index, _ ->
-            val left = side + index * (width + gap)
-            collectionFilterRects[index].set(left, top, left + width, top + height)
-        }
-    }
-
-    private fun collectionItemAt(x: Float, y: Float): Int {
-        if (y < collectionViewportTop() || y > collectionViewportBottom()) return -1
-        return collectionItemRects.indexOfFirst { it.contains(x, y) }
-    }
-
-    private fun collectionFilterAt(x: Float, y: Float): Int = collectionFilterRects.indexOfFirst { it.contains(x, y) }
-
-    private fun collectionFilterActiveIndex(index: Int): Int = COLLECTION_FILTER_BASE_INDEX - index
-
-    private fun collectionFilterFromActiveIndex(activeIndex: Int): Int {
-        if (activeIndex > COLLECTION_FILTER_BASE_INDEX) return -1
-        val index = COLLECTION_FILTER_BASE_INDEX - activeIndex
-        return if (index in CollectionFilter.entries.indices) index else -1
-    }
-
-    private fun filteredCollectionIndexes(): List<Int> {
-        return ballSkins.indices.filter { index -> collectionFilterMatches(collectionFilter, ballSkins[index]) }
-    }
-
-    private fun collectionFilterMatches(filter: CollectionFilter, skin: BallSkin): Boolean {
-        return when (filter) {
-            CollectionFilter.ALL -> true
-            CollectionFilter.SUPERPOWER -> skin.power != BallPower.NONE
-            CollectionFilter.HYPE -> skin.unlock.type == UnlockType.HYPE_COST
-            CollectionFilter.PREMIUM -> skin.unlock.type == UnlockType.PREMIUM
-            CollectionFilter.COSMETIC -> skin.power == BallPower.NONE && skin.unlock.type != UnlockType.PREMIUM
-        }
-    }
+    private fun collectionFilterActiveIndex(index: Int): Int = CollectionTouchController.filterActiveIndex(index)
 
     private fun collectionViewportTop(): Float = dp(228f)
 
     private fun collectionViewportBottom(): Float = viewHeight - dp(86f)
 
     private fun drawLeaderboards(canvas: Canvas) {
-        drawBackground(canvas)
-        layoutLeaderboards()
-
-        val left = pageContentLeft() + dp(4f)
-        textPaint.shader = null
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(30f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(t("LEADERBOARDS").uppercase(), left, dp(56f), textPaint)
-        textPaint.textSize = dp(10f)
-        textPaint.color = if (leaderboardBridge.configured) 0xFF64E572.toInt() else 0xAAFFFFFF.toInt()
-        canvas.drawText(t(if (leaderboardBridge.configured) "GOOGLE PLAY / NO POWERS" else "LOCAL RECORDS").uppercase(), left, dp(78f), textPaint)
-        drawLeaderboardBackButton(canvas)
-
-        val bandTop = dp(98f)
-        val bandBottom = dp(158f)
-        paint.style = Paint.Style.FILL
-        paint.color = 0xA80B111A.toInt()
-        canvas.drawRect(0f, bandTop, viewWidth.toFloat(), bandBottom, paint)
-        paint.color = 0x331DE8C8
-        canvas.drawRect(0f, bandBottom - dp(2f), viewWidth * 0.5f, bandBottom, paint)
-        paint.color = 0x33FF4D8D
-        canvas.drawRect(viewWidth * 0.5f, bandBottom - dp(2f), viewWidth.toFloat(), bandBottom, paint)
-
-        drawLeaderboardStat(
-            canvas,
-            left = pageContentLeft() + dp(4f),
-            label = t("HIGHEST LEVEL").uppercase(),
-            value = "L${max(modeHighestLevel(GameMode.CLASSIC), modeHighestLevel(GameMode.CHAOS)).toString().padStart(2, '0')}",
-            accent = 0xFF1DE8C8.toInt()
-        )
-        drawLeaderboardStat(
-            canvas,
-            left = pageContentLeft() + pageContentWidth() * 0.54f,
-            label = t("LONGEST STREAK").uppercase(),
-            value = "x${max(modeBestStreak(GameMode.CLASSIC), modeBestStreak(GameMode.CHAOS))}",
-            accent = 0xFFFF4D8D.toInt()
-        )
-
-        LeaderboardBoard.entries.forEachIndexed { index, board ->
-            drawLeaderboardItem(canvas, leaderboardItemRects[index], board, index)
-        }
-
-        val footerText = leaderboardMessage.ifBlank {
-            t(if (leaderboardBridge.configured) "SELECT A BOARD" else "GLOBAL SYNC OFFLINE")
-        }
-        drawStatusMessage(canvas, footerText, if (leaderboardBridge.configured) 0xFF8AA6FF.toInt() else 0xFF6F7788.toInt(), leaderboardMessage.isNotBlank())
-    }
-
-    private fun drawStatusMessage(canvas: Canvas, message: String, accent: Int, transient: Boolean) {
-        scratch.set(pageContentLeft(), viewHeight - dp(70f), pageContentRight(), viewHeight - dp(16f))
-        paint.style = Paint.Style.FILL
-        paint.color = 0xED080C13.toInt()
-        canvas.drawRoundRect(scratch, dp(7f), dp(7f), paint)
-        paint.color = accent
-        canvas.drawRect(scratch.left, scratch.top, scratch.left + dp(4f), scratch.bottom, paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(0.8f)
-        paint.color = withAlpha(accent, 135)
-        canvas.drawRoundRect(scratch, dp(7f), dp(7f), paint)
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(accent, 235)
-        canvas.drawCircle(scratch.left + dp(20f), scratch.centerY(), dp(if (transient) 5f else 3f), paint)
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(8f)
-        textPaint.color = 0x77FFFFFF
-        canvas.drawText(t(if (transient) "STATUS UPDATE" else "NEXT SIGNAL").uppercase(), scratch.left + dp(36f), scratch.top + dp(18f), textPaint)
-        textPaint.textSize = dp(10.5f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(fitText(message, scratch.width() - dp(54f)), scratch.left + dp(36f), scratch.top + dp(38f), textPaint)
-    }
-
-    private fun drawLeaderboardStat(canvas: Canvas, left: Float, label: String, value: String, accent: Int) {
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.textSize = dp(9f)
-        textPaint.color = 0x99FFFFFF.toInt()
-        canvas.drawText(t(label).uppercase(), left, dp(118f), textPaint)
-        textPaint.textSize = dp(22f)
-        textPaint.color = accent
-        canvas.drawText(value, left, dp(146f), textPaint)
-    }
-
-    private fun drawLeaderboardBackButton(canvas: Canvas) {
-        drawUiButtonFrame(
-            canvas = canvas,
-            rect = leaderboardBackButton,
-            active = activeLeaderboardIndex == LEADERBOARD_BACK_INDEX,
-            accent = 0xFF8AA6FF.toInt(),
-            cornerDp = 99f
-        )
-        drawUiIconAsset(canvas, "ui_back", leaderboardBackButton, padDp = -1f, alpha = 245)
-    }
-
-    private fun drawLeaderboardItem(canvas: Canvas, rect: RectF, board: LeaderboardBoard, index: Int) {
-        val classic = board == LeaderboardBoard.CLASSIC_LEVEL || board == LeaderboardBoard.CLASSIC_STREAK
-        val levelBoard = board == LeaderboardBoard.CLASSIC_LEVEL || board == LeaderboardBoard.CHAOS_LEVEL
-        val accent = if (classic) 0xFF1DE8C8.toInt() else 0xFFFF4D8D.toInt()
-        val active = activeLeaderboardIndex == index
-        val score = leaderboardScore(board)
-
-        paint.style = Paint.Style.FILL
-        paint.color = if (active) withAlpha(accent, 72) else 0xD5161D29.toInt()
-        canvas.drawRoundRect(rect, dp(8f), dp(8f), paint)
-        paint.color = withAlpha(accent, 28)
-        canvas.drawRoundRect(rect.left, rect.top, rect.left + dp(6f), rect.bottom, dp(4f), dp(4f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (active) 2f else 1f)
-        paint.color = withAlpha(accent, if (active) 230 else 130)
-        canvas.drawRoundRect(rect, dp(8f), dp(8f), paint)
-
-        val badgeCx = rect.left + dp(34f)
-        val badgeCy = rect.centerY()
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(accent, 42)
-        canvas.drawCircle(badgeCx, badgeCy, dp(20f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(2f)
-        paint.color = accent
-        if (levelBoard) {
-            canvas.drawLine(badgeCx - dp(8f), badgeCy + dp(7f), badgeCx - dp(2f), badgeCy, paint)
-            canvas.drawLine(badgeCx - dp(2f), badgeCy, badgeCx + dp(3f), badgeCy + dp(4f), paint)
-            canvas.drawLine(badgeCx + dp(3f), badgeCy + dp(4f), badgeCx + dp(10f), badgeCy - dp(9f), paint)
-        } else {
-            canvas.drawCircle(badgeCx, badgeCy, dp(10f), paint)
-            canvas.drawLine(badgeCx, badgeCy - dp(10f), badgeCx, badgeCy + dp(10f), paint)
-            canvas.drawLine(badgeCx - dp(7f), badgeCy - dp(6f), badgeCx + dp(7f), badgeCy + dp(6f), paint)
-        }
-
-        val textLeft = rect.left + dp(68f)
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.textSize = dp(9f)
-        textPaint.color = withAlpha(accent, 220)
-        canvas.drawText(t(if (classic) "CLASSIC" else "CHAOS").uppercase(), textLeft, rect.top + dp(21f), textPaint)
-        textPaint.textSize = dp(15f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(t(if (levelBoard) "HIGHEST LEVEL" else "LONGEST STREAK").uppercase(), textLeft, rect.top + dp(45f), textPaint)
-        textPaint.textSize = dp(9f)
-        textPaint.color = 0x99FFFFFF.toInt()
-        canvas.drawText(t(if (leaderboardBridge.configured) "OPEN FAIR GLOBAL RANKING" else "PERSONAL BEST").uppercase(), textLeft, rect.top + dp(65f), textPaint)
-
-        textPaint.textAlign = Paint.Align.RIGHT
-        textPaint.textSize = dp(25f)
-        textPaint.color = accent
-        val value = if (levelBoard) "L${score.toString().padStart(2, '0')}" else "x$score"
-        canvas.drawText(value, rect.right - dp(24f), rect.centerY() + dp(9f), textPaint)
-    }
-
-    private fun handleLeaderboardTouch(event: MotionEvent) {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                layoutLeaderboards()
-                activeLeaderboardIndex = when {
-                    leaderboardBackButton.contains(event.x, event.y) -> LEADERBOARD_BACK_INDEX
-                    else -> leaderboardItemRects.indexOfFirst { it.contains(event.x, event.y) }
-                }
+        val scores = LeaderboardBoard.entries.map { board ->
+            val score = leaderboardScore(board)
+            when (board) {
+                LeaderboardBoard.CLASSIC_LEVEL,
+                LeaderboardBoard.CHAOS_LEVEL -> "L${score.toString().padStart(2, '0')}"
+                LeaderboardBoard.CLASSIC_STREAK,
+                LeaderboardBoard.CHAOS_STREAK -> "x$score"
             }
-
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                val released = activeLeaderboardIndex
-                activeLeaderboardIndex = -1
-                if (released == LEADERBOARD_BACK_INDEX && leaderboardBackButton.contains(event.x, event.y)) {
-                    screen = Screen.MENU
-                    backgroundShader = null
-                    performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    return
-                }
-                val board = LeaderboardBoard.entries.getOrNull(released) ?: return
-                if (!leaderboardItemRects[released].contains(event.x, event.y)) return
-                performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                if (!leaderboardBridge.configured) {
-                    leaderboardMessage = t("GLOBAL SYNC OFFLINE")
-                    leaderboardMessageTimer = 2.8f
-                    return
-                }
-                leaderboardMessage = t("OPENING GOOGLE PLAY")
-                leaderboardMessageTimer = 3f
-                leaderboardBridge.open(board) {
-                    post {
-                        synchronized(lock) {
-                            leaderboardMessage = t("PLAY GAMES UNAVAILABLE")
-                            leaderboardMessageTimer = 3.2f
-                        }
+        }
+        SubScreenMasterRenderer.drawLeaderboards(
+            canvas = canvas,
+            drawBackground = ::drawBackground,
+            layoutLeaderboards = ::layoutLeaderboards,
+            scores = scores,
+            pageLeft = pageContentLeft(),
+            pageRight = pageContentRight(),
+            pageWidth = pageContentWidth(),
+            viewWidth = viewWidth.toFloat(),
+            top56 = dp(56f),
+            top78 = dp(78f),
+            bandTop = dp(98f),
+            bandBottom = dp(158f),
+            top118 = dp(118f),
+            top146 = dp(146f),
+            bottom70 = viewHeight - dp(70f),
+            bottom16 = viewHeight - dp(16f),
+            configured = leaderboardBridge.configured,
+            highestLevelText = "L${max(modeHighestLevel(GameMode.CLASSIC), modeHighestLevel(GameMode.CHAOS)).toString().padStart(2, '0')}",
+            bestStreakText = "x${max(modeBestStreak(GameMode.CLASSIC), modeBestStreak(GameMode.CHAOS))}",
+            activeLeaderboardIndex = activeLeaderboardIndex,
+            leaderboardBackButton = leaderboardBackButton,
+            leaderboardItemRects = leaderboardItemRects,
+            leaderboardMessage = leaderboardMessage,
+            paint = paint,
+            dp = uiDensity,
+            t = ::t,
+            fitText = ::fitText,
+            drawBackButton = { targetCanvas, rect, active ->
+                drawUiButtonFrame(targetCanvas, rect, active, 0xFF8AA6FF.toInt(), 99f)
+                drawUiIconAsset(targetCanvas, "ui_back", rect, padDp = -1f, alpha = 245)
+            }
+        )
+    }
+    private fun handleLeaderboardTouch(event: MotionEvent) {
+        LeaderboardTouchController.handleTouch(
+            event = event,
+            layoutLeaderboards = ::layoutLeaderboards,
+            activeLeaderboardIndex = activeLeaderboardIndex,
+            setActiveIndex = { activeLeaderboardIndex = it },
+            leaderboardBackButton = leaderboardBackButton,
+            leaderboardItemRects = leaderboardItemRects,
+            leaderboardBridge = leaderboardBridge,
+            performHaptic = { performHapticFeedback(it) },
+            t = ::t,
+            onBack = {
+                screen = Screen.MENU
+                backgroundShader = null
+            },
+            setMessage = { message, duration ->
+                leaderboardMessage = message
+                leaderboardMessageTimer = duration
+            },
+            postAction = { action ->
+                post {
+                    synchronized(lock) {
+                        action()
                     }
                 }
             }
-        }
+        )
     }
-
     private fun drawSettings(canvas: Canvas) {
         val compact = pageContentWidth() < dp(430f)
         SubScreenMasterRenderer.drawSettings(
@@ -4041,207 +3000,154 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
 
     private fun drawLanguageSelector(canvas: Canvas) {
         drawBackground(canvas)
-        layoutLanguageSelector()
-
-        val left = pageContentLeft() + dp(4f)
+        val side = pageContentLeft()
+        val contentRight = pageContentRight()
+        val contentWidth = pageContentWidth()
         val selected = KavvoroI18n.selected(context)
-        textPaint.shader = null
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(30f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(t("CHOOSE LANGUAGE").uppercase(), left, dp(56f), textPaint)
-        textPaint.textSize = dp(10f)
-        textPaint.color = 0xAAFFFFFF.toInt()
-        canvas.drawText(t("GAME TEXT + COLLECTION VOICE").uppercase(), left, dp(78f), textPaint)
-        drawLanguageBackButton(canvas)
-
-        val viewportTop = languageViewportTop()
-        val viewportBottom = languageViewportBottom()
-        canvas.save()
-        canvas.clipRect(0f, viewportTop, viewWidth.toFloat(), viewportBottom)
-        KavvoroLanguage.entries.forEachIndexed { index, language ->
-            val rect = languageItemRects.getOrNull(index) ?: return@forEachIndexed
-            if (rect.bottom >= viewportTop && rect.top <= viewportBottom) {
-                drawLanguageItem(canvas, rect, language, language == selected, activeLanguageIndex == index)
+        SubScreenMasterRenderer.drawLanguage(
+            canvas = canvas,
+            layoutSelector = ::layoutLanguageSelector,
+            side = side,
+            contentRight = contentRight,
+            contentWidth = contentWidth,
+            compact = contentWidth < dp(430f),
+            centerX = viewWidth * 0.5f,
+            selected = selected,
+            activeLanguageIndex = activeLanguageIndex,
+            headerFrameBmp = worldBitmap("lang_header_frame"),
+            diamondBmp = worldBitmap("lang_diamond"),
+            backButtonRect = languageBackButton,
+            backButtonBmp = worldBitmap("lang_back_button"),
+            itemRects = languageItemRects,
+            viewportTop = languageViewportTop(),
+            viewportBottom = languageViewportBottom(),
+            footerRect = languageFooterRect,
+            footerBmp = worldBitmap("lang_footer_panel"),
+            langCardBitmap = { isSelected, isRightColumn ->
+                worldBitmap(
+                    when {
+                        isSelected -> "lang_card_selected"
+                        isRightColumn -> "lang_card_right"
+                        else -> "lang_card_left"
+                    }
+                )
+            },
+            languageFlagBitmap = { language ->
+                if (language == KavvoroLanguage.SYSTEM) null
+                else worldBitmap("flag_badge_${language.code}")
+            },
+            langRadioBitmap = { isSelected ->
+                worldBitmap(if (isSelected) "lang_radio_selected" else "lang_radio_unselected")
+            },
+            typeface = languageTypeface,
+            paint = paint,
+            dp = uiDensity,
+            t = ::t,
+            fitText = ::fitText,
+            drawFlagFallback = { targetCanvas, rect, language ->
+                LanguageSelectorRenderer.drawVectorFlag(targetCanvas, rect, language, paint, uiDensity)
             }
-        }
-        canvas.restore()
-
-        drawStatusMessage(
-            canvas = canvas,
-            message = "${t("CURRENT")}: ${KavvoroI18n.label(context, selected)}",
-            accent = 0xFF45F2FF.toInt(),
-            transient = false
         )
-    }
-
-    private fun drawLanguageBackButton(canvas: Canvas) {
-        drawUiButtonFrame(
-            canvas = canvas,
-            rect = languageBackButton,
-            active = activeLanguageIndex == LANGUAGE_BACK_INDEX,
-            accent = 0xFF8AA6FF.toInt(),
-            cornerDp = 99f
-        )
-        drawUiIconAsset(canvas, "ui_back", languageBackButton, padDp = -1f, alpha = 245)
-    }
-
-    private fun drawLanguageItem(canvas: Canvas, rect: RectF, language: KavvoroLanguage, selected: Boolean, active: Boolean) {
-        val accent = if (language == KavvoroLanguage.SYSTEM) 0xFF8AA6FF.toInt() else 0xFF45F2FF.toInt()
-        paint.style = Paint.Style.FILL
-        paint.color = when {
-            selected -> withAlpha(accent, 92)
-            active -> withAlpha(accent, 52)
-            else -> 0xD5161D29.toInt()
-        }
-        canvas.drawRoundRect(rect, dp(8f), dp(8f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (selected || active) 1.7f else 0.8f)
-        paint.color = if (selected) accent else 0x44FFFFFF
-        canvas.drawRoundRect(rect, dp(8f), dp(8f), paint)
-
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(14f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(fitText(KavvoroI18n.label(context, language), rect.width() - dp(58f)), rect.left + dp(14f), rect.top + dp(27f), textPaint)
-        textPaint.textSize = dp(9f)
-        textPaint.color = if (selected) accent else 0x99FFFFFF.toInt()
-        val meta = if (language == KavvoroLanguage.SYSTEM) {
-            "${t("SYSTEM")} / ${KavvoroI18n.active(context).nativeName}"
-        } else {
-            language.shortCode
-        }
-        canvas.drawText(fitText(meta, rect.width() - dp(58f)), rect.left + dp(14f), rect.top + dp(44f), textPaint)
-
-        if (selected) {
-            paint.style = Paint.Style.FILL
-            paint.color = accent
-            canvas.drawCircle(rect.right - dp(22f), rect.centerY(), dp(6f), paint)
-        }
     }
 
     private fun handleLanguageTouch(event: MotionEvent) {
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                layoutLanguageSelector()
-                languageTouchY = event.y
-                languageLastY = event.y
-                languageDragging = false
-                activeLanguageIndex = when {
-                    languageBackButton.contains(event.x, event.y) -> LANGUAGE_BACK_INDEX
-                    else -> languageItemAt(event.x, event.y)
-                }
-            }
-
-            MotionEvent.ACTION_MOVE -> {
-                val dy = event.y - languageLastY
-                if (kotlin.math.abs(event.y - languageTouchY) > dp(5f)) {
-                    languageDragging = true
-                    activeLanguageIndex = -1
-                }
-                languageScroll = (languageScroll - dy).coerceIn(0f, languageMaxScroll)
-                languageLastY = event.y
-            }
-
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                val released = activeLanguageIndex
-                activeLanguageIndex = -1
-                if (!languageDragging && released == LANGUAGE_BACK_INDEX && languageBackButton.contains(event.x, event.y)) {
-                    screen = languageReturnScreen
-                    backgroundShader = null
-                    performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP)
-                    triggerScreenTransition(0xFF45F2FF.toInt())
-                    return
-                }
-                val language = KavvoroLanguage.entries.getOrNull(released) ?: return
-                val rect = languageItemRects.getOrNull(released) ?: return
-                if (languageDragging || !rect.contains(event.x, event.y)) return
-                KavvoroI18n.setSelected(context, language)
-                audio.setLanguageCode(KavvoroI18n.audioLanguageCode(context))
-                performHapticFeedback(HapticFeedbackConstants.CONFIRM)
-            }
-        }
+        LanguageTouchController.handleTouch(
+            event = event,
+            layoutSelector = ::layoutLanguageSelector,
+            activeLanguageIndex = activeLanguageIndex,
+            setActiveIndex = { activeLanguageIndex = it },
+            languageDragging = languageDragging,
+            setDragging = { languageDragging = it },
+            languageTouchY = languageTouchY,
+            setTouchY = { languageTouchY = it },
+            languageLastY = languageLastY,
+            setLastY = { languageLastY = it },
+            languageScroll = languageScroll,
+            setScroll = { languageScroll = it },
+            languageMaxScroll = languageMaxScroll,
+            languageBackButton = languageBackButton,
+            languageItemRects = languageItemRects,
+            displayLanguages = KavvoroLanguage.entries,
+            viewportTop = languageViewportTop(),
+            viewportBottom = languageViewportBottom(),
+            context = context,
+            audio = audio,
+            onBack = {
+                screen = languageReturnScreen
+                backgroundShader = null
+                triggerScreenTransition(0xFF45F2FF.toInt())
+            },
+            performHaptic = { performHapticFeedback(it) },
+            dp = uiDensity
+        )
     }
 
     private fun layoutLanguageSelector() {
-        val backSize = dp(44f)
         val side = pageContentLeft()
         val contentRight = pageContentRight()
-        languageBackButton.set(contentRight - backSize, dp(28f), contentRight, dp(28f) + backSize)
-        val gap = dp(10f)
-        val top = languageViewportTop() + dp(2f)
-        val contentWidth = pageContentWidth()
-        val columns = if (contentWidth < dp(430f)) 1 else 2
-        val itemHeight = dp(58f)
-        val itemWidth = (contentWidth - gap * (columns - 1)) / columns
-        KavvoroLanguage.entries.forEachIndexed { index, _ ->
-            val row = index / columns
-            val column = index % columns
-            val left = side + column * (itemWidth + gap)
-            val itemTop = top + row * (itemHeight + gap) - languageScroll
-            languageItemRects[index].set(left, itemTop, left + itemWidth, itemTop + itemHeight)
-        }
-        val rows = ((KavvoroLanguage.entries.size + columns - 1) / columns).coerceAtLeast(1)
-        val contentHeight = rows * itemHeight + (rows - 1) * gap + dp(8f)
-        val viewportHeight = languageViewportBottom() - languageViewportTop()
-        languageMaxScroll = (contentHeight - viewportHeight).coerceAtLeast(0f)
-        languageScroll = languageScroll.coerceIn(0f, languageMaxScroll)
-    }
-
-    private fun languageItemAt(x: Float, y: Float): Int {
-        if (y < languageViewportTop() || y > languageViewportBottom()) return -1
-        return languageItemRects.indexOfFirst { it.contains(x, y) }
+        val result = ScreenLayoutManager.layoutLanguageSelector(
+            side = side,
+            contentWidth = pageContentWidth(),
+            compact = pageContentWidth() < dp(430f),
+            headerY = dp(28f),
+            viewportTop = languageViewportTop(),
+            viewportBottom = languageViewportBottom(),
+            languageScroll = languageScroll,
+            dp = uiDensity,
+            languageBackButton = languageBackButton,
+            languageItemRects = languageItemRects
+        )
+        languageScroll = result.first
+        languageMaxScroll = result.second
+        languageFooterRect.set(side, viewHeight - dp(70f), contentRight, viewHeight - dp(16f))
     }
 
     private fun languageViewportTop(): Float = dp(102f)
 
     private fun languageViewportBottom(): Float = viewHeight - dp(86f)
-
     private fun layoutLeaderboards() {
-        val backSize = dp(44f)
-        val side = pageContentLeft()
-        val contentRight = pageContentRight()
-        leaderboardBackButton.set(contentRight - backSize, dp(28f), contentRight, dp(28f) + backSize)
-        val top = dp(176f)
-        val gap = dp(10f)
-        val height = min(dp(88f), (viewHeight - top - dp(94f) - gap * 3f) / 4f)
-        repeat(4) { index ->
-            val itemTop = top + index * (height + gap)
-            val rect = leaderboardItemRects.getOrNull(index) ?: RectF().also { leaderboardItemRects += it }
-            rect.set(side, itemTop, contentRight, itemTop + height)
-        }
-        while (leaderboardItemRects.size > 4) {
-            leaderboardItemRects.removeAt(leaderboardItemRects.lastIndex)
-        }
+        ScreenLayoutManager.layoutLeaderboards(
+            side = pageContentLeft(),
+            contentRight = pageContentRight(),
+            backTop = dp(28f),
+            itemsTop = dp(176f),
+            viewHeight = viewHeight.toFloat(),
+            dp = uiDensity,
+            leaderboardBackButton = leaderboardBackButton,
+            leaderboardItemRects = leaderboardItemRects
+        )
     }
 
-    private fun leaderboardScore(board: LeaderboardBoard): Int {
-        return when (board) {
-            LeaderboardBoard.CLASSIC_LEVEL -> prefs.getInt(fairHighestLevelKey(GameMode.CLASSIC), modeHighestLevel(GameMode.CLASSIC))
-            LeaderboardBoard.CHAOS_LEVEL -> prefs.getInt(fairHighestLevelKey(GameMode.CHAOS), modeHighestLevel(GameMode.CHAOS))
-            LeaderboardBoard.CLASSIC_STREAK -> prefs.getInt(fairBestStreakKey(GameMode.CLASSIC), modeBestStreak(GameMode.CLASSIC))
-            LeaderboardBoard.CHAOS_STREAK -> prefs.getInt(fairBestStreakKey(GameMode.CHAOS), modeBestStreak(GameMode.CHAOS))
-        }
-    }
+    private fun leaderboardScore(board: LeaderboardBoard): Int =
+        LeaderboardTouchController.leaderboardScore(
+            board = board,
+            prefs = prefs,
+            fairHighestLevelKey = ::fairHighestLevelKey,
+            fairBestStreakKey = ::fairBestStreakKey,
+            modeHighestLevel = ::modeHighestLevel,
+            modeBestStreak = ::modeBestStreak
+        )
 
     private fun ensureFairLeaderboardSnapshot() {
-        val editor = prefs.edit()
-        GameMode.entries.forEach { mode ->
-            if (!prefs.contains(fairHighestLevelKey(mode))) editor.putInt(fairHighestLevelKey(mode), modeHighestLevel(mode))
-            if (!prefs.contains(fairBestStreakKey(mode))) editor.putInt(fairBestStreakKey(mode), modeBestStreak(mode))
-        }
-        editor.apply()
+        LeaderboardTouchController.ensureFairLeaderboardSnapshot(
+            prefs = prefs,
+            fairHighestLevelKey = ::fairHighestLevelKey,
+            fairBestStreakKey = ::fairBestStreakKey,
+            modeHighestLevel = ::modeHighestLevel,
+            modeBestStreak = ::modeBestStreak
+        )
     }
 
     private fun syncLeaderboards() {
-        if (!leaderboardBridge.configured) return
-        LeaderboardBoard.entries.forEach { board ->
-            leaderboardBridge.submitScore(board, leaderboardScore(board).toLong())
-        }
+        LeaderboardTouchController.syncLeaderboards(
+            prefs = prefs,
+            leaderboardBridge = leaderboardBridge,
+            fairHighestLevelKey = ::fairHighestLevelKey,
+            fairBestStreakKey = ::fairBestStreakKey,
+            modeHighestLevel = ::modeHighestLevel,
+            modeBestStreak = ::modeBestStreak
+        )
     }
-
     private fun drawPulseZones(canvas: Canvas) {
         level.pulseZones.forEachIndexed { index, zone ->
             val rich = richEffects()
@@ -4581,24 +3487,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         paint.style = Paint.Style.FILL
         paint.color = 0x99FF4D8D.toInt()
         canvas.drawCircle(cx, cy, dp(2.2f), paint)
-    }
-
-    private fun drawHazardSpikes(canvas: Canvas, cx: Float, cy: Float, r: Float) {
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1.5f)
-        paint.color = 0xCC07090F.toInt()
-        repeat(8) { i ->
-            val angle = i * PI.toFloat() / 4f + stateElapsed * 0.7f
-            val inner = r * 0.35f
-            val outer = r * 0.72f
-            canvas.drawLine(
-                cx + cos(angle) * inner,
-                cy + sin(angle) * inner,
-                cx + cos(angle) * outer,
-                cy + sin(angle) * outer,
-                paint
-            )
-        }
     }
 
     private fun drawRouteCoach(canvas: Canvas) {
@@ -5130,7 +4018,19 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         }
 
         val timeRemaining = (level.timeLimitSeconds - simElapsed).coerceAtLeast(0f)
-        val hudHype = currentHudHypeScore()
+        val hudHype = GameplayScoreCalculator.currentHudHypeScore(
+            won = state == GameState.WON,
+            lost = state == GameState.LOST,
+            lastHypeScore = lastHypeScore,
+            gameMode = gameMode,
+            levelIndex = level.index,
+            timeLimitSeconds = level.timeLimitSeconds,
+            simElapsed = simElapsed,
+            riftEnergy = riftEnergy,
+            streak = streak,
+            maxChain = maxChain,
+            chainCount = chainCount
+        )
         drawHudControlsDock(canvas)
         if (compactHud) {
             val statsLeft = left
@@ -5302,30 +4202,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             if (compactHud) 9.3f else 10.8f,
             if (compactHud) 7.2f else 8.2f
         )
-    }
-
-    private fun drawInkBar(canvas: Canvas, left: Float, top: Float, width: Float) {
-        val accent = if (riftEnergy < 0.22f) 0xFFFF5757.toInt() else level.accent
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(8f)
-        textPaint.color = 0x88FFFFFF.toInt()
-        scratch.set(left, top - dp(3f), left + dp(13f), top + dp(10f))
-        drawWorldAsset(canvas, "boost_rift_pull", scratch, 220)
-        canvas.drawText(t("RIFT").uppercase(), left + dp(15f), top + dp(7f), textPaint)
-        textPaint.textAlign = Paint.Align.RIGHT
-        textPaint.color = withAlpha(accent, 235)
-        canvas.drawText("${(riftEnergy * 100).roundToInt()}%", left + width, top + dp(7f), textPaint)
-        val barTop = top + dp(13f)
-        val gap = dp(2f)
-        val segmentWidth = (width - gap * 9f) / 10f
-        repeat(10) { index ->
-            val segmentLeft = left + index * (segmentWidth + gap)
-            scratch.set(segmentLeft, barTop, segmentLeft + segmentWidth, barTop + dp(5f))
-            paint.style = Paint.Style.FILL
-            paint.color = if (riftEnergy * 10f > index) withAlpha(accent, 230) else 0x22FFFFFF
-            canvas.drawRoundRect(scratch, dp(1.5f), dp(1.5f), paint)
-        }
     }
 
     private fun drawRiftEnergyBar(canvas: Canvas, left: Float, top: Float, width: Float, showLabel: Boolean = true) {
@@ -5649,45 +4525,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         }
     }
 
-    private fun drawLevelStartCard(canvas: Canvas) {
-        if (state != GameState.READY) return
-        if (stateElapsed > 2.6f && level.tutorialHint.isNotBlank()) return
-        val width = min(viewWidth - dp(42f), dp(380f))
-        val height = dp(82f)
-        val left = viewWidth * 0.5f - width * 0.5f
-        val top = dp(if (level.curses.isEmpty()) 118f else 184f)
-        val alpha = if (stateElapsed < 2.2f) 1f else (1f - (stateElapsed - 2.2f) / 0.8f).coerceIn(0f, 1f)
-        if (alpha <= 0f) return
-
-        scratch.set(left, top, left + width, top + height)
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(0xFF07090F.toInt(), (215 * alpha).roundToInt())
-        canvas.drawRoundRect(scratch, dp(8f), dp(8f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(1.2f)
-        paint.color = withAlpha(level.accent, (190 * alpha).roundToInt())
-        canvas.drawRoundRect(scratch, dp(8f), dp(8f), paint)
-
-        drawBallSkin(canvas, left + dp(34f), top + height * 0.5f, dp(18f), selectedBallSkin(), animated = true, locked = false)
-
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(10f)
-        textPaint.color = withAlpha(0xFFFFFFFF.toInt(), (150 * alpha).roundToInt())
-        canvas.drawText("${gameMode.menuTitle()} ${t("LEVEL").uppercase()} ${level.index.toString().padStart(2, '0')}", left + dp(62f), top + dp(24f), textPaint)
-        textPaint.textSize = dp(17f)
-        textPaint.color = withAlpha(0xFFF7F4FF.toInt(), (255 * alpha).roundToInt())
-        canvas.drawText(fitText(localizedLevelTitle(level.title), width - dp(82f)), left + dp(62f), top + dp(48f), textPaint)
-        textPaint.textSize = dp(10f)
-        textPaint.color = withAlpha(0xFFFFCF4A.toInt(), (230 * alpha).roundToInt())
-        val rewardLine = when {
-            isTutorialLevel() && level.index < TUTORIAL_LAST_LEVEL -> t("NO ADS IN TRAINING").uppercase()
-            isTutorialLevel() -> t("L10 UNLOCKS VORO GRAD").uppercase()
-            else -> nextRewardText() ?: t("CHASE CLEAN RUNS").uppercase()
-        }
-        canvas.drawText(fitText(rewardLine, width - dp(82f)), left + dp(62f), top + dp(66f), textPaint)
-    }
-
     private fun drawFinishBurst(canvas: Canvas) {
         if (state != GameState.WON && state != GameState.LOST) return
         val won = state == GameState.WON
@@ -5968,41 +4805,8 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         }
     }
 
-    private fun drawTwoLineText(canvas: Canvas, text: String, x: Float, y: Float, maxWidth: Float) {
-        if (textPaint.measureText(text) <= maxWidth) {
-            canvas.drawText(text, x, y, textPaint)
-            return
-        }
-
-        val words = text.split(" ")
-        var first = ""
-        var second = ""
-        for (word in words) {
-            val candidate = if (first.isEmpty()) word else "$first $word"
-            if (second.isEmpty() && textPaint.measureText(candidate) <= maxWidth) {
-                first = candidate
-            } else {
-                second = if (second.isEmpty()) word else "$second $word"
-            }
-        }
-        canvas.drawText(first, x, y, textPaint)
-        if (second.isNotEmpty()) {
-            var line = second
-            while (line.isNotEmpty() && textPaint.measureText(line) > maxWidth) {
-                line = line.dropLast(1)
-            }
-            canvas.drawText(line, x, y + dp(16f), textPaint)
-        }
-    }
-
-    private fun fitText(text: String, maxWidth: Float): String {
-        if (textPaint.measureText(text) <= maxWidth) return text
-        var clipped = text
-        while (clipped.length > 3 && textPaint.measureText("$clipped...") > maxWidth) {
-            clipped = clipped.dropLast(1)
-        }
-        return if (clipped.length <= 3) clipped else "$clipped..."
-    }
+    private fun fitText(text: String, maxWidth: Float): String =
+        UiWidgetRenderer.fitText(context, text, maxWidth, textPaint, uiDensity)
 
     private fun drawFittedText(
         canvas: Canvas,
@@ -6013,57 +4817,33 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         startSizeDp: Float,
         minSizeDp: Float
     ) {
-        textPaint.textSize = dp(startSizeDp)
-        val minSize = dp(minSizeDp)
-        while (textPaint.textSize > minSize && textPaint.measureText(text) > maxWidth) {
-            textPaint.textSize -= dp(0.35f)
-        }
-        canvas.drawText(fitText(text, maxWidth), x, y, textPaint)
+        UiWidgetRenderer.drawFittedText(
+            canvas = canvas,
+            context = context,
+            text = text,
+            x = x,
+            y = y,
+            maxWidth = maxWidth,
+            startSizeDp = startSizeDp,
+            minSizeDp = minSizeDp,
+            textPaint = textPaint,
+            dp = uiDensity
+        )
     }
 
     private fun drawIconButton(canvas: Canvas, rect: RectF, id: ButtonId) {
-        if (rect.isEmpty) return
-        val active = activeButton == id
-        val accent = when (id) {
-            ButtonId.HOME -> 0xFF45F2FF.toInt()
-            ButtonId.RESTART -> 0xFFFF4D8D.toInt()
-            ButtonId.SHARE -> 0xFFC15CFF.toInt()
-            ButtonId.NEXT -> 0xFFFFCF4A.toInt()
-            ButtonId.SFX -> 0xFF45F2FF.toInt()
-            ButtonId.MUSIC -> 0xFFFFCF4A.toInt()
-            else -> level.accent
-        }
-        drawUiButtonFrame(canvas, rect, active, accent, cornerDp = 7f)
-        val iconKey = when (id) {
-            ButtonId.HOME -> "ui_home"
-            ButtonId.RESTART -> "ui_retry"
-            ButtonId.SHARE -> "ui_share"
-            ButtonId.NEXT -> "ui_next"
-            ButtonId.SFX -> "ui_sound"
-            ButtonId.MUSIC -> "ui_music"
-            ButtonId.CONTINUE,
-            ButtonId.AD_CONTINUE,
-            ButtonId.NONE -> null
-        }
-        when (id) {
-            ButtonId.SFX -> drawAudioIconAsset(canvas, rect, "ui_sound", muted = sfxMuted, active = active)
-            ButtonId.MUSIC -> drawAudioIconAsset(canvas, rect, "ui_music", muted = musicMuted, active = active)
-            else -> iconKey?.let {
-                drawUiIconAsset(canvas, it, rect, padDp = -1f, alpha = if (active) 255 else 232)
-            }
-        }
-    }
-
-    private fun drawAudioToggleButton(
-        canvas: Canvas,
-        rect: RectF,
-        active: Boolean,
-        muted: Boolean,
-        music: Boolean,
-        accent: Int
-    ) {
-        drawUiButtonFrame(canvas, rect, active, accent, cornerDp = 7f)
-        drawAudioIconAsset(canvas, rect, if (music) "ui_music" else "ui_sound", muted, active)
+        UiWidgetRenderer.drawIconButton(
+            canvas = canvas,
+            rect = rect,
+            id = id,
+            active = activeButton == id,
+            sfxMuted = sfxMuted,
+            musicMuted = musicMuted,
+            levelAccent = level.accent,
+            paint = paint,
+            dp = uiDensity,
+            drawWorldAsset = ::drawWorldAsset
+        )
     }
 
     private fun drawUiButtonFrame(
@@ -6073,231 +4853,39 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         accent: Int,
         cornerDp: Float
     ) {
-        val corner = dp(cornerDp)
-        paint.style = Paint.Style.FILL
-        paint.shader = LinearGradient(
-            rect.left,
-            rect.top,
-            rect.right,
-            rect.bottom,
-            intArrayOf(
-                if (active) withAlpha(accent, 92) else 0xA00B101C.toInt(),
-                0x7A141B27,
-                if (active) withAlpha(accent, 42) else 0x52101822
-            ),
-            floatArrayOf(0f, 0.48f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, corner, corner, paint)
-        paint.shader = null
-
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (active) 1.35f else 0.85f)
-        paint.color = if (active) withAlpha(accent, 220) else 0x52FFFFFF
-        canvas.drawRoundRect(rect, corner, corner, paint)
-
-        paint.style = Paint.Style.FILL
-        paint.color = if (active) withAlpha(0xFFF7F4FF.toInt(), 34) else 0x18FFFFFF
-        canvas.drawRoundRect(
-            rect.left + dp(3f),
-            rect.top + dp(3f),
-            rect.right - dp(3f),
-            rect.top + rect.height() * 0.42f,
-            max(dp(2f), corner - dp(3f)),
-            max(dp(2f), corner - dp(3f)),
-            paint
-        )
+        UiWidgetRenderer.drawUiButtonFrame(canvas, rect, active, accent, cornerDp, paint, uiDensity)
     }
 
     private fun drawUiIconAsset(canvas: Canvas, key: String, rect: RectF, padDp: Float, alpha: Int) {
-        val pad = dp(padDp)
-        scratch.set(rect.left + pad, rect.top + pad, rect.right - pad, rect.bottom - pad)
-        drawWorldAsset(canvas, key, scratch, alpha)
-    }
-
-    private fun drawAudioIconAsset(canvas: Canvas, rect: RectF, key: String, muted: Boolean, active: Boolean) {
-        drawUiIconAsset(canvas, key, rect, padDp = -1f, alpha = if (muted) 155 else if (active) 255 else 232)
-        if (muted) {
-            paint.style = Paint.Style.STROKE
-            paint.strokeCap = Paint.Cap.ROUND
-            paint.strokeWidth = dp(2.4f)
-            paint.color = 0xFFFF4D8D.toInt()
-            canvas.drawLine(
-                rect.left + rect.width() * 0.26f,
-                rect.bottom - rect.height() * 0.25f,
-                rect.right - rect.width() * 0.24f,
-                rect.top + rect.height() * 0.24f,
-                paint
-            )
-            paint.strokeCap = Paint.Cap.BUTT
-        }
-    }
-
-    private fun drawAudioGlyph(canvas: Canvas, rect: RectF, music: Boolean, muted: Boolean, active: Boolean) {
-        val alpha = if (muted) 145 else if (active) 255 else 232
-        paint.color = withAlpha(0xFFF7F4FF.toInt(), alpha)
-        if (music) {
-            drawMusicNoteIcon(canvas, rect)
-        } else {
-            drawSpeakerIcon(canvas, rect, muted)
-        }
-        if (muted) {
-            paint.style = Paint.Style.STROKE
-            paint.strokeCap = Paint.Cap.ROUND
-            paint.strokeWidth = dp(2.4f)
-            paint.color = 0xFFFF4D8D.toInt()
-            canvas.drawLine(
-                rect.left + rect.width() * 0.28f,
-                rect.bottom - rect.height() * 0.27f,
-                rect.right - rect.width() * 0.24f,
-                rect.top + rect.height() * 0.25f,
-                paint
-            )
-            paint.strokeCap = Paint.Cap.BUTT
-        }
-    }
-
-    private fun drawSpeakerIcon(canvas: Canvas, rect: RectF, muted: Boolean) {
-        paint.style = Paint.Style.FILL
-        path.reset()
-        path.moveTo(rect.left + rect.width() * 0.25f, rect.top + rect.height() * 0.43f)
-        path.lineTo(rect.left + rect.width() * 0.39f, rect.top + rect.height() * 0.43f)
-        path.lineTo(rect.left + rect.width() * 0.56f, rect.top + rect.height() * 0.30f)
-        path.lineTo(rect.left + rect.width() * 0.56f, rect.top + rect.height() * 0.70f)
-        path.lineTo(rect.left + rect.width() * 0.39f, rect.top + rect.height() * 0.57f)
-        path.lineTo(rect.left + rect.width() * 0.25f, rect.top + rect.height() * 0.57f)
-        path.close()
-        canvas.drawPath(path, paint)
-        if (!muted) {
-            paint.style = Paint.Style.STROKE
-            paint.strokeCap = Paint.Cap.ROUND
-            paint.strokeWidth = dp(1.9f)
-            scratch.set(
-                rect.left + rect.width() * 0.48f,
-                rect.top + rect.height() * 0.34f,
-                rect.left + rect.width() * 0.73f,
-                rect.top + rect.height() * 0.66f
-            )
-            canvas.drawArc(scratch, -42f, 84f, false, paint)
-            paint.strokeWidth = dp(1.45f)
-            scratch.set(
-                rect.left + rect.width() * 0.50f,
-                rect.top + rect.height() * 0.24f,
-                rect.left + rect.width() * 0.86f,
-                rect.top + rect.height() * 0.76f
-            )
-            canvas.drawArc(scratch, -42f, 84f, false, paint)
-            paint.strokeCap = Paint.Cap.BUTT
-        }
-    }
-
-    private fun drawMusicNoteIcon(canvas: Canvas, rect: RectF) {
-        paint.style = Paint.Style.STROKE
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.strokeJoin = Paint.Join.ROUND
-        paint.strokeWidth = dp(2.4f)
-        val stemX = rect.left + rect.width() * 0.61f
-        val top = rect.top + rect.height() * 0.26f
-        val bottom = rect.top + rect.height() * 0.62f
-        canvas.drawLine(stemX, top, stemX, bottom, paint)
-        canvas.drawLine(stemX, top, rect.left + rect.width() * 0.39f, rect.top + rect.height() * 0.32f, paint)
-        paint.style = Paint.Style.FILL
-        canvas.drawOval(
-            rect.left + rect.width() * 0.31f,
-            rect.top + rect.height() * 0.56f,
-            rect.left + rect.width() * 0.53f,
-            rect.top + rect.height() * 0.74f,
-            paint
+        UiWidgetRenderer.drawUiIconAsset(
+            canvas,
+            key,
+            rect,
+            padDp,
+            alpha,
+            uiDensity,
+            ::drawWorldAsset
         )
-        paint.strokeCap = Paint.Cap.BUTT
-        paint.strokeJoin = Paint.Join.MITER
     }
 
-    private fun drawLegacyIconButton(canvas: Canvas, rect: RectF, id: ButtonId) {
-        paint.style = Paint.Style.FILL
-        paint.color = if (activeButton == id) withAlpha(level.accent, 88) else 0x7A141B27
-        canvas.drawRoundRect(rect, dp(7f), dp(7f), paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(if (activeButton == id) 1.6f else 0.8f)
-        paint.color = if (activeButton == id) withAlpha(level.accent, 220) else 0x42FFFFFF
-        canvas.drawRoundRect(rect, dp(7f), dp(7f), paint)
-        when (id) {
-            ButtonId.HOME -> drawHomeIcon(canvas, rect)
-            ButtonId.RESTART -> drawRestartIcon(canvas, rect)
-            ButtonId.SHARE -> drawShareIcon(canvas, rect)
-            ButtonId.NEXT -> drawNextIcon(canvas, rect)
-            ButtonId.SFX -> drawAudioGlyph(canvas, rect, music = false, muted = sfxMuted, active = activeButton == id)
-            ButtonId.MUSIC -> drawAudioGlyph(canvas, rect, music = true, muted = musicMuted, active = activeButton == id)
-            ButtonId.CONTINUE,
-            ButtonId.AD_CONTINUE,
-            ButtonId.NONE -> Unit
-        }
+    private fun drawAudioIconAsset(
+        canvas: Canvas,
+        rect: RectF,
+        key: String,
+        muted: Boolean,
+        active: Boolean
+    ) {
+        UiWidgetRenderer.drawAudioIconAsset(
+            canvas,
+            rect,
+            key,
+            muted,
+            active,
+            paint,
+            uiDensity,
+            ::drawWorldAsset
+        )
     }
-
-    private fun drawHomeIcon(canvas: Canvas, rect: RectF) {
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(2.4f)
-        paint.strokeJoin = Paint.Join.ROUND
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.color = 0xFFF7F4FF.toInt()
-        path.reset()
-        path.moveTo(rect.left + rect.width() * 0.28f, rect.centerY())
-        path.lineTo(rect.centerX(), rect.top + rect.height() * 0.28f)
-        path.lineTo(rect.left + rect.width() * 0.72f, rect.centerY())
-        path.lineTo(rect.left + rect.width() * 0.72f, rect.top + rect.height() * 0.72f)
-        path.lineTo(rect.left + rect.width() * 0.34f, rect.top + rect.height() * 0.72f)
-        path.lineTo(rect.left + rect.width() * 0.34f, rect.centerY())
-        canvas.drawPath(path, paint)
-        paint.strokeCap = Paint.Cap.BUTT
-        paint.strokeJoin = Paint.Join.MITER
-    }
-
-    private fun drawRestartIcon(canvas: Canvas, rect: RectF) {
-        val pad = rect.width() * 0.27f
-        scratch.set(rect.left + pad, rect.top + pad, rect.right - pad, rect.bottom - pad)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(2.4f)
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.color = 0xFFF7F4FF.toInt()
-        canvas.drawArc(scratch, 35f, 285f, false, paint)
-        paint.strokeCap = Paint.Cap.BUTT
-        paint.style = Paint.Style.FILL
-        val x = rect.left + rect.width() * 0.68f
-        val y = rect.top + rect.height() * 0.22f
-        path.reset()
-        path.moveTo(x, y)
-        path.lineTo(x + dp(1f), y + dp(9f))
-        path.lineTo(x - dp(8f), y + dp(5f))
-        path.close()
-        canvas.drawPath(path, paint)
-    }
-
-    private fun drawShareIcon(canvas: Canvas, rect: RectF) {
-        val a = Point2(rect.left + rect.width() * 0.34f, rect.centerY())
-        val b = Point2(rect.left + rect.width() * 0.66f, rect.top + rect.height() * 0.32f)
-        val c = Point2(rect.left + rect.width() * 0.66f, rect.top + rect.height() * 0.68f)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = dp(2.1f)
-        paint.color = 0xFFF7F4FF.toInt()
-        canvas.drawLine(a.x, a.y, b.x, b.y, paint)
-        canvas.drawLine(a.x, a.y, c.x, c.y, paint)
-        paint.style = Paint.Style.FILL
-        canvas.drawCircle(a.x, a.y, dp(3.4f), paint)
-        canvas.drawCircle(b.x, b.y, dp(3.4f), paint)
-        canvas.drawCircle(c.x, c.y, dp(3.4f), paint)
-    }
-
-    private fun drawNextIcon(canvas: Canvas, rect: RectF) {
-        paint.style = Paint.Style.FILL
-        paint.color = 0xFFF7F4FF.toInt()
-        path.reset()
-        path.moveTo(rect.left + rect.width() * 0.38f, rect.top + rect.height() * 0.28f)
-        path.lineTo(rect.left + rect.width() * 0.38f, rect.top + rect.height() * 0.72f)
-        path.lineTo(rect.left + rect.width() * 0.72f, rect.centerY())
-        path.close()
-        canvas.drawPath(path, paint)
-    }
-
     private fun drawOutcome(canvas: Canvas) {
         if (state != GameState.WON && state != GameState.LOST) return
         val won = state == GameState.WON
@@ -6430,20 +5018,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         textPaint.textSize = dp(15f)
         textPaint.color = 0xFFF7F4FF.toInt()
         canvas.drawText(fitText(value, width - dp(18f)), left + dp(9f), top + dp(46f), textPaint)
-    }
-
-    private fun drawResultMetric(canvas: Canvas, left: Float, top: Float, width: Float, label: String, value: String) {
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.typeface = android.graphics.Typeface.create("sans", android.graphics.Typeface.BOLD)
-        textPaint.textSize = dp(8f)
-        textPaint.color = 0x66FFFFFF
-        canvas.drawText(t(label).uppercase(), left + dp(7f), top + dp(12f), textPaint)
-        textPaint.textSize = dp(16f)
-        textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText(fitText(value, width - dp(14f)), left + dp(7f), top + dp(34f), textPaint)
-        paint.style = Paint.Style.FILL
-        paint.color = 0x24FFFFFF
-        canvas.drawRect(left + width - dp(1f), top, left + width, top + dp(42f), paint)
     }
 
     private fun drawBrainballResultLine(canvas: Canvas, left: Float, top: Float, right: Float, accent: Int, won: Boolean) {
@@ -6913,7 +5487,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
                     ballPrimary = skin.primary,
                     ballSecondary = skin.secondary,
                     lineColor = skin.lineColor,
-                    ballArtResource = brainballArtResources[skin.id] ?: R.drawable.brainball_nodlo,
+                    ballArtResource = BallSkinCatalog.ART_RESOURCES[skin.id] ?: R.drawable.brainball_nodlo,
                     ballVisualScale = gameplayBallScale(skin),
                     riftBreak = lastRiftBreak,
                     riftBreakLabel = lastRiftBreakReason,
@@ -6988,7 +5562,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             rewardMessage = rewardLine(newSkin)
             audio.playEvent(SoundEvent.UNLOCK, selectedBallIndex())
             hapticSequence(
-                HapticFeedbackConstants.CONFIRM to 0L,
+                HapticFeedbackCompat.confirm to 0L,
                 HapticFeedbackConstants.LONG_PRESS to 90L
             )
         } else {
@@ -7048,70 +5622,29 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         }
     }
 
-    private fun selectedBallSkin(): BallSkin {
-        return ballSkins.firstOrNull { it.id == selectedSkinId && isSkinUnlocked(it) }
-            ?: ballSkins.first { it.id == DEFAULT_SKIN_ID }
-    }
+    private fun selectedBallSkin(): BallSkin = progressRepository.selectedBallSkin(selectedSkinId)
 
-    private fun focusedCollectionSkin(): BallSkin {
-        return ballSkins.firstOrNull { it.id == collectionFocusSkinId } ?: selectedBallSkin()
-    }
+    private fun focusedCollectionSkin(): BallSkin =
+        ballSkins.firstOrNull { it.id == collectionFocusSkinId } ?: selectedBallSkin()
 
-    private fun selectedBallIndex(): Int = ballSkins.indexOfFirst { it.id == selectedBallSkin().id }.coerceAtLeast(0)
+    private fun selectedBallIndex(): Int =
+        ballSkins.indexOfFirst { it.id == selectedBallSkin().id }.coerceAtLeast(0)
 
-    private fun isSkinUnlocked(skin: BallSkin): Boolean {
-        if (BuildConfig.FORCE_UNLOCK_ALL_BRAINBALLS) return true
-        if (skin.unlock.type == UnlockType.DEFAULT) return true
-        if (skin.unlock.type == UnlockType.PREMIUM) return prefs.getBoolean(purchasedSkinKey(skin.id), false)
-        if (skin.unlock.type == UnlockType.HYPE_COST) return prefs.getBoolean(earnedSkinKey(skin.id), false)
-        if (prefs.getBoolean(earnedSkinKey(skin.id), false)) return true
-        if (!unlockConditionMet(skin.unlock)) return false
-        prefs.edit().putBoolean(earnedSkinKey(skin.id), true).apply()
-        return true
-    }
+    private fun isSkinUnlocked(skin: BallSkin): Boolean = progressRepository.isSkinUnlocked(skin)
 
-    private fun unlockConditionMet(rule: UnlockRule): Boolean {
-        return when (rule.type) {
-            UnlockType.DEFAULT -> true
-            UnlockType.PREMIUM -> false
-            UnlockType.CLASSIC_LEVEL -> clearedLevel(GameMode.CLASSIC) >= rule.value
-            UnlockType.CHAOS_LEVEL -> clearedLevel(GameMode.CHAOS) >= rule.value
-            UnlockType.TUTORIAL_CLEAR -> max(clearedLevel(GameMode.CLASSIC), clearedLevel(GameMode.CHAOS)) >= rule.value
-            UnlockType.BEST_STREAK -> bestStreak() >= rule.value
-            UnlockType.SHARE_COUNT -> prefs.getInt(SHARE_COUNT_KEY, 0) >= rule.value
-            UnlockType.HYPE_COST -> false
-        }
-    }
+    private fun unlockedSkinIds(): Set<String> = progressRepository.unlockedSkinIds()
 
-    private fun unlockedSkinIds(): Set<String> {
-        return ballSkins.filter(::isSkinUnlocked).map { it.id }.toSet()
-    }
+    private fun unlockedSkinCount(): Int = progressRepository.unlockedSkinCount()
 
-    private fun unlockedSkinCount(): Int = ballSkins.count(::isSkinUnlocked)
+    private fun bestStreak(): Int = progressRepository.bestStreak()
 
-    private fun bestStreak(): Int = prefs.getInt(BEST_STREAK_KEY, prefs.getInt("clear_streak", 0)).coerceAtLeast(0)
+    private fun hypeBalance(): Int = progressRepository.hypeBalance()
 
-    private fun hypeBalance(): Int = prefs.getInt(HYPE_BANK_KEY, prefs.getInt("last_hype", 0)).coerceAtLeast(0)
+    private fun spendHype(amount: Int) = progressRepository.spendHype(amount)
 
-    private fun spendHype(amount: Int) {
-        val next = (hypeBalance() - amount.coerceAtLeast(0)).coerceAtLeast(0)
-        prefs.edit().putInt(HYPE_BANK_KEY, next).apply()
-    }
+    private fun formatHypeAmount(value: Int): String = progressRepository.formatHypeAmount(value)
 
-    private fun formatHypeAmount(value: Int): String {
-        val safe = value.coerceAtLeast(0)
-        return when {
-            safe >= 1_000_000 -> "${safe / 100_000 / 10f}M"
-            safe >= 10_000 -> "${safe / 1_000}K"
-            safe >= 1_000 -> {
-                val tenths = safe / 100
-                "${tenths / 10}.${tenths % 10}K"
-            }
-            else -> safe.toString()
-        }
-    }
-
-    private fun clearedLevel(mode: GameMode): Int = (modeHighestLevel(mode) - 1).coerceAtLeast(0)
+    private fun clearedLevel(mode: GameMode): Int = progressRepository.clearedLevel(mode)
 
     private fun rewardLine(newSkin: BallSkin?): String {
         val next = nextRewardText(excludeId = newSkin?.id)
@@ -7137,160 +5670,40 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         return signals.joinToString(" | ")
     }
 
-    private fun claimDailyRiftBonus(): Int {
-        val key = dailyRiftBonusKey()
-        if (prefs.getBoolean(key, false)) return 0
-        val bonus = dailyRiftBonusForMode(gameMode)
-        prefs.edit()
-            .putBoolean(key, true)
-            .putInt(dailyRiftBonusAmountKey(), bonus)
-            .putString(dailyRiftBonusModeKey(), gameMode.name)
-            .putLong(dailyRiftBonusClaimedAtKey(), System.currentTimeMillis())
-            .apply()
-        return bonus
-    }
+    private fun claimDailyRiftBonus(): Int = progressRepository.claimDailyRiftBonus(gameMode)
 
-    private fun dailyRiftBonusClaimed(): Boolean = prefs.getBoolean(dailyRiftBonusKey(), false)
+    private fun dailyRiftBonusClaimed(): Boolean = progressRepository.dailyRiftBonusClaimed()
 
-    private fun dailyRiftBonusKey(): String = "daily_rift_bonus_${LevelDirector.dailySeed()}"
+    private fun dailyRiftClaimedAmount(): Int = progressRepository.dailyRiftClaimedAmount()
 
-    private fun dailyRiftBonusAmountKey(): String = "${dailyRiftBonusKey()}_amount"
+    private fun dailyRiftClaimedMode(): GameMode? = progressRepository.dailyRiftClaimedMode()
 
-    private fun dailyRiftBonusModeKey(): String = "${dailyRiftBonusKey()}_mode"
+    private fun dailyRiftResetText(): String = progressRepository.dailyRiftResetText()
 
-    private fun dailyRiftBonusClaimedAtKey(): String = "${dailyRiftBonusKey()}_claimed_at"
+    private fun dailyRiftDayProgress(): Float = progressRepository.dailyRiftDayProgress()
 
-    private fun dailyRiftBonusForMode(mode: GameMode): Int = if (mode == GameMode.CHAOS) 420 else 320
+    private fun nextRewardText(excludeId: String? = null): String? =
+        progressRepository.nextRewardText(excludeId)
 
-    private fun dailyRiftClaimedAmount(): Int = prefs.getInt(dailyRiftBonusAmountKey(), 0)
+    private fun nextRewardInfo(excludeId: String? = null): NextReward? =
+        progressRepository.nextRewardInfo(excludeId)
 
-    private fun dailyRiftClaimedMode(): GameMode? {
-        return prefs.getString(dailyRiftBonusModeKey(), null)?.let { saved ->
-            runCatching { GameMode.valueOf(saved) }.getOrNull()
-        }
-    }
+    private fun nextStreakRewardInfo(): NextReward? = progressRepository.nextStreakRewardInfo()
 
-    private fun dailyRiftResetText(): String {
-        val remaining = dailyRiftRemainingMillis()
-        val hours = remaining / HOUR_MILLIS
-        val minutes = ((remaining % HOUR_MILLIS) / MINUTE_MILLIS).coerceAtLeast(1L)
-        return "${t("RESET").uppercase()} ${hours}H ${minutes}M"
-    }
+    private fun unlockShortLabel(skin: BallSkin): String = progressRepository.unlockShortLabel(skin)
 
-    private fun dailyRiftDayProgress(): Float {
-        val remaining = dailyRiftRemainingMillis().coerceIn(0L, DAY_MILLIS)
-        return (1f - remaining.toFloat() / DAY_MILLIS.toFloat()).coerceIn(0.05f, 0.95f)
-    }
+    private fun unlockLongLabel(skin: BallSkin): String = progressRepository.unlockLongLabel(skin)
 
-    private fun dailyRiftRemainingMillis(): Long {
-        val now = System.currentTimeMillis()
-        val nextReset = (LevelDirector.dailySeed() + 1L) * DAY_MILLIS
-        return (nextReset - now).coerceIn(0L, DAY_MILLIS)
-    }
+    private fun premiumPriceLabel(skin: BallSkin): String = progressRepository.premiumPriceLabel(skin)
 
-    private fun nextRewardText(excludeId: String? = null): String? {
-        val next = nextRewardInfo(excludeId)
-        return next?.let { "${it.name} ${t("AT").uppercase()} ${it.label.uppercase()}" }
-    }
+    private fun premiumCompactPriceLabel(skin: BallSkin): String =
+        premiumPriceLabel(skin).substringBefore(" ")
 
-    private fun nextRewardInfo(excludeId: String? = null): NextReward? {
-        return ballSkins
-            .filter { it.id != excludeId && it.unlock.type != UnlockType.PREMIUM && !isSkinUnlocked(it) }
-            .mapNotNull { skin ->
-                rewardDistance(skin.unlock)?.let { distance ->
-                    val current = rewardProgressValue(skin.unlock)
-                    val target = skin.unlock.value.coerceAtLeast(1)
-                    NextReward(
-                        name = skin.name,
-                        label = unlockShortLabel(skin),
-                        target = target,
-                        distance = distance,
-                        progress = (current.toFloat() / target.toFloat()).coerceIn(0f, 1f),
-                        accent = skin.lineColor
-                    )
-                }
-            }
-            .minWithOrNull(compareBy<NextReward> { it.distance }.thenBy { it.label })
-    }
+    private fun premiumPriceKey(id: String): String = GameProgressRepository.premiumPriceKey(id)
 
-    private fun nextStreakRewardInfo(): NextReward? {
-        return ballSkins
-            .filter { it.unlock.type == UnlockType.BEST_STREAK && !isSkinUnlocked(it) }
-            .minByOrNull { it.unlock.value }
-            ?.let { skin ->
-                val target = skin.unlock.value.coerceAtLeast(1)
-                NextReward(
-                    name = skin.name,
-                    label = unlockShortLabel(skin),
-                    target = target,
-                    distance = (target - bestStreak()).coerceAtLeast(0),
-                    progress = (bestStreak().toFloat() / target.toFloat()).coerceIn(0f, 1f),
-                    accent = skin.lineColor
-                )
-            }
-    }
+    private fun purchasedSkinKey(id: String): String = GameProgressRepository.purchasedSkinKey(id)
 
-    private fun rewardDistance(rule: UnlockRule): Int? {
-        return when (rule.type) {
-            UnlockType.CLASSIC_LEVEL -> (rule.value - clearedLevel(GameMode.CLASSIC)).coerceAtLeast(0)
-            UnlockType.CHAOS_LEVEL -> (rule.value - clearedLevel(GameMode.CHAOS)).coerceAtLeast(0)
-            UnlockType.TUTORIAL_CLEAR -> (rule.value - max(clearedLevel(GameMode.CLASSIC), clearedLevel(GameMode.CHAOS))).coerceAtLeast(0)
-            UnlockType.BEST_STREAK -> (rule.value - bestStreak()).coerceAtLeast(0)
-            UnlockType.SHARE_COUNT -> (rule.value - prefs.getInt(SHARE_COUNT_KEY, 0)).coerceAtLeast(0)
-            UnlockType.HYPE_COST -> (rule.value - hypeBalance()).coerceAtLeast(0)
-            UnlockType.DEFAULT,
-            UnlockType.PREMIUM -> null
-        }
-    }
-
-    private fun rewardProgressValue(rule: UnlockRule): Int {
-        return when (rule.type) {
-            UnlockType.CLASSIC_LEVEL -> clearedLevel(GameMode.CLASSIC)
-            UnlockType.CHAOS_LEVEL -> clearedLevel(GameMode.CHAOS)
-            UnlockType.TUTORIAL_CLEAR -> max(clearedLevel(GameMode.CLASSIC), clearedLevel(GameMode.CHAOS))
-            UnlockType.BEST_STREAK -> bestStreak()
-            UnlockType.SHARE_COUNT -> prefs.getInt(SHARE_COUNT_KEY, 0)
-            UnlockType.HYPE_COST -> hypeBalance()
-            UnlockType.DEFAULT,
-            UnlockType.PREMIUM -> 0
-        }
-    }
-
-    private fun unlockShortLabel(skin: BallSkin): String {
-        return when (skin.unlock.type) {
-            UnlockType.DEFAULT -> t("UNLOCKED").uppercase()
-            UnlockType.PREMIUM -> premiumPriceLabel(skin)
-            UnlockType.CLASSIC_LEVEL -> "${t("CLASSIC")} L${skin.unlock.value.toString().padStart(2, '0')}"
-            UnlockType.CHAOS_LEVEL -> "${t("CHAOS")} L${skin.unlock.value.toString().padStart(2, '0')}"
-            UnlockType.TUTORIAL_CLEAR -> "${t("TUTORIAL")} L${skin.unlock.value.toString().padStart(2, '0')}"
-            UnlockType.BEST_STREAK -> "${t("STREAK")} ${skin.unlock.value}"
-            UnlockType.SHARE_COUNT -> "${t("SHARE")} ${skin.unlock.value}"
-            UnlockType.HYPE_COST -> "${formatHypeAmount(skin.unlock.value)} ${t("HYPE").uppercase()}"
-        }
-    }
-
-    private fun unlockLongLabel(skin: BallSkin): String {
-        return when (skin.unlock.type) {
-            UnlockType.PREMIUM -> "${premiumPriceLabel(skin)} - ${t("local price from Play Billing")}"
-            UnlockType.HYPE_COST -> "${t("UNLOCK WITH").uppercase()} ${formatHypeAmount(skin.unlock.value)} ${t("HYPE").uppercase()} / ${t("HYPE BANK").uppercase()} ${formatHypeAmount(hypeBalance())}"
-            else -> t(skin.unlock.label)
-        }
-    }
-
-    private fun premiumPriceLabel(skin: BallSkin): String {
-        return premiumPricesBySkin[skin.id]
-            ?: prefs.getString(premiumPriceKey(skin.id), null)
-            ?: prefs.getString(PREMIUM_PRICE_KEY, "0.99 LOCAL")
-            ?: "0.99 LOCAL"
-    }
-
-    private fun premiumCompactPriceLabel(skin: BallSkin): String = premiumPriceLabel(skin).substringBefore(" ")
-
-    private fun premiumPriceKey(id: String): String = "premium_price_$id"
-
-    private fun purchasedSkinKey(id: String): String = "skin_purchased_$id"
-
-    private fun earnedSkinKey(id: String): String = "skin_unlocked_$id"
+    private fun earnedSkinKey(id: String): String = GameProgressRepository.earnedSkinKey(id)
 
     private fun curseStackLabel(): String {
         if (level.curses.isEmpty()) return t("NO CURSE").uppercase()
@@ -7304,73 +5717,34 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         return "KAV-" + raw.takeLast(6).padStart(6, '0')
     }
 
-    private fun modeMeta(mode: GameMode): String {
-        val progress = modeProgress(mode)
-        val modeStreak = modeStreak(mode)
-        return if (progress <= 1) {
-            t("START LEVEL 01").uppercase()
-        } else {
-            "${t("LEVEL").uppercase()} ${progress.toString().padStart(2, '0')}   ${t("STREAK").uppercase()} $modeStreak"
-        }
-    }
+    private fun modeMeta(mode: GameMode): String =
+        progressRepository.modeMeta(mode, if (mode == gameMode) streak else 0)
 
-    private fun modeProgress(mode: GameMode): Int {
-        return when (mode) {
-            GameMode.CLASSIC -> prefs.getInt(progressKey(mode), prefs.getInt("unlocked_level", 1)).coerceAtLeast(1)
-            GameMode.CHAOS -> prefs.getInt(progressKey(mode), prefs.getInt("chaos_level", 1)).coerceAtLeast(1)
-        }
-    }
+    private fun modeProgress(mode: GameMode): Int = progressRepository.modeProgress(mode)
 
-    private fun modeStreak(mode: GameMode): Int {
-        return prefs.getInt(streakKey(mode), if (mode == gameMode) streak else 0).coerceAtLeast(0)
-    }
+    private fun modeStreak(mode: GameMode): Int =
+        progressRepository.modeStreak(mode, if (mode == gameMode) streak else 0)
 
-    private fun modeHighestLevel(mode: GameMode): Int {
-        return prefs.getInt(highestLevelKey(mode), modeProgress(mode)).coerceAtLeast(1)
-    }
+    private fun modeHighestLevel(mode: GameMode): Int = progressRepository.modeHighestLevel(mode)
 
-    private fun modeBestStreak(mode: GameMode): Int {
-        return prefs.getInt(bestModeStreakKey(mode), modeStreak(mode)).coerceAtLeast(0)
-    }
+    private fun modeBestStreak(mode: GameMode): Int =
+        progressRepository.modeBestStreak(mode, if (mode == gameMode) streak else 0)
 
-    private fun resetModeProgress(mode: GameMode) {
-        val existingHighestLevel = modeHighestLevel(mode)
-        val existingBestStreak = modeBestStreak(mode)
-        prefs.edit()
-            .putInt(highestLevelKey(mode), existingHighestLevel)
-            .putInt(bestModeStreakKey(mode), existingBestStreak)
-            .putInt(progressKey(mode), 1)
-            .putInt(streakKey(mode), 0)
-            .putInt(freeFailContinueKey(mode), 0)
-            .putInt(continueAdStreakKey(mode), 0)
-            .putInt(levelAdKey(mode), 0)
-            .apply()
-    }
+    private fun resetModeProgress(mode: GameMode) = progressRepository.resetModeProgress(mode)
 
-    private fun progressKey(mode: GameMode): String = when (mode) {
-        GameMode.CLASSIC -> "classic_level"
-        GameMode.CHAOS -> "chaos_level"
-    }
+    private fun progressKey(mode: GameMode): String = GameProgressRepository.progressKey(mode)
 
-    private fun highestLevelKey(mode: GameMode): String = "highest_level_${mode.name.lowercase()}"
+    private fun highestLevelKey(mode: GameMode): String = progressRepository.highestLevelKey(mode)
 
-    private fun fairHighestLevelKey(mode: GameMode): String = "fair_highest_level_${mode.name.lowercase()}"
+    private fun fairHighestLevelKey(mode: GameMode): String = progressRepository.fairHighestLevelKey(mode)
 
-    private fun bestModeStreakKey(mode: GameMode): String = "best_streak_${mode.name.lowercase()}"
+    private fun bestModeStreakKey(mode: GameMode): String = progressRepository.bestModeStreakKey(mode)
 
-    private fun fairBestStreakKey(mode: GameMode): String = "fair_best_streak_${mode.name.lowercase()}"
+    private fun fairBestStreakKey(mode: GameMode): String = progressRepository.fairBestStreakKey(mode)
 
-    private fun streakKey(mode: GameMode): String = "streak_${mode.name.lowercase()}"
+    private fun streakKey(mode: GameMode): String = GameProgressRepository.streakKey(mode)
 
-    private fun freeFailContinueKey(mode: GameMode): String = "free_fail_continue_${mode.name.lowercase()}"
-
-    private fun continueAdStreakKey(mode: GameMode): String = "continue_ad_streak_${mode.name.lowercase()}"
-
-    private fun levelAdKey(mode: GameMode): String = "level_ad_checkpoint_${mode.name.lowercase()}"
-
-    private fun failContinueCountKey(mode: GameMode, levelNumber: Int): String =
-        "fail_continue_${mode.name.lowercase()}_$levelNumber"
-
+    private fun levelAdKey(mode: GameMode): String = progressRepository.levelAdKey(mode)
     private fun GameMode.menuTitle(): String = when (this) {
         GameMode.CLASSIC -> t("CLASSIC").uppercase()
         GameMode.CHAOS -> t("CHAOS").uppercase()
@@ -7423,34 +5797,6 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         return (color and 0x00FFFFFF) or (alpha.coerceIn(0, 255) shl 24)
     }
 
-    private fun detectRenderProfile(): RenderProfile {
-        val deviceText = listOf(
-            Build.MANUFACTURER,
-            Build.MODEL,
-            Build.DEVICE,
-            Build.PRODUCT,
-            Build.HARDWARE,
-            Build.BOARD
-        ).joinToString(" ").lowercase()
-        val cores = Runtime.getRuntime().availableProcessors()
-        val lowEndSignature = listOf(
-            "moto g06",
-            "xt2535",
-            "mt6768",
-            "mt6769",
-            "mt6765",
-            "helio g80",
-            "helio g81",
-            "helio g85",
-            "mali-g52"
-        ).any { it in deviceText }
-        return when {
-            lowEndSignature || cores <= 4 -> RenderProfile.LOW
-            cores <= 6 -> RenderProfile.BALANCED
-            else -> RenderProfile.HIGH
-        }
-    }
-
     private data class ShareRequest(
         val payload: ReplaySharePayload,
         val text: String
@@ -7486,38 +5832,9 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         }
     }
 
-    interface PurchaseBridge {
-        fun purchase(productId: String)
-        fun restore()
-
-        companion object {
-            val NONE = object : PurchaseBridge {
-                override fun purchase(productId: String) = Unit
-                override fun restore() = Unit
-            }
-        }
-    }
-
     private companion object {
         const val TARGET_STAGE_HEIGHT = 17.78f
         const val TUTORIAL_LAST_LEVEL = 10
         const val AD_LEVEL_INTERVAL = 6
-        const val FAILS_BEFORE_CONTINUE_AD = 4
-        const val MINUTE_MILLIS = 60_000L
-        const val HOUR_MILLIS = 60L * MINUTE_MILLIS
-        const val DAY_MILLIS = 24L * HOUR_MILLIS
-        const val DEFAULT_SKIN_ID = "nodlo"
-        const val SELECTED_SKIN_KEY = "selected_ball_skin"
-        const val SFX_MUTED_KEY = "sfx_muted"
-        const val MUSIC_MUTED_KEY = "music_muted"
-        const val BEST_STREAK_KEY = "best_streak"
-        const val SHARE_COUNT_KEY = "share_count"
-        const val HYPE_BANK_KEY = "hype_bank"
-        const val PREMIUM_PRICE_KEY = "premium_price_label"
-        const val COLLECTION_BACK_INDEX = -2
-        const val COLLECTION_RESTORE_INDEX = -3
-        const val COLLECTION_FILTER_BASE_INDEX = -100
-        const val LEADERBOARD_BACK_INDEX = -2
-        const val LANGUAGE_BACK_INDEX = -2
     }
 }

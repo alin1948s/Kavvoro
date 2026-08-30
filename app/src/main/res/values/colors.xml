@@ -1,6 +1,4 @@
 <resources>
     <color name="chaos_black">#07090F</color>
     <color name="chaos_splash_black">#05070D</color>
-    <color name="chaos_signal">#1DE8C8</color>
-    <color name="chaos_magenta">#FF4D8D</color>
 </resources>

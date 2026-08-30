@@ -547,62 +547,6 @@ object HomeUiRenderer {
         val sndSize = sfxRect.width() * 0.27f
         drawSpeakerIcon(canvas, sfxRect.centerX(), sfxRect.centerY(), sndSize, sfxMuted, iconColor, paint, dp)
     }
-    fun drawElectricLightning(
-        canvas: Canvas,
-        cx: Float,
-        cy: Float,
-        radius: Float,
-        scale: Float,
-        menuPulse: Float,
-        paint: Paint,
-        dp: Float
-    ) {
-        paint.style = Paint.Style.STROKE
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.strokeJoin = Paint.Join.ROUND
-
-        val boltCount = 6
-        repeat(boltCount) { index ->
-            val baseAngle = index * (2f * PI.toFloat() / boltCount) + (sin(menuPulse * 0.8f + index) * 0.15f)
-            val isLeft = cos(baseAngle) < 0
-            val color = if (isLeft) 0xFF00E5FF.toInt() else 0xFFFF2E93.toInt()
-
-            val jitter = sin(menuPulse * 16f + index * 4.3f) * 6f * scale * dp
-            val rInner = radius * 0.65f
-            val rMid1 = radius * 0.85f
-            val rMid2 = radius * 1.05f
-            val rOuter = radius * 1.25f
-
-            val x0 = cx + cos(baseAngle) * rInner
-            val y0 = cy + sin(baseAngle) * rInner
-            val x1 = cx + cos(baseAngle + 0.12f) * rMid1 + jitter
-            val y1 = cy + sin(baseAngle + 0.12f) * rMid1 - jitter * 0.5f
-            val x2 = cx + cos(baseAngle - 0.08f) * rMid2 - jitter * 0.8f
-            val y2 = cy + sin(baseAngle - 0.08f) * rMid2 + jitter
-            val x3 = cx + cos(baseAngle + 0.05f) * rOuter
-            val y3 = cy + sin(baseAngle + 0.05f) * rOuter
-
-            paint.strokeWidth = 1.8f * scale * dp
-            paint.color = withAlpha(color, 235)
-            tempPath.reset()
-            tempPath.moveTo(x0, y0)
-            tempPath.lineTo(x1, y1)
-            tempPath.lineTo(x2, y2)
-            tempPath.lineTo(x3, y3)
-            canvas.drawPath(tempPath, paint)
-
-            paint.strokeWidth = 1.1f * scale * dp
-            paint.color = withAlpha(color, 150)
-            tempPath.reset()
-            tempPath.moveTo(x1, y1)
-            val xFork = cx + cos(baseAngle + 0.28f) * rMid2 + jitter
-            val yFork = cy + sin(baseAngle + 0.28f) * rMid2 + jitter
-            tempPath.lineTo(xFork, yFork)
-            canvas.drawPath(tempPath, paint)
-        }
-        paint.strokeCap = Paint.Cap.BUTT
-    }
-
     fun drawRiftOnlineBadge(
         canvas: Canvas,
         cx: Float,

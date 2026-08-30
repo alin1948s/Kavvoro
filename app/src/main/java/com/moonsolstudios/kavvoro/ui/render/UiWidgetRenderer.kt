@@ -154,21 +154,6 @@ object UiWidgetRenderer {
         }
     }
 
-    fun drawAudioToggleButton(
-        canvas: Canvas,
-        rect: RectF,
-        active: Boolean,
-        muted: Boolean,
-        music: Boolean,
-        accent: Int,
-        paint: Paint,
-        dp: Float,
-        drawWorldAsset: (Canvas, String, RectF, Int) -> Unit
-    ) {
-        drawUiButtonFrame(canvas, rect, active, accent, cornerDp = 7f, paint = paint, dp = dp)
-        drawAudioIconAsset(canvas, rect, if (music) "ui_music" else "ui_sound", muted, active, paint, dp, drawWorldAsset)
-    }
-
     fun drawIconButton(
         canvas: Canvas,
         rect: RectF,

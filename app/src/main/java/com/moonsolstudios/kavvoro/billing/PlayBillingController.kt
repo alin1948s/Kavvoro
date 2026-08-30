@@ -13,10 +13,9 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
-import com.moonsolstudios.kavvoro.ui.ChaosGameView
 
 class PlayBillingController(private val activity: Activity) :
-    ChaosGameView.PurchaseBridge,
+    PurchaseBridge,
     PurchasesUpdatedListener {
 
     interface Listener {

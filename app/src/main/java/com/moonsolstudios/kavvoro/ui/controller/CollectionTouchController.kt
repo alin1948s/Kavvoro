@@ -8,6 +8,7 @@ import com.moonsolstudios.kavvoro.model.BallSkin
 import com.moonsolstudios.kavvoro.model.CollectionFilter
 import com.moonsolstudios.kavvoro.model.UnlockType
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository
+import com.moonsolstudios.kavvoro.ui.HapticFeedbackCompat
 
 object CollectionTouchController {
 
@@ -146,10 +147,6 @@ object CollectionTouchController {
             onSkinSelected(skin.id)
             onFocusSkin(skin.id)
             prefs.edit().putString(GameProgressRepository.SELECTED_SKIN_KEY, skin.id).apply()
-            com.moonsolstudios.kavvoro.telemetry.KavvoroTelemetry.logEvent(
-                com.moonsolstudios.kavvoro.telemetry.KavvoroTelemetry.Event.BRAINBALL_SELECTED,
-                mapOf("brainball" to skin.id)
-            )
             setMessage("${skin.name} ${t("IS NOW IN YOUR HEAD")} / ${t("AURA").uppercase()} ${brainballAura(skin)}", 2.4f)
             return
         }
@@ -174,15 +171,11 @@ object CollectionTouchController {
                     .putBoolean(GameProgressRepository.earnedSkinKey(skin.id), true)
                     .putString(GameProgressRepository.SELECTED_SKIN_KEY, skin.id)
                     .apply()
-                com.moonsolstudios.kavvoro.telemetry.KavvoroTelemetry.logEvent(
-                    com.moonsolstudios.kavvoro.telemetry.KavvoroTelemetry.Event.BRAINBALL_UNLOCKED,
-                    mapOf("brainball" to skin.id)
-                )
                 setMessage("${t("UNLOCKED").uppercase()} ${skin.name} / -${formatHypeAmount(price)} ${t("HYPE").uppercase()}", 3.2f)
                 playSoundEvent(com.moonsolstudios.kavvoro.audio.SoundEvent.UNLOCK, skinIndex)
                 hapticSequence(
                     arrayOf(
-                        android.view.HapticFeedbackConstants.CONFIRM to 0L,
+                        HapticFeedbackCompat.confirm to 0L,
                         android.view.HapticFeedbackConstants.LONG_PRESS to 90L
                     )
                 )

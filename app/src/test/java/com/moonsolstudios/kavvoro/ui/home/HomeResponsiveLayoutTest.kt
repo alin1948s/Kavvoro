@@ -1,10 +1,7 @@
 package com.moonsolstudios.kavvoro.ui.home
 
-import com.moonsolstudios.kavvoro.model.Brainball
 import com.moonsolstudios.kavvoro.model.LayoutMode
-import com.moonsolstudios.kavvoro.repository.BrainballRepository
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.abs
@@ -36,14 +33,11 @@ class HomeResponsiveLayoutTest {
     @Test
     fun testAllElevenResolutionsInMatrix() {
         val calculator = HomeLayoutCalculator()
-        val brainball = BrainballRepository.getById("kavvoro")
-
         for (spec in testMatrix) {
             calculator.calculate(
                 width = spec.width,
                 height = spec.height,
-                displayDensity = spec.density,
-                brainball = brainball
+                displayDensity = spec.density
             )
 
             // 1. Verify LayoutMode
@@ -115,51 +109,4 @@ class HomeResponsiveLayoutTest {
         }
     }
 
-    @Test
-    fun testBrainballRepositoryRetrievalAndDefaults() {
-        val kavvoro = BrainballRepository.getById("kavvoro")
-        assertNotNull(kavvoro)
-        assertEquals("Kavvoro", kavvoro.name)
-
-        val nodlo = BrainballRepository.getById("nodlo")
-        assertNotNull(nodlo)
-        assertEquals("Kavvoro", nodlo.name)
-
-        val prismKing = BrainballRepository.getById("prism_king")
-        assertNotNull(prismKing)
-        assertEquals("Prism King", prismKing.name)
-
-        val fallback = BrainballRepository.getById("non_existent_id")
-        assertNotNull(fallback)
-        assertEquals("kavvoro", fallback.id)
-    }
-
-    @Test
-    fun testDynamicBrainballOffsetsAndScaling() {
-        val calculator = HomeLayoutCalculator()
-        val customBrainball = Brainball(
-            id = "custom_test",
-            name = "Custom Test",
-            drawableRes = 0,
-            homeScale = 1.2f,
-            homeOffsetX = 0.05f,
-            homeOffsetY = -0.02f
-        )
-
-        calculator.calculate(
-            width = 412f,
-            height = 915f,
-            displayDensity = 1f,
-            brainball = customBrainball
-        )
-
-        val portal = calculator.portalRect
-        val charRect = calculator.characterRect
-
-        val expectedSize = portal.width() * 0.54f * 1.2f
-        assertEquals("Character width should scale by homeScale", expectedSize, charRect.width(), 0.1f)
-
-        assertEquals("Character centerX should match portal centerX", portal.centerX(), charRect.centerX(), 0.1f)
-        assertEquals("Character centerY should match portal centerY", portal.centerY(), charRect.centerY(), 0.1f)
-    }
 }
