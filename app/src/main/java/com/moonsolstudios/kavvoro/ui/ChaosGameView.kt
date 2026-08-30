@@ -261,6 +261,8 @@ class ChaosGameView(
     private val menuChaosCard = RectF()
     private val menuClassicContinueButton = RectF()
     private val menuClassicNewButton = RectF()
+    private val menuChaosContinueButton = RectF()
+    private val menuChaosNewButton = RectF()
     private val menuChaosStartButton = RectF()
     private val homeLayoutCalculator = HomeLayoutCalculator()
     private val collectionBackButton = RectF()
@@ -1433,6 +1435,8 @@ class ChaosGameView(
             MenuButton.CLASSIC_CONTINUE -> startRun(GameMode.CLASSIC, continueProgress = true)
             MenuButton.CLASSIC_START -> startRun(GameMode.CLASSIC, continueProgress = false)
             MenuButton.CHAOS_START -> startRun(GameMode.CHAOS, continueProgress = false)
+            MenuButton.CHAOS_CONTINUE -> continueRunFromMenu(GameMode.CHAOS)
+            MenuButton.CHAOS_NEW -> startRun(GameMode.CHAOS, continueProgress = false)
             MenuButton.VAULT,
             MenuButton.COLLECTION -> {
                 screen = Screen.COLLECTION
@@ -1491,12 +1495,12 @@ class ChaosGameView(
     }
 
     private fun playSelectedMode() {
-        val mode = selectedMenuMode
-        if (modeProgress(mode) <= 1) {
-            startRun(mode, continueProgress = false)
-        } else {
-            continueRunFromMenu(mode)
-        }
+        // Play is the entry point to the mode decision. Starting or resuming a
+        // run happens only after an explicit action on the picker screen.
+        menuState = MenuState.MODE_ACTION
+        activeMenuButton = MenuButton.NONE
+        backgroundShader = null
+        triggerScreenTransition(if (selectedMenuMode == GameMode.CHAOS) 0xFFFF4D8D.toInt() else 0xFF1DE8C8.toInt())
     }
 
     private fun continueRunFromMenu(mode: GameMode) {
@@ -1516,6 +1520,16 @@ class ChaosGameView(
     }
 
     private fun selectHomeMode(mode: GameMode) {
+        if (menuState == MenuState.MODE_ACTION) {
+            if (selectedMenuMode != mode) {
+                selectedMenuMode = mode
+                val accent = if (mode == GameMode.CHAOS) 0xFFFF4D8D.toInt() else 0xFF1DE8C8.toInt()
+                menuBallVelocityX += if (mode == GameMode.CHAOS) -420f else 420f
+                menuBallVelocityY += if (mode == GameMode.CHAOS) 160f else -120f
+                triggerScreenTransition(accent)
+            }
+            return
+        }
         val changed = selectedMenuMode != mode
         if (selectedMenuMode == mode && modeProgress(mode) > 1) {
             menuState = MenuState.MODE_ACTION
@@ -2036,13 +2050,8 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
     }
 
     private fun drawPrimaryPlayButton(canvas: Canvas, rect: RectF) {
-        val hasProgress = modeProgress(selectedMenuMode) > 1
-        val title = if (hasProgress) "${t("CONTINUE").uppercase()} ${selectedMenuMode.menuTitle()}" else t("PLAY").uppercase()
-        val subtitle = if (hasProgress) {
-            "${t("LEVEL").uppercase()} ${modeProgress(selectedMenuMode).toString().padStart(2, '0')} • ${t("STREAK").uppercase()} ${modeStreak(selectedMenuMode)}"
-        } else {
-            t("CHOOSE YOUR MODE").uppercase()
-        }
+        val title = t("PLAY").uppercase()
+        val subtitle = t("CHOOSE YOUR MODE").uppercase()
         SciFiCtaButtonRenderer.draw(
             canvas = canvas,
             rect = rect,
@@ -2062,8 +2071,10 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         val side = left
         val right = left + contentWidth
         val gap = dp(10f)
-        val cardHeight = (if (short) 110f else if (compact) 140f else 180f) * dp(1f)
-        val startY = top + dp(60f)
+        // Keep the picker heading below the brand lockup. The previous 60dp
+        // offset put "PLAY" on top of the logo on portrait phones.
+        val cardHeight = (if (short) 130f else if (compact) 170f else 200f) * dp(1f)
+        val startY = top + (if (short) 82f else if (compact) 104f else 118f) * dp(1f)
 
         menuClassicCard.set(side, startY, right, startY + cardHeight)
         menuChaosCard.set(side, menuClassicCard.bottom + gap, right, menuClassicCard.bottom + gap + cardHeight)
@@ -2071,11 +2082,24 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         val btnH = (if (short) 26f else if (compact) 32f else 40f) * dp(1f)
         val btnY = menuClassicCard.bottom - btnH - dp(12f)
         val halfW = (menuClassicCard.width() - dp(36f) - gap) * 0.5f
-        menuClassicContinueButton.set(menuClassicCard.left + dp(18f), btnY, menuClassicCard.left + dp(18f) + halfW, btnY + btnH)
-        menuClassicNewButton.set(menuClassicContinueButton.right + gap, btnY, menuClassicCard.right - dp(18f), btnY + btnH)
+        if (modeProgress(GameMode.CLASSIC) > 1) {
+            menuClassicContinueButton.set(menuClassicCard.left + dp(18f), btnY, menuClassicCard.left + dp(18f) + halfW, btnY + btnH)
+            menuClassicNewButton.set(menuClassicContinueButton.right + gap, btnY, menuClassicCard.right - dp(18f), btnY + btnH)
+        } else {
+            menuClassicContinueButton.setEmpty()
+            menuClassicNewButton.set(menuClassicCard.left + dp(18f), btnY, menuClassicCard.right - dp(18f), btnY + btnH)
+        }
 
         val chaosBtnY = menuChaosCard.bottom - btnH - dp(12f)
-        menuChaosStartButton.set(menuChaosCard.left + dp(18f), chaosBtnY, menuChaosCard.right - dp(18f), chaosBtnY + btnH)
+        if (modeProgress(GameMode.CHAOS) > 1) {
+            menuChaosContinueButton.set(menuChaosCard.left + dp(18f), chaosBtnY, menuChaosCard.left + dp(18f) + halfW, chaosBtnY + btnH)
+            menuChaosNewButton.set(menuChaosContinueButton.right + gap, chaosBtnY, menuChaosCard.right - dp(18f), chaosBtnY + btnH)
+            menuChaosStartButton.setEmpty()
+        } else {
+            menuChaosContinueButton.setEmpty()
+            menuChaosNewButton.set(menuChaosCard.left + dp(18f), chaosBtnY, menuChaosCard.right - dp(18f), chaosBtnY + btnH)
+            menuChaosStartButton.set(menuChaosNewButton)
+        }
         menuContinueButton.set(side, menuChaosCard.bottom + gap * 2f, right, menuChaosCard.bottom + gap * 2f + dp(44f))
 
         HomeMenuRenderer.drawPlayModeScreen(
@@ -2084,6 +2108,8 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             menuChaosCard = menuChaosCard,
             menuClassicContinueButton = menuClassicContinueButton,
             menuClassicNewButton = menuClassicNewButton,
+            menuChaosContinueButton = menuChaosContinueButton,
+            menuChaosNewButton = menuChaosNewButton,
             menuChaosStartButton = menuChaosStartButton,
             menuContinueButton = menuContinueButton,
             activeMenuButton = activeMenuButton,
@@ -2816,6 +2842,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             settingsResetConfirmButton = settingsResetConfirmButton,
             paint = paint,
             dp = uiDensity,
+            t = ::t,
             fitText = ::fitText,
             drawBrandTitle = ::drawSettingsBrandTitle,
             drawUiButtonFrame = ::drawUiButtonFrame,
@@ -5448,6 +5475,8 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             if (menuCollectionButton.contains(x, y)) return MenuButton.COLLECTION
             if (menuClassicContinueButton.contains(x, y)) return MenuButton.CLASSIC_CONTINUE
             if (menuClassicNewButton.contains(x, y)) return MenuButton.CLASSIC_START
+            if (menuChaosContinueButton.contains(x, y)) return MenuButton.CHAOS_CONTINUE
+            if (menuChaosNewButton.contains(x, y)) return MenuButton.CHAOS_NEW
             if (menuChaosStartButton.contains(x, y)) return MenuButton.CHAOS_START
             for (i in 0 until 4) {
                 if (menuStatsRects[i].contains(x, y)) {
@@ -5457,6 +5486,8 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
         } else {
             if (menuClassicContinueButton.contains(x, y)) return MenuButton.CLASSIC_CONTINUE
             if (menuClassicNewButton.contains(x, y)) return MenuButton.CLASSIC_START
+            if (menuChaosContinueButton.contains(x, y)) return MenuButton.CHAOS_CONTINUE
+            if (menuChaosNewButton.contains(x, y)) return MenuButton.CHAOS_NEW
             if (menuChaosStartButton.contains(x, y)) return MenuButton.CHAOS_START
             if (menuActionStartButton.contains(x, y)) return MenuButton.START
             if (menuChaosButton.contains(x, y)) return MenuButton.CONTINUE

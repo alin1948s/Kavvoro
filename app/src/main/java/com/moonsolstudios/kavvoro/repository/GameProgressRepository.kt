@@ -266,7 +266,10 @@ class GameProgressRepository(
         return when (skin.unlock.type) {
             UnlockType.PREMIUM -> "${premiumPriceLabel(skin)} - ${t("local price from Play Billing")}"
             UnlockType.HYPE_COST -> "${t("UNLOCK WITH").uppercase()} ${formatHypeAmount(skin.unlock.value)} ${t("HYPE").uppercase()} / ${t("HYPE BANK").uppercase()} ${formatHypeAmount(hypeBalance())}"
-            else -> t(skin.unlock.label)
+            // UnlockRule.label is retained as an English data/debug description,
+            // but must never be rendered directly. Build the visible label from
+            // the structured rule so every locale uses the same vocabulary.
+            else -> unlockShortLabel(skin)
         }
     }
 

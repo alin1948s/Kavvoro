@@ -240,7 +240,8 @@ object SettingsUiRenderer {
         cancelButton: RectF,
         confirmButton: RectF,
         paint: Paint,
-        dp: Float
+        dp: Float,
+        t: (String) -> String
     ) {
         paint.style = Paint.Style.FILL
         paint.color = 0xCC02040A.toInt()
@@ -263,11 +264,11 @@ object SettingsUiRenderer {
         textPaint.typeface = Typeface.create("sans", Typeface.BOLD)
         textPaint.textSize = 18f * dp
         textPaint.color = 0xFFFF4D8D.toInt()
-        canvas.drawText("RESET PROGRESS?", box.centerX(), box.top + 40f * dp, textPaint)
+        canvas.drawText(t("RESET PROGRESS?"), box.centerX(), box.top + 40f * dp, textPaint)
         textPaint.typeface = Typeface.create("sans", Typeface.NORMAL)
         textPaint.textSize = 11f * dp
         textPaint.color = 0xCCDDE4EF.toInt()
-        canvas.drawText("This cannot be undone.", box.centerX(), box.top + 68f * dp, textPaint)
+        canvas.drawText(t("This cannot be undone."), box.centerX(), box.top + 68f * dp, textPaint)
         val buttonTop = box.bottom - 58f * dp
         cancelButton.set(box.left + 16f * dp, buttonTop, box.centerX() - 5f * dp, box.bottom - 16f * dp)
         confirmButton.set(box.centerX() + 5f * dp, buttonTop, box.right - 16f * dp, box.bottom - 16f * dp)
@@ -275,9 +276,9 @@ object SettingsUiRenderer {
         CyberShapeRenderer.drawCyberChamferRect(canvas, confirmButton, 7f * dp, 5f * dp, paint)
         textPaint.textSize = 10f * dp
         textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText("CANCEL", cancelButton.centerX(), cancelButton.centerY() + 3f * dp, textPaint)
+        canvas.drawText(t("CANCEL"), cancelButton.centerX(), cancelButton.centerY() + 3f * dp, textPaint)
         textPaint.color = 0xFFFF4D8D.toInt()
-        canvas.drawText("RESET", confirmButton.centerX(), confirmButton.centerY() + 3f * dp, textPaint)
+        canvas.drawText(t("RESET"), confirmButton.centerX(), confirmButton.centerY() + 3f * dp, textPaint)
     }
 
     fun drawSliderRow(
@@ -378,7 +379,8 @@ object SettingsUiRenderer {
         compact: Boolean,
         paint: Paint,
         dp: Float,
-        fitText: (String, Float) -> String
+        fitText: (String, Float) -> String,
+        t: (String) -> String
     ) {
         drawCardFrame(canvas, rect.left, rect.right, rect.top, rect.bottom, paint, dp)
         drawGlyph(canvas, RectF(rect.left + 14f * dp, rect.centerY() - 15f * dp, rect.left + 44f * dp, rect.centerY() + 15f * dp), 0xFFFF4D8D.toInt(), false, 5, paint, dp)
@@ -388,10 +390,10 @@ object SettingsUiRenderer {
         textPaint.typeface = Typeface.create("sans", Typeface.NORMAL)
         textPaint.textSize = (if (compact) 10f else 13f) * dp
         textPaint.color = 0xFFFF4D8D.toInt()
-        canvas.drawText("RESET PROGRESS", rect.left + 62f * dp, rect.top + 23f * dp, textPaint)
+        canvas.drawText(t("RESET PROGRESS"), rect.left + 62f * dp, rect.top + 23f * dp, textPaint)
         textPaint.textSize = (if (compact) 8f else 10f) * dp
         textPaint.color = 0xAAB5C0D0.toInt()
-        canvas.drawText("Clears gameplay only", rect.left + 62f * dp, rect.top + 41f * dp, textPaint)
+        canvas.drawText(t("Clears gameplay only"), rect.left + 62f * dp, rect.top + 41f * dp, textPaint)
         drawChevron(canvas, rect.right - 24f * dp, rect.centerY(), 0xFFFF4D8D.toInt(), paint, dp)
     }
 
@@ -440,6 +442,7 @@ object SettingsUiRenderer {
         settingsResetConfirmButton: RectF,
         paint: Paint,
         dp: Float,
+        t: (String) -> String,
         fitText: (String, Float) -> String,
         drawBrandTitle: (Canvas, Float, Float) -> Unit,
         drawUiButtonFrame: (Canvas, RectF, Boolean, Int, Float) -> Unit,
@@ -457,42 +460,42 @@ object SettingsUiRenderer {
         textPaint.typeface = Typeface.create("sans", Typeface.BOLD)
         textPaint.textSize = (if (compact) 24f else 30f) * dp
         textPaint.color = 0xFFF7F4FF.toInt()
-        canvas.drawText("SETTINGS", safeCenterX, safeTop112, textPaint)
+        canvas.drawText(t("SETTINGS").uppercase(), safeCenterX, safeTop112, textPaint)
         drawDivider(canvas, left, right, safeTop132, safeCenterX, paint, dp)
 
         canvas.save()
         canvas.clipRect(0f, settingsViewportTop, viewWidth, settingsViewportBottom)
-        drawSectionLabel(canvas, "AUDIO", left, settingsMasterButton.top - 24f * dp, compact, 0xFF45F2FF.toInt(), dp)
+        drawSectionLabel(canvas, t("AUDIO").uppercase(), left, settingsMasterButton.top - 24f * dp, compact, 0xFF45F2FF.toInt(), dp)
         drawCardFrame(canvas, left, right, settingsMasterButton.top - 7f * dp, settingsHapticToggle.bottom + 7f * dp, paint, dp)
-        drawSliderRow(canvas, settingsMasterButton, settingsMasterSlider, "MASTER VOLUME", settingsMasterVolume, 0xFF45F2FF.toInt(), "ui_sound", activeSettingsButton == SettingsButton.MASTER_VOLUME, compact, paint, dp, fitText, drawAudioIconAsset)
-        drawSliderRow(canvas, settingsMusicButton, settingsMusicSlider, "MUSIC VOLUME", settingsMusicVolume, 0xFF45F2FF.toInt(), "ui_music", activeSettingsButton == SettingsButton.MUSIC_VOLUME, compact, paint, dp, fitText, drawAudioIconAsset)
-        drawSliderRow(canvas, settingsSfxButton, settingsSfxSlider, "SOUND EFFECTS", settingsSfxVolume, 0xFF45F2FF.toInt(), "ui_sound", activeSettingsButton == SettingsButton.SFX_VOLUME, compact, paint, dp, fitText, drawAudioIconAsset)
-        drawToggleRow(canvas, settingsHapticToggle, "HAPTIC FEEDBACK", "Vibration on actions", settingsHapticEnabled, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.HAPTIC, 0, compact, paint, dp, fitText)
+        drawSliderRow(canvas, settingsMasterButton, settingsMasterSlider, t("MASTER VOLUME"), settingsMasterVolume, 0xFF45F2FF.toInt(), "ui_sound", activeSettingsButton == SettingsButton.MASTER_VOLUME, compact, paint, dp, fitText, drawAudioIconAsset)
+        drawSliderRow(canvas, settingsMusicButton, settingsMusicSlider, t("MUSIC VOLUME"), settingsMusicVolume, 0xFF45F2FF.toInt(), "ui_music", activeSettingsButton == SettingsButton.MUSIC_VOLUME, compact, paint, dp, fitText, drawAudioIconAsset)
+        drawSliderRow(canvas, settingsSfxButton, settingsSfxSlider, t("SOUND EFFECTS"), settingsSfxVolume, 0xFF45F2FF.toInt(), "ui_sound", activeSettingsButton == SettingsButton.SFX_VOLUME, compact, paint, dp, fitText, drawAudioIconAsset)
+        drawToggleRow(canvas, settingsHapticToggle, t("HAPTIC FEEDBACK"), t("Vibration on actions"), settingsHapticEnabled, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.HAPTIC, 0, compact, paint, dp, fitText)
 
-        drawSectionLabel(canvas, "GAMEPLAY", left, settingsShakeToggle.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
+        drawSectionLabel(canvas, t("GAMEPLAY").uppercase(), left, settingsShakeToggle.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
         drawCardFrame(canvas, left, right, settingsShakeToggle.top - 7f * dp, settingsPerformanceToggle.bottom + 7f * dp, paint, dp)
-        drawToggleRow(canvas, settingsShakeToggle, "SCREEN SHAKE", "Shake the screen on impact", settingsScreenShake, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.SCREEN_SHAKE, 1, compact, paint, dp, fitText)
-        drawToggleRow(canvas, settingsPerformanceToggle, "PERFORMANCE MODE", "Reduce effects for smoother gameplay", settingsPerformanceMode, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.PERFORMANCE, 2, compact, paint, dp, fitText)
+        drawToggleRow(canvas, settingsShakeToggle, t("SCREEN SHAKE"), t("Shake the screen on impact"), settingsScreenShake, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.SCREEN_SHAKE, 1, compact, paint, dp, fitText)
+        drawToggleRow(canvas, settingsPerformanceToggle, t("PERFORMANCE MODE"), t("Reduce effects for smoother gameplay"), settingsPerformanceMode, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.PERFORMANCE, 2, compact, paint, dp, fitText)
 
-        drawSectionLabel(canvas, "LANGUAGE", left, settingsLanguageButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
-        drawNavRow(canvas, settingsLanguageButton, "LANGUAGE", selectedLanguageLabel, 0xFF45F2FF.toInt(), 0, true, compact, paint, dp, fitText)
+        drawSectionLabel(canvas, t("LANGUAGE").uppercase(), left, settingsLanguageButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
+        drawNavRow(canvas, settingsLanguageButton, t("LANGUAGE"), selectedLanguageLabel, 0xFF45F2FF.toInt(), 0, true, compact, paint, dp, fitText)
 
-        drawSectionLabel(canvas, "ACCOUNT & CLOUD", left, settingsAccountButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
-        drawNavRow(canvas, settingsAccountButton, "ACCOUNT", "Manage your account and progress", 0xFF45F2FF.toInt(), 1, true, compact, paint, dp, fitText)
+        drawSectionLabel(canvas, t("ACCOUNT & CLOUD").uppercase(), left, settingsAccountButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
+        drawNavRow(canvas, settingsAccountButton, t("ACCOUNT"), t("Manage your account and progress"), 0xFF45F2FF.toInt(), 1, true, compact, paint, dp, fitText)
 
-        drawSectionLabel(canvas, "INFO & LEGAL", left, settingsPrivacyButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
+        drawSectionLabel(canvas, t("INFO & LEGAL").uppercase(), left, settingsPrivacyButton.top - 12f * dp, compact, 0xFF45F2FF.toInt(), dp)
         drawCardFrame(canvas, left, right, settingsPrivacyButton.top, settingsAboutButton.bottom, paint, dp)
-        drawNavRow(canvas, settingsPrivacyButton, "PRIVACY POLICY", "", 0xFF45F2FF.toInt(), 2, false, compact, paint, dp, fitText)
-        drawNavRow(canvas, settingsTermsButton, "TERMS OF SERVICE", "", 0xFF45F2FF.toInt(), 3, false, compact, paint, dp, fitText)
-        drawNavRow(canvas, settingsDataDeletionButton, "DATA DELETION", "Erase all local app data", 0xFFFFCF4A.toInt(), 5, false, compact, paint, dp, fitText)
-        drawNavRow(canvas, settingsAboutButton, "ABOUT MOONSOL STUDIOS", "Kavvoro v$versionName", 0xFF45F2FF.toInt(), 4, false, compact, paint, dp, fitText)
+        drawNavRow(canvas, settingsPrivacyButton, t("PRIVACY POLICY"), "", 0xFF45F2FF.toInt(), 2, false, compact, paint, dp, fitText)
+        drawNavRow(canvas, settingsTermsButton, t("TERMS OF SERVICE"), "", 0xFF45F2FF.toInt(), 3, false, compact, paint, dp, fitText)
+        drawNavRow(canvas, settingsDataDeletionButton, t("DATA DELETION"), t("Erase all local app data"), 0xFFFFCF4A.toInt(), 5, false, compact, paint, dp, fitText)
+        drawNavRow(canvas, settingsAboutButton, t("ABOUT MOONSOL STUDIOS"), "Kavvoro v$versionName", 0xFF45F2FF.toInt(), 4, false, compact, paint, dp, fitText)
 
-        drawResetRow(canvas, settingsResetButton, compact, paint, dp, fitText)
-        drawBackHomeButton(canvas, settingsBackButton, activeSettingsButton == SettingsButton.BACK, "BACK TO HOME", compact, paint, dp)
+        drawResetRow(canvas, settingsResetButton, compact, paint, dp, fitText, t)
+        drawBackHomeButton(canvas, settingsBackButton, activeSettingsButton == SettingsButton.BACK, t("BACK TO HOME").uppercase(), compact, paint, dp)
         canvas.restore()
 
         if (settingsResetConfirm) {
-            drawResetDialog(canvas, viewWidth, viewHeight, pageContentLeft, pageContentRight - pageContentLeft, safeCenterX, settingsResetCancelButton, settingsResetConfirmButton, paint, dp)
+            drawResetDialog(canvas, viewWidth, viewHeight, pageContentLeft, pageContentRight - pageContentLeft, safeCenterX, settingsResetCancelButton, settingsResetConfirmButton, paint, dp, t)
         }
     }
 

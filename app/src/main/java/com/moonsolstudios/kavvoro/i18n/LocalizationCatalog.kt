@@ -448,13 +448,9 @@ object LocalizationCatalog {
     )
 
     val requiredKeys: Set<String> =
-        (renderedSourceKeys + TutorialCopy.requiredKeys).toSortedSet()
+        (renderedSourceKeys + TutorialCopy.requiredKeys + UiTranslations.requiredKeys).toSortedSet()
 
-    /**
-     * Locale-specific translation files will replace entries here in Tasks 3–4.
-     * Task 2 deliberately keeps the source-backed adapter as the migration
-     * baseline so the strict tests expose every remaining English fallback.
-     */
+    /** Per-language gameplay catalogs plus the shared procedural UI vocabulary. */
     private val translationOverlays: Map<KavvoroLanguage, Map<String, String>> = mapOf(
         KavvoroLanguage.EN to EnTranslations.values,
         KavvoroLanguage.RO to RoTranslations.values,
@@ -493,7 +489,7 @@ object LocalizationCatalog {
 
         return synchronized(localeCache) {
             localeCache.getOrPut(resolvedLanguage) {
-                val overlay = translationOverlays[resolvedLanguage].orEmpty()
+                val overlay = translationOverlays[resolvedLanguage].orEmpty() + UiTranslations.forLanguage(resolvedLanguage)
                 require(overlay.keys.all { it in requiredKeys }) {
                     "Translation overlay for ${resolvedLanguage.code} contains unknown keys"
                 }

@@ -27,6 +27,7 @@ object ModePickerRenderer {
         streakText: String,
         activeRunLabel: String,
         noActiveRunLabel: String,
+        bestStreakLabel: String,
         startFreshLabel: String,
         continueLabel: String,
         newGameLabel: String,
@@ -89,19 +90,19 @@ object ModePickerRenderer {
         if (activeRun) {
             textPaint.textSize = (if (short) 7f else if (compact) 8f else 10f) * dp
             textPaint.color = accent
-            canvas.drawText(activeRunLabel, rect.left + (if (short) 14f else 28f) * dp, rect.top + (if (short) 60f else if (compact) 76f else 108f) * dp, textPaint)
+            canvas.drawText(activeRunLabel, rect.left + (if (short) 14f else 28f) * dp, rect.top + (if (short) 68f else if (compact) 96f else 108f) * dp, textPaint)
 
             textPaint.textSize = (if (short) 14f else if (compact) 18f else 24f) * dp
             textPaint.color = 0xFFF7F4FF.toInt()
-            canvas.drawText(levelText, rect.left + (if (short) 14f else 28f) * dp, rect.top + (if (short) 78f else if (compact) 96f else 132f) * dp, textPaint)
+            canvas.drawText(levelText, rect.left + (if (short) 14f else 28f) * dp, rect.top + (if (short) 88f else if (compact) 119f else 132f) * dp, textPaint)
 
             textPaint.textSize = (if (short) 7f else if (compact) 8f else 10f) * dp
             textPaint.color = 0x99FFFFFF.toInt()
-            canvas.drawText("BEST STREAK", rect.centerX() + (if (short) 4f else 20f) * dp, rect.top + (if (short) 60f else if (compact) 76f else 108f) * dp, textPaint)
+            canvas.drawText(bestStreakLabel, rect.centerX() + (if (short) 4f else 20f) * dp, rect.top + (if (short) 68f else if (compact) 96f else 108f) * dp, textPaint)
 
             textPaint.textSize = (if (short) 14f else if (compact) 18f else 24f) * dp
             textPaint.color = 0xFFF7F4FF.toInt()
-            canvas.drawText(streakText, rect.centerX() + (if (short) 4f else 20f) * dp, rect.top + (if (short) 78f else if (compact) 96f else 132f) * dp, textPaint)
+            canvas.drawText(streakText, rect.centerX() + (if (short) 4f else 20f) * dp, rect.top + (if (short) 88f else if (compact) 119f else 132f) * dp, textPaint)
 
             if (!continueButton.isEmpty && !newGameButton.isEmpty) {
                 drawActionButton(canvas, continueButton, continueLabel, accent, filled = true, active = activeButtonId == continueButtonId, compact = compact, short = short, paint = paint, dp = dp, fitText = fitText)
@@ -112,11 +113,11 @@ object ModePickerRenderer {
         } else {
             textPaint.textSize = (if (short) 7f else if (compact) 8f else 10f) * dp
             textPaint.color = accent
-            canvas.drawText(noActiveRunLabel, rect.left + (if (short) 14f else 28f) * dp, rect.top + (if (short) 60f else if (compact) 76f else 108f) * dp, textPaint)
+            canvas.drawText(noActiveRunLabel, rect.left + (if (short) 14f else 28f) * dp, rect.top + (if (short) 68f else if (compact) 96f else 108f) * dp, textPaint)
 
             textPaint.textSize = (if (short) 9f else if (compact) 11f else 14f) * dp
             textPaint.color = 0xB8D2DCE8.toInt()
-            canvas.drawText(fitText(startFreshLabel, rect.width() - (if (short) 28f else 56f) * dp), rect.left + (if (short) 14f else 28f) * dp, rect.top + (if (short) 76f else if (compact) 96f else 132f) * dp, textPaint)
+            canvas.drawText(fitText(startFreshLabel, rect.width() - (if (short) 28f else 56f) * dp), rect.left + (if (short) 14f else 28f) * dp, rect.top + (if (short) 88f else if (compact) 119f else 132f) * dp, textPaint)
 
             drawActionButton(canvas, startButton, startLabel, accent, filled = true, active = activeButtonId == startButtonId, compact = compact, short = short, paint = paint, dp = dp, fitText = fitText)
         }

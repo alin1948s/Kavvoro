@@ -117,13 +117,14 @@ object HomeMenuRenderer {
         centerX: Float,
         viewHeight: Float,
         safeInsetBottom: Float,
-        dp: Float
+        dp: Float,
+        t: (String) -> String
     ) {
         textPaint.textAlign = Paint.Align.CENTER
         textPaint.typeface = Typeface.create("sans", Typeface.NORMAL)
         textPaint.textSize = ((8f * scale).coerceIn(7f, 11f)) * dp
         textPaint.color = 0x889AA8BA.toInt()
-        canvas.drawText("Collection, language and privacy are available from Settings.", centerX, viewHeight - safeInsetBottom - 6f * scale * dp, textPaint)
+        canvas.drawText(t("Collection, language and privacy are available from Settings."), centerX, viewHeight - safeInsetBottom - 6f * scale * dp, textPaint)
     }
 
     fun drawPlayModeScreen(
@@ -132,6 +133,8 @@ object HomeMenuRenderer {
         menuChaosCard: RectF,
         menuClassicContinueButton: RectF,
         menuClassicNewButton: RectF,
+        menuChaosContinueButton: RectF,
+        menuChaosNewButton: RectF,
         menuChaosStartButton: RectF,
         menuContinueButton: RectF,
         activeMenuButton: MenuButton,
@@ -177,6 +180,7 @@ object HomeMenuRenderer {
             streakText = classicStreak.toString(),
             activeRunLabel = t("ACTIVE RUN").uppercase(),
             noActiveRunLabel = t("NO ACTIVE RUN").uppercase(),
+            bestStreakLabel = t("BEST STREAK").uppercase(),
             startFreshLabel = t("START FRESH WHEN READY").uppercase(),
             continueLabel = t("CONTINUE").uppercase(),
             newGameLabel = t("NEW GAME").uppercase(),
@@ -185,11 +189,11 @@ object HomeMenuRenderer {
             short = short,
             continueButton = menuClassicContinueButton,
             newGameButton = menuClassicNewButton,
-            startButton = RectF(),
+            startButton = menuClassicNewButton,
             activeButtonId = activeMenuButton.ordinal,
             continueButtonId = if (!menuClassicContinueButton.isEmpty) menuButtonAt(menuClassicContinueButton.centerX(), menuClassicContinueButton.centerY()).ordinal else -1,
             newGameButtonId = if (!menuClassicNewButton.isEmpty) menuButtonAt(menuClassicNewButton.centerX(), menuClassicNewButton.centerY()).ordinal else -1,
-            startButtonId = -1,
+            startButtonId = if (!menuClassicNewButton.isEmpty) menuButtonAt(menuClassicNewButton.centerX(), menuClassicNewButton.centerY()).ordinal else -1,
             paint = paint,
             dp = dp,
             fitText = fitText,
@@ -209,18 +213,19 @@ object HomeMenuRenderer {
             streakText = chaosStreak.toString(),
             activeRunLabel = t("ACTIVE RUN").uppercase(),
             noActiveRunLabel = t("NO ACTIVE RUN").uppercase(),
+            bestStreakLabel = t("BEST STREAK").uppercase(),
             startFreshLabel = t("START FRESH WHEN READY").uppercase(),
             continueLabel = t("CONTINUE").uppercase(),
             newGameLabel = t("NEW GAME").uppercase(),
             startLabel = t("START NEW GAME").uppercase(),
             compact = compact,
             short = short,
-            continueButton = RectF(),
-            newGameButton = RectF(),
+            continueButton = menuChaosContinueButton,
+            newGameButton = menuChaosNewButton,
             startButton = menuChaosStartButton,
             activeButtonId = activeMenuButton.ordinal,
-            continueButtonId = -1,
-            newGameButtonId = -1,
+            continueButtonId = if (!menuChaosContinueButton.isEmpty) menuButtonAt(menuChaosContinueButton.centerX(), menuChaosContinueButton.centerY()).ordinal else -1,
+            newGameButtonId = if (!menuChaosNewButton.isEmpty) menuButtonAt(menuChaosNewButton.centerX(), menuChaosNewButton.centerY()).ordinal else -1,
             startButtonId = if (!menuChaosStartButton.isEmpty) menuButtonAt(menuChaosStartButton.centerX(), menuChaosStartButton.centerY()).ordinal else -1,
             paint = paint,
             dp = dp,
@@ -563,7 +568,8 @@ object HomeMenuRenderer {
                 centerX = centerX,
                 viewHeight = viewHeight,
                 safeInsetBottom = safeInsetBottom,
-                dp = dp
+                dp = dp,
+                t = t
             )
         } else {
             drawPlayModeScreen(canvas, homeContentLeft, homeContentWidth, safeTopMenu)

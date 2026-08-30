@@ -44,6 +44,19 @@ class LocalizationCatalogTest {
     }
 
     @Test
+    fun proceduralUiVocabularyIsExplicitlyLocalizedForEveryLanguage() {
+        assertTrue(LocalizationCatalog.requiredKeys.containsAll(UiTranslations.requiredKeys))
+        KavvoroLanguage.entries
+            .filterNot { it == KavvoroLanguage.SYSTEM }
+            .forEach { language ->
+                val values = LocalizationCatalog.locale(language)
+                UiTranslations.requiredKeys.forEach { key ->
+                    assertTrue("${language.code}: missing UI key $key", values[key].orEmpty().isNotBlank())
+                }
+            }
+    }
+
+    @Test
     fun frozenInventoryMatchesTheCurrentSourceBackedInventory() {
         assertEquals(LocalizationCatalog.sourceInventory, LocalizationCatalog.requiredKeys)
     }

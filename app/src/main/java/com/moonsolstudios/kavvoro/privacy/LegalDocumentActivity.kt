@@ -24,6 +24,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.core.net.toUri
 import androidx.core.text.htmlEncode
+import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import java.io.IOException
 
 /**
@@ -137,7 +138,7 @@ class LegalDocumentActivity : ComponentActivity() {
             gravity = Gravity.CENTER
             isClickable = true
             setOnClickListener { finish() }
-            contentDescription = "Back"
+            contentDescription = KavvoroI18n.t(this@LegalDocumentActivity, "BACK")
         }, LinearLayout.LayoutParams(44.dp(), LinearLayout.LayoutParams.MATCH_PARENT))
 
         titleView = TextView(this@LegalDocumentActivity).apply {
@@ -150,9 +151,9 @@ class LegalDocumentActivity : ComponentActivity() {
         addView(titleView, LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.MATCH_PARENT, 1f))
 
         if (page != LegalDocumentPage.ABOUT) {
-            addView(toolbarButton("PRIVACY") { loadPage(LegalDocumentPage.PRIVACY) })
-            addView(toolbarButton("TERMS") { loadPage(LegalDocumentPage.TERMS) })
-            addView(toolbarButton("DATA") { loadPage(LegalDocumentPage.DATA_DELETION) })
+            addView(toolbarButton(KavvoroI18n.t(this@LegalDocumentActivity, "PRIVACY")) { loadPage(LegalDocumentPage.PRIVACY) })
+            addView(toolbarButton(KavvoroI18n.t(this@LegalDocumentActivity, "TERMS")) { loadPage(LegalDocumentPage.TERMS) })
+            addView(toolbarButton(KavvoroI18n.t(this@LegalDocumentActivity, "DATA")) { loadPage(LegalDocumentPage.DATA_DELETION) })
         }
     }
 
@@ -168,7 +169,12 @@ class LegalDocumentActivity : ComponentActivity() {
 
     private fun loadPage(nextPage: LegalDocumentPage) {
         page = nextPage
-        titleView.text = nextPage.title
+        titleView.text = when (nextPage) {
+            LegalDocumentPage.PRIVACY -> KavvoroI18n.t(this, "PRIVACY POLICY")
+            LegalDocumentPage.TERMS -> KavvoroI18n.t(this, "TERMS OF SERVICE")
+            LegalDocumentPage.DATA_DELETION -> KavvoroI18n.t(this, "DATA DELETION")
+            LegalDocumentPage.ABOUT -> KavvoroI18n.t(this, "ABOUT MOONSOL STUDIOS")
+        }
         // A tap on a Settings row can finish on the newly created WebView after the
         // Activity transition. Ignore that one stale gesture so it cannot activate
         // the first Play Store/mail link in the About document.

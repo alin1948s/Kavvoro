@@ -24,6 +24,8 @@ enum class MenuButton {
     START,
     CHAOS,
     CHAOS_START,
+    CHAOS_CONTINUE,
+    CHAOS_NEW,
     LEADERBOARDS,
     VAULT,
     COLLECTION,
