@@ -3,10 +3,8 @@ package com.moonsolstudios.kavvoro.privacy
 import android.app.AlertDialog
 import android.app.Activity
 import android.content.ActivityNotFoundException
-import android.content.Intent
 import android.os.Process
 import android.widget.Toast
-import androidx.core.net.toUri
 import com.google.android.gms.ads.AgeRestrictedTreatment
 import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.RequestConfiguration
@@ -79,16 +77,24 @@ class PrivacyAdsController(
     }
 
     override fun openPrivacyPolicy() {
-        openExternalPage(PRIVACY_POLICY_URL)
+        openLegalPage(LegalDocumentPage.PRIVACY)
     }
 
     override fun openTermsOfService() {
-        openExternalPage(TERMS_OF_SERVICE_URL)
+        openLegalPage(LegalDocumentPage.TERMS)
     }
 
-    private fun openExternalPage(url: String) {
+    override fun openDataDeletion() {
+        openLegalPage(LegalDocumentPage.DATA_DELETION)
+    }
+
+    override fun openAbout() {
+        openLegalPage(LegalDocumentPage.ABOUT)
+    }
+
+    private fun openLegalPage(page: LegalDocumentPage) {
         try {
-            activity.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()))
+            activity.startActivity(LegalDocumentActivity.intent(activity, page))
         } catch (_: ActivityNotFoundException) {
             Toast.makeText(activity, t("Privacy policy is temporarily unavailable."), Toast.LENGTH_SHORT).show()
         }

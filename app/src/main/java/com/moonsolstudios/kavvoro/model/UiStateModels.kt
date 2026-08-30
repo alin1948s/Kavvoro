@@ -62,6 +62,7 @@ enum class SettingsButton {
     ACCOUNT,
     PRIVACY,
     TERMS,
+    DATA_DELETION,
     ABOUT,
     RESET
 }

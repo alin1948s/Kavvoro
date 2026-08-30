@@ -18,6 +18,15 @@ android {
     namespace = "com.moonsolstudios.kavvoro"
     compileSdk = 36
 
+    // The hosted legal pages under /web are the canonical source. Include that same
+    // tree in the APK so the in-game reader remains available without a network
+    // connection and cannot drift from the published copy.
+    sourceSets {
+        getByName("main") {
+            assets.directories.add(rootProject.file("web").absolutePath)
+        }
+    }
+
     defaultConfig {
         applicationId = "com.moonsolstudios.kavvoro"
         minSdk = 24

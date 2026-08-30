@@ -306,6 +306,7 @@ class ChaosGameView(
     private val settingsAccountButton = RectF()
     private val settingsPrivacyButton = RectF()
     private val settingsTermsButton = RectF()
+    private val settingsDataDeletionButton = RectF()
     private val settingsAboutButton = RectF()
     private val settingsResetButton = RectF()
     private val settingsBackButton = RectF()
@@ -2805,6 +2806,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             settingsAccountButton = settingsAccountButton,
             settingsPrivacyButton = settingsPrivacyButton,
             settingsTermsButton = settingsTermsButton,
+            settingsDataDeletionButton = settingsDataDeletionButton,
             settingsAboutButton = settingsAboutButton,
             versionName = BuildConfig.VERSION_NAME,
             settingsResetButton = settingsResetButton,
@@ -2861,6 +2863,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             accountButton = settingsAccountButton,
             privacyButton = settingsPrivacyButton,
             termsButton = settingsTermsButton,
+            dataDeletionButton = settingsDataDeletionButton,
             aboutButton = settingsAboutButton,
             resetButton = settingsResetButton,
             backButton = settingsBackButton,
@@ -2924,6 +2927,7 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             accountButton = settingsAccountButton,
             privacyButton = settingsPrivacyButton,
             termsButton = settingsTermsButton,
+            dataDeletionButton = settingsDataDeletionButton,
             aboutButton = settingsAboutButton,
             resetButton = settingsResetButton
         )
@@ -2984,9 +2988,8 @@ canvas.drawRect(0f, dp(104f), viewWidth * riftEnergy, dp(108f), paint)
             }
             SettingsButton.PRIVACY -> return { privacyBridge.openPrivacyPolicy() }
             SettingsButton.TERMS -> return { privacyBridge.openTermsOfService() }
-            SettingsButton.ABOUT -> return {
-                Toast.makeText(context, "Kavvoro ${BuildConfig.VERSION_NAME}", Toast.LENGTH_SHORT).show()
-            }
+            SettingsButton.DATA_DELETION -> return { privacyBridge.openDataDeletion() }
+            SettingsButton.ABOUT -> return { privacyBridge.openAbout() }
             SettingsButton.RESET -> settingsResetConfirm = true
         }
         return null

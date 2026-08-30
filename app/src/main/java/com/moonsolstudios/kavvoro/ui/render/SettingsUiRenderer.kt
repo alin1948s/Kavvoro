@@ -430,6 +430,7 @@ object SettingsUiRenderer {
         settingsAccountButton: RectF,
         settingsPrivacyButton: RectF,
         settingsTermsButton: RectF,
+        settingsDataDeletionButton: RectF,
         settingsAboutButton: RectF,
         versionName: String,
         settingsResetButton: RectF,
@@ -483,7 +484,8 @@ object SettingsUiRenderer {
         drawCardFrame(canvas, left, right, settingsPrivacyButton.top, settingsAboutButton.bottom, paint, dp)
         drawNavRow(canvas, settingsPrivacyButton, "PRIVACY POLICY", "", 0xFF45F2FF.toInt(), 2, false, compact, paint, dp, fitText)
         drawNavRow(canvas, settingsTermsButton, "TERMS OF SERVICE", "", 0xFF45F2FF.toInt(), 3, false, compact, paint, dp, fitText)
-        drawNavRow(canvas, settingsAboutButton, "ABOUT KAVVORO", "v$versionName", 0xFF45F2FF.toInt(), 4, false, compact, paint, dp, fitText)
+        drawNavRow(canvas, settingsDataDeletionButton, "DATA DELETION", "Manage stored data and requests", 0xFFFFCF4A.toInt(), 5, false, compact, paint, dp, fitText)
+        drawNavRow(canvas, settingsAboutButton, "ABOUT MOONSOL STUDIOS", "Kavvoro v$versionName", 0xFF45F2FF.toInt(), 4, false, compact, paint, dp, fitText)
 
         drawResetRow(canvas, settingsResetButton, compact, paint, dp, fitText)
         drawBackHomeButton(canvas, settingsBackButton, activeSettingsButton == SettingsButton.BACK, "BACK TO HOME", compact, paint, dp)

@@ -152,6 +152,22 @@ Use these placement rules:
 9. Never commit secrets, signing material, `google-services.json`, build output,
    device logs, generated handoff bundles, APKs, AABs, or copied repositories.
 
+### Legal and studio information
+
+`web/privacy/index.html`, `web/terms/index.html`, and
+`web/data-deletion/index.html` are the canonical policy pages. The Android
+legal reader packages that same `web/` tree as assets, so the in-game Privacy,
+Terms & Conditions, and Data Deletion pages work offline and cannot drift from
+the hosted copy. When legal text changes, edit the matching `web/` page once,
+verify the hosted route, then run the Android build; do not create a second
+policy copy under `app/`.
+
+The in-game About page is implemented in
+`app/src/main/java/com/moonsolstudios/kavvoro/privacy/LegalDocumentActivity.kt`.
+Keep released game titles and Play Store links in that single About template;
+use a disabled “Coming soon to Google Play” action until a store listing exists,
+and keep the Android/iOS availability note current for every title.
+
 Before merging a structural change:
 
 ```powershell

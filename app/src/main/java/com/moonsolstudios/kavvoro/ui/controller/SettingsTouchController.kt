@@ -25,6 +25,7 @@ object SettingsTouchController {
         accountButton: RectF,
         privacyButton: RectF,
         termsButton: RectF,
+        dataDeletionButton: RectF,
         aboutButton: RectF,
         resetButton: RectF
     ): SettingsButton = when {
@@ -41,6 +42,7 @@ object SettingsTouchController {
         accountButton.contains(x, y) -> SettingsButton.ACCOUNT
         privacyButton.contains(x, y) -> SettingsButton.PRIVACY
         termsButton.contains(x, y) -> SettingsButton.TERMS
+        dataDeletionButton.contains(x, y) -> SettingsButton.DATA_DELETION
         aboutButton.contains(x, y) -> SettingsButton.ABOUT
         resetButton.contains(x, y) -> SettingsButton.RESET
         else -> SettingsButton.NONE
@@ -74,6 +76,7 @@ object SettingsTouchController {
             SettingsButton.ACCOUNT -> showAccountMessage()
             SettingsButton.PRIVACY -> showPrivacy()
             SettingsButton.TERMS,
+            SettingsButton.DATA_DELETION,
             SettingsButton.ABOUT -> Unit
             SettingsButton.RESET -> requestResetConfirm()
             SettingsButton.MASTER_VOLUME,

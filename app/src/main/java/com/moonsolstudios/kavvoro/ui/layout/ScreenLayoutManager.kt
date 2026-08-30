@@ -96,6 +96,7 @@ object ScreenLayoutManager {
         accountButton: RectF,
         privacyButton: RectF,
         termsButton: RectF,
+        dataDeletionButton: RectF,
         aboutButton: RectF,
         resetButton: RectF,
         backButton: RectF,
@@ -128,7 +129,8 @@ object ScreenLayoutManager {
         cursor = accountButton.bottom + gap * 2f
         privacyButton.set(left, cursor, right, cursor + rowHeight)
         termsButton.set(left, privacyButton.bottom, right, privacyButton.bottom + rowHeight)
-        aboutButton.set(left, termsButton.bottom, right, termsButton.bottom + rowHeight)
+        dataDeletionButton.set(left, termsButton.bottom, right, termsButton.bottom + rowHeight)
+        aboutButton.set(left, dataDeletionButton.bottom, right, dataDeletionButton.bottom + rowHeight)
 
         cursor = aboutButton.bottom + gap
         resetButton.set(left, cursor, right, cursor + rowHeight + 8f * dp)
