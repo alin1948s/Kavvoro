@@ -164,9 +164,10 @@ second policy copy under `app/`.
 
 The in-game About page is implemented in
 `app/src/main/java/com/moonsolstudios/kavvoro/privacy/LegalDocumentActivity.kt`.
-Keep released game titles and Play Store links in that single About template;
-use a disabled “Coming soon to Google Play” action until a store listing exists,
-and keep the Android/iOS availability note current for every title.
+Keep the current release clearly marked as the game already installed; do not
+add a self-download action for it. Add Play Store links only for other released
+titles, use a disabled “Coming soon to Google Play” action until a listing
+exists, and keep the Android/iOS availability note current for every title.
 
 Before merging a structural change:
 
