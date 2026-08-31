@@ -1382,8 +1382,22 @@ class ChaosGameView(
                 putInt(fairHighestLevelKey(gameMode), fairLevel)
                 putInt(fairBestStreakKey(gameMode), fairStreak)
             }
-            leaderboardBridge.submitScore(levelBoard, fairLevel.toLong())
-            leaderboardBridge.submitScore(streakBoard, fairStreak.toLong())
+            // Keep every score submission behind the same client-side sanity guard used
+            // when synchronizing the locally persisted leaderboard snapshot.
+            LeaderboardTouchController.submitScore(
+                board = levelBoard,
+                score = fairLevel,
+                leaderboardBridge = leaderboardBridge,
+                modeHighestLevel = ::modeHighestLevel,
+                modeBestStreak = ::modeBestStreak
+            )
+            LeaderboardTouchController.submitScore(
+                board = streakBoard,
+                score = fairStreak,
+                leaderboardBridge = leaderboardBridge,
+                modeHighestLevel = ::modeHighestLevel,
+                modeBestStreak = ::modeBestStreak
+            )
         }
     }
 

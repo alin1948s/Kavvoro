@@ -2,6 +2,7 @@ package com.moonsolstudios.kavvoro.playgames
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 import com.google.android.gms.games.PlayGames
 import com.moonsolstudios.kavvoro.R
 
@@ -26,7 +27,11 @@ class PlayGamesLeaderboardController(
         if (!configured || score <= 0L) return
         PlayGames.getGamesSignInClient(activity).isAuthenticated.addOnCompleteListener(activity) { task ->
             if (task.isSuccessful && task.result.isAuthenticated) {
+                // The v2 SDK exposes submitScore as a fire-and-forget call. Keep the
+                // submission centralized here so every caller uses the same auth gate.
                 PlayGames.getLeaderboardsClient(activity).submitScore(boardId(board), score)
+            } else if (!task.isSuccessful) {
+                Log.w(TAG, "Unable to verify Play Games authentication before score submission", task.exception)
             }
         }
     }
@@ -38,7 +43,10 @@ class PlayGamesLeaderboardController(
                 @Suppress("DEPRECATION")
                 activity.startActivityForResult(intent, LEADERBOARD_REQUEST_CODE)
             }
-            .addOnFailureListener(activity) { onFailure() }
+            .addOnFailureListener(activity) { error ->
+                Log.w(TAG, "Failed to open leaderboard $board", error)
+                onFailure()
+            }
     }
 
     private fun boardId(board: LeaderboardBoard): String {
@@ -52,6 +60,7 @@ class PlayGamesLeaderboardController(
     }
 
     companion object {
+        private const val TAG = "KavvoroLeaderboard"
         private const val LEADERBOARD_REQUEST_CODE = 9004
     }
 }
