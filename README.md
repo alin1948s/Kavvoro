@@ -67,6 +67,18 @@ vertical replays.
 - Repository safety: signing material and `app/google-services.json` are local
   only and must never be committed.
 
+## Screenshots
+
+Reference QA captures from a **1080×2400 px phone profile at 420 dpi**. The
+images below are checked-in captures from the app; see
+[`screenshots/README.md`](screenshots/README.md) and
+[`tools/screenshot-capture/README.md`](tools/screenshot-capture/README.md) for
+the capture policy and repeatable scripts.
+
+| Home | Mode picker | Language selector | Settings |
+| --- | --- | --- | --- |
+| <img src="screenshots/home/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Home screen at 1080 by 2400 pixels"> | <img src="screenshots/play-mode/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro mode picker at 1080 by 2400 pixels"> | <img src="screenshots/language/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro language selector at 1080 by 2400 pixels"> | <img src="screenshots/settings/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro settings screen at 1080 by 2400 pixels"> |
+
 ## Repository Structure
 
 Only project entry points and configuration belong at repository root. Runtime
