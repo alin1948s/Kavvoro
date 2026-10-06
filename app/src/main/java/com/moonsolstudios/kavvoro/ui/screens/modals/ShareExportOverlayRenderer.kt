@@ -28,6 +28,7 @@ object ShareExportOverlayRenderer {
         paint: Paint,
         textPaint: Paint,
         t: (String) -> String,
+        fitText: (String, Float) -> String,
         drawWorldAsset: (Canvas, String, RectF, Int) -> Unit
     ) {
         paint.style = Paint.Style.FILL
@@ -75,7 +76,8 @@ object ShareExportOverlayRenderer {
         canvas.drawText(t("BUILDING SHORT").uppercase(), left + 70f * dp, top + 31f * dp, textPaint)
         textPaint.textSize = 11f * dp
         textPaint.color = 0xCCFFFFFF.toInt()
-        canvas.drawText("9:16 MP4  /  TIKTOK  /  REELS  /  SHORTS", left + 70f * dp, top + 52f * dp, textPaint)
+        val formatText = fitText(t("9:16 video MP4 / TikTok / Reels / Shorts").uppercase(), width - 86f * dp)
+        canvas.drawText(formatText, left + 70f * dp, top + 52f * dp, textPaint)
 
         val barLeft = left + 70f * dp
         val barRight = left + width - 18f * dp

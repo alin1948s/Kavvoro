@@ -96,6 +96,31 @@ class LocalizationCatalogTest {
     }
 
     @Test
+    fun visibleCanvasAndToastCopyDoesNotBypassLocalization() {
+        val srcDir = java.io.File("src/main/java")
+        if (!srcDir.isDirectory) return
+        val visibleStringRegexes = listOf(
+            Regex("""\.drawText\(\s*"([^"]*)"""),
+            Regex("""Toast\.makeText\([^,\n]*,\s*"([^"]*)""" )
+        )
+        val offenders = mutableListOf<String>()
+        srcDir.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+            .forEach { file ->
+                val source = file.readText(Charsets.UTF_8)
+                visibleStringRegexes.forEach { regex ->
+                    regex.findAll(source).forEach { match ->
+                        val literal = match.groupValues[1]
+                        if ('$' !in literal && literal.any(Char::isLetter)) {
+                            offenders += "${file.relativeTo(srcDir).path}: \"$literal\""
+                        }
+                    }
+                }
+            }
+        assertTrue("Visible Canvas/Toast strings must use the localization catalog: $offenders", offenders.isEmpty())
+    }
+
+    @Test
     fun proceduralUiVocabularyIsExplicitlyLocalizedForEveryLanguage() {
         assertTrue(LocalizationCatalog.requiredKeys.containsAll(UiTranslations.requiredKeys))
         KavvoroLanguage.entries

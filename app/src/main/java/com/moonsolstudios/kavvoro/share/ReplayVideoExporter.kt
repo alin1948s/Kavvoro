@@ -26,6 +26,7 @@ import com.moonsolstudios.kavvoro.engine.Point2
 import com.moonsolstudios.kavvoro.engine.PortalPair
 import com.moonsolstudios.kavvoro.engine.PulseZone
 import com.moonsolstudios.kavvoro.engine.STAGE_WIDTH
+import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import java.io.File
 import kotlin.math.PI
 import kotlin.math.cos
@@ -78,36 +79,87 @@ class ReplayVideoExporter(private val context: Context) {
     }
 
     private fun encode(outputFile: File, payload: ReplaySharePayload) {
-        val codec = MediaCodec.createEncoderByType(MIME_TYPE)
-        val format = MediaFormat.createVideoFormat(MIME_TYPE, VIDEO_WIDTH, VIDEO_HEIGHT).apply {
-            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
-            setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
-            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
-        }
-        codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        val inputSurface = codec.createInputSurface()
-        codec.start()
-
-        val muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
         val bufferInfo = MediaCodec.BufferInfo()
         val muxerState = MuxerState()
+        var codec: MediaCodec? = null
+        var inputSurface: Surface? = null
+        var muxer: MediaMuxer? = null
+        var codecStarted = false
+        var completed = false
+        var failure: Throwable? = null
 
         try {
+            val activeCodec = MediaCodec.createEncoderByType(MIME_TYPE)
+            codec = activeCodec
+            val format = MediaFormat.createVideoFormat(MIME_TYPE, VIDEO_WIDTH, VIDEO_HEIGHT).apply {
+                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+                setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE)
+                setInteger(MediaFormat.KEY_FRAME_RATE, FRAME_RATE)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)
+            }
+            activeCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            val activeSurface = activeCodec.createInputSurface()
+            inputSurface = activeSurface
+            activeCodec.start()
+            codecStarted = true
+
+            val activeMuxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+            muxer = activeMuxer
             val frameCount = (FRAME_RATE * videoSeconds(payload)).roundToInt().coerceAtLeast(FRAME_RATE * 4)
             repeat(frameCount) { frameIndex ->
-                drawVideoFrame(inputSurface, payload, frameIndex, frameCount)
-                drainEncoder(codec, muxer, bufferInfo, muxerState, signalEnd = false)
+                drawVideoFrame(activeSurface, payload, frameIndex, frameCount)
+                drainEncoder(activeCodec, activeMuxer, bufferInfo, muxerState, signalEnd = false)
             }
-            drainEncoder(codec, muxer, bufferInfo, muxerState, signalEnd = true)
+            drainEncoder(activeCodec, activeMuxer, bufferInfo, muxerState, signalEnd = true)
+            completed = true
+        } catch (caught: Throwable) {
+            failure = caught
+            throw caught
         } finally {
-            inputSurface.release()
-            codec.stop()
-            codec.release()
-            if (muxerState.started) {
-                muxer.stop()
+            releaseEncoderResources(
+                inputSurface = inputSurface,
+                codec = codec,
+                codecStarted = codecStarted,
+                muxer = muxer,
+                muxerStarted = muxerState.started,
+                failure = failure
+            )
+            if (!completed) outputFile.delete()
+        }
+    }
+
+    private fun releaseEncoderResources(
+        inputSurface: Surface?,
+        codec: MediaCodec?,
+        codecStarted: Boolean,
+        muxer: MediaMuxer?,
+        muxerStarted: Boolean,
+        failure: Throwable?
+    ) {
+        var cleanupFailure: Exception? = null
+        fun attemptCleanup(action: () -> Unit) {
+            try {
+                action()
+            } catch (exception: Exception) {
+                val firstFailure = cleanupFailure
+                if (firstFailure == null) cleanupFailure = exception
+                else firstFailure.addSuppressed(exception)
             }
-            muxer.release()
+        }
+
+        inputSurface?.let { attemptCleanup(it::release) }
+        codec?.let { activeCodec ->
+            if (codecStarted) attemptCleanup(activeCodec::stop)
+            attemptCleanup(activeCodec::release)
+        }
+        muxer?.let { activeMuxer ->
+            if (muxerStarted) attemptCleanup(activeMuxer::stop)
+            attemptCleanup(activeMuxer::release)
+        }
+
+        cleanupFailure?.let { cleanupError ->
+            if (failure != null) failure.addSuppressed(cleanupError)
+            else throw cleanupError
         }
     }
 
@@ -590,11 +642,11 @@ class ReplayVideoExporter(private val context: Context) {
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.color = 0xFFF7F4FF.toInt()
         textPaint.textSize = 34f
-        canvas.drawText("BRAINROT CHAOS: KAVVORO", 34f, 52f, textPaint)
+        drawFittedText(canvas, KavvoroI18n.t(context, "Brainrot Chaos: Kavvoro"), 34f, 52f, canvas.width * 0.58f)
         textPaint.textSize = 24f
         textPaint.color = payload.lineColor
         val archetype = payload.archetypeLabel.ifBlank { payload.level.title.uppercase() }
-        canvas.drawText("${payload.modeLabel} L${payload.level.index.toString().padStart(2, '0')}  ${payload.ballName}", 34f, 90f, textPaint)
+        drawFittedText(canvas, "${payload.modeLabel} L${payload.level.index.toString().padStart(2, '0')}  ${payload.ballName}", 34f, 90f, canvas.width * 0.58f)
         textPaint.textSize = 19f
         textPaint.color = 0xCCFFFFFF.toInt()
         canvas.drawText(archetype.take(34), 34f, 118f, textPaint)
@@ -602,11 +654,11 @@ class ReplayVideoExporter(private val context: Context) {
         textPaint.textAlign = Paint.Align.RIGHT
         textPaint.color = 0xFFFFCF4A.toInt()
         textPaint.textSize = 26f
-        canvas.drawText("HYPE ${payload.hypeScore}", canvas.width - 34f, 72f, textPaint)
+        drawFittedText(canvas, "${KavvoroI18n.t(context, "HYPE").uppercase()} ${payload.hypeScore}", canvas.width - 34f, 72f, canvas.width * 0.28f)
         if (payload.riftBreak) {
             textPaint.textSize = 20f
             textPaint.color = 0xFFF7F4FF.toInt()
-            canvas.drawText(payload.riftBreakLabel.ifBlank { "RIFT BREAK" }.take(24), canvas.width - 34f, 104f, textPaint)
+            drawFittedText(canvas, payload.riftBreakLabel.ifBlank { KavvoroI18n.t(context, "RIFT BREAK") }, canvas.width - 34f, 104f, canvas.width * 0.28f)
         }
     }
 
@@ -627,7 +679,7 @@ class ReplayVideoExporter(private val context: Context) {
         canvas.drawText(detail.take(42), canvas.width * 0.5f, h - 82f, textPaint)
         textPaint.textSize = 24f
         textPaint.color = payload.level.accent
-        canvas.drawText("BEAT THIS RUN  ${payload.challengeCode}", canvas.width * 0.5f, h - 40f, textPaint)
+        drawFittedText(canvas, "${KavvoroI18n.t(context, "Beat This Run").uppercase()}  ${payload.challengeCode}", canvas.width * 0.5f, h - 40f, canvas.width * 0.88f)
 
         paint.style = Paint.Style.FILL
         paint.color = payload.level.accent
@@ -657,7 +709,8 @@ class ReplayVideoExporter(private val context: Context) {
         textPaint.textAlign = Paint.Align.CENTER
         textPaint.color = 0xFFF7F4FF.toInt()
         textPaint.textSize = 42f
-        canvas.drawText(if (payload.riftBreak) "RIFT BREAK" else "BEAT THIS RIFT", cx, cy + 184f, textPaint)
+        val endTitle = if (payload.riftBreak) KavvoroI18n.t(context, "RIFT BREAK") else KavvoroI18n.t(context, "Beat This Rift")
+        drawFittedText(canvas, endTitle.uppercase(), cx, cy + 184f, canvas.width * 0.88f)
         textPaint.textSize = 28f
         textPaint.color = payload.level.accent
         val result = if (payload.riftBreak && payload.riftBreakLabel.isNotBlank()) payload.riftBreakLabel else payload.resultLabel
@@ -682,6 +735,19 @@ class ReplayVideoExporter(private val context: Context) {
         paint.isFilterBitmap = true
         canvas.drawBitmap(bitmap, null, bounds, paint)
         paint.alpha = 255
+    }
+
+    private fun drawFittedText(canvas: Canvas, text: String, x: Float, y: Float, maxWidth: Float) {
+        val currentScale = textPaint.textScaleX
+        val measuredWidth = textPaint.measureText(text)
+        if (measuredWidth > maxWidth && measuredWidth > 0f) {
+            textPaint.textScaleX = currentScale * (maxWidth / measuredWidth).coerceAtLeast(0.5f)
+        }
+        try {
+            canvas.drawText(text, x, y, textPaint)
+        } finally {
+            textPaint.textScaleX = currentScale
+        }
     }
 
     private data class MuxerState(

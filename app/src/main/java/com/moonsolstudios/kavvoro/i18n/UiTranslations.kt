@@ -90,6 +90,17 @@ object UiTranslations {
         "Synthwave soundtrack",
         "Terms and conditions",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)",
-        "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)"
+        "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)",
+        "No app can open this link.",
+        "Brainrot Vault // 50 Meme Legends",
+        "Global Hall of Fame // Top Sigmas",
+        "9:16 video MP4 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro",
+        "Beat This Run",
+        "Beat This Rift",
+        "Document unavailable",
+        "Connect to the internet and try again to read the current MoonSol Studios document.",
+        "Retry",
+        "Kavvoro"
     )
 }

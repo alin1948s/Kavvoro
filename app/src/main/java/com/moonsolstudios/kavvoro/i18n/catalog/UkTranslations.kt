@@ -511,5 +511,16 @@ internal object UkTranslations {
         "local price from Play Billing" to "місцева ціна з Play Billing",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ РЕЖИМ ПРОДУКТИВНОСТІ: УВІМК. (ЕКО 60FPS / МІНІМУМ ШЕЙДЕРІВ)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ РЕЖИМ ПРОДУКТИВНОСТІ: ВИМК. (МАКСИМАЛЬНА ЯКІСТЬ AAA)",
+        "No app can open this link." to "Жоден застосунок не може відкрити це посилання.",
+        "Brainrot Vault // 50 Meme Legends" to "Сховище Brainrot // 50 мем-легенд",
+        "Global Hall of Fame // Top Sigmas" to "Світова зала слави // найкращі сигми",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "Відео 9:16 MP4 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Хаос Brainrot: Kavvoro",
+        "Beat This Run" to "Переверш цей забіг",
+        "Beat This Rift" to "Подолай цей розлом",
+        "Document unavailable" to "Документ недоступний",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Підключіться до інтернету й спробуйте ще раз, щоб прочитати актуальний документ MoonSol Studios.",
+        "Retry" to "Спробувати ще раз",
+        "Kavvoro" to "Kavvoro",
     )
 }

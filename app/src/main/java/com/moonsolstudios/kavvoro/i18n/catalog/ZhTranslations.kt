@@ -511,5 +511,16 @@ internal object ZhTranslations {
         "local price from Play Billing" to "当地价格 Play Billing",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ 性能模式：开启（节能 60FPS / 精简着色器）",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ 性能模式：关闭（最高 AAA 画质）",
+        "No app can open this link." to "没有应用可以打开此链接。",
+        "Brainrot Vault // 50 Meme Legends" to "脑腐收藏库 // 50 位迷因传奇",
+        "Global Hall of Fame // Top Sigmas" to "全球名人堂 // 顶尖西格玛",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "9:16 MP4 视频 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "脑腐混乱：Kavvoro",
+        "Beat This Run" to "挑战本局",
+        "Beat This Rift" to "挑战此裂隙",
+        "Document unavailable" to "文档不可用",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "请连接互联网并重试，以阅读 MoonSol Studios 的最新文档。",
+        "Retry" to "重试",
+        "Kavvoro" to "Kavvoro",
     )
 }

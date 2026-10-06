@@ -245,7 +245,7 @@ class LegalDocumentActivity : ComponentActivity() {
             startActivity(Intent(Intent.ACTION_VIEW, uri))
             true
         } catch (_: ActivityNotFoundException) {
-            Toast.makeText(this, "No app can open this link.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, KavvoroI18n.t(this, "No app can open this link."), Toast.LENGTH_SHORT).show()
             true
         }
     }
@@ -257,7 +257,7 @@ class LegalDocumentActivity : ComponentActivity() {
             """
             <!doctype html><html><head><meta name=viewport content='width=device-width, initial-scale=1'>
             <style>body{background:#07090f;color:#f7f4ff;font:16px/1.6 sans-serif;padding:28px}h1{color:#45f2ff}p{color:#b9c2d0}a{color:#45f2ff}</style>
-            </head><body><h1>Document unavailable</h1><p>Connect to the internet and try again to read the current MoonSol Studios document.</p><p><a href='$escapedUrl'>Retry</a></p></body></html>
+            </head><body><h1>${KavvoroI18n.t(this, "Document unavailable").htmlEncode()}</h1><p>${KavvoroI18n.t(this, "Connect to the internet and try again to read the current MoonSol Studios document.").htmlEncode()}</p><p><a href='$escapedUrl'>${KavvoroI18n.t(this, "Retry").htmlEncode()}</a></p></body></html>
             """.trimIndent(),
             "text/html",
             "UTF-8",

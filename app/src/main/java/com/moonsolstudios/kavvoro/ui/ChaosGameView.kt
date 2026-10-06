@@ -22,6 +22,7 @@ import androidx.core.content.edit
 import com.moonsolstudios.kavvoro.BuildConfig
 import com.moonsolstudios.kavvoro.R
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
+import com.moonsolstudios.kavvoro.ui.layout.ViewportLayoutCalculator
 import com.moonsolstudios.kavvoro.ads.AdBridge
 import com.moonsolstudios.kavvoro.ads.AdPolicyController
 import com.moonsolstudios.kavvoro.audio.KavvoroSoundEngine
@@ -746,8 +747,9 @@ class ChaosGameView(
                         }
                     }
                 }
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 Log.e("ChaosGameView", "Error in gameLoop", e)
+                running = false
             }
 
             val frameTime = (System.nanoTime() - now) / 1_000_000
@@ -1860,7 +1862,15 @@ class ChaosGameView(
             onBeforePostOverlays = { drawTutorialHint(canvas) }
         )
         drawOutcome(canvas)
-        if (flash > 0f) drawFlash(canvas)
+        if (flash > 0f) {
+            AtmosphereRenderer.drawFlash(
+                canvas = canvas,
+                width = viewWidth.toFloat(),
+                height = viewHeight.toFloat(),
+                color = withAlpha(if (state == GameState.WON) level.accent else 0xFFFF4D8D.toInt(), (flash * 72).roundToInt()),
+                paint = paint
+            )
+        }
         if (exportingShare) drawExportingOverlay(canvas)
         drawScreenTransition(canvas)
     }
@@ -1912,7 +1922,8 @@ class ChaosGameView(
             paint = paint,
             textPaint = textPaint,
             scratch = scratch,
-            portalBitmap = worldBitmap("portal_goal")
+            portalBitmap = worldBitmap("portal_goal"),
+            t = ::t
         )
     }
 
@@ -1938,7 +1949,8 @@ class ChaosGameView(
             starPath = starPath,
             worldBitmap = ::worldBitmap,
             backgroundBitmap = ::backgroundBitmap,
-            worldToScreen = ::worldToScreen
+            worldToScreen = ::worldToScreen,
+            t = ::t
         )
     }
 
@@ -2275,16 +2287,14 @@ class ChaosGameView(
 
     private fun collectionFilterActiveIndex(index: Int): Int = CollectionTouchController.filterActiveIndex(index)
 
-    private fun collectionViewportTop(): Float =
-        if (!CollectionTouchController.sortButtonRect.isEmpty) {
-            CollectionTouchController.sortButtonRect.bottom + dp(6f)
-        } else if (!CollectionTouchController.heroStageRect.isEmpty) {
-            CollectionTouchController.heroStageRect.bottom + dp(68f)
-        } else {
-            dp(284f)
-        }
+    private fun collectionViewportTop(): Float = CollectionLayoutCalculator.viewportTop(
+        sortButtonBottom = CollectionTouchController.sortButtonRect.takeUnless { it.isEmpty }?.bottom,
+        heroStageBottom = CollectionTouchController.heroStageRect.takeUnless { it.isEmpty }?.bottom,
+        dp = dp(1f)
+    )
 
-    private fun collectionViewportBottom(): Float = viewHeight - dp(78f)
+    private fun collectionViewportBottom(): Float =
+        ViewportLayoutCalculator.bottomInset(viewHeight.toFloat(), dp(1f), 78f)
 
     private fun drawLeaderboards(canvas: Canvas) {
         val scores = LeaderboardBoard.entries.map { board ->
@@ -2412,9 +2422,11 @@ class ChaosGameView(
     private fun settingsContentWidth(): Float =
         SettingsLayoutCalculator.contentWidth(viewWidth.toFloat(), settingsDensity(), viewHeight.toFloat())
 
-    private fun settingsContentLeft(): Float = (viewWidth - settingsContentWidth()) * 0.5f
+    private fun settingsContentLeft(): Float =
+        ViewportLayoutCalculator.centeredLeft(viewWidth.toFloat(), settingsContentWidth())
 
-    private fun settingsContentRight(): Float = settingsContentLeft() + settingsContentWidth()
+    private fun settingsContentRight(): Float =
+        ViewportLayoutCalculator.contentRight(settingsContentLeft(), settingsContentWidth())
 
     private fun drawSettings(canvas: Canvas) {
         drawBackground(canvas)
@@ -2997,25 +3009,26 @@ class ChaosGameView(
             paint = paint,
             textPaint = textPaint,
             t = ::t,
+            fitText = ::fitText,
             drawWorldAsset = ::drawWorldAsset
         )
-    }
-
-    private fun drawFlash(canvas: Canvas) {
-        paint.style = Paint.Style.FILL
-        paint.color = withAlpha(if (state == GameState.WON) level.accent else 0xFFFF4D8D.toInt(), (flash * 72).roundToInt())
-        canvas.drawRect(0f, 0f, viewWidth.toFloat(), viewHeight.toFloat(), paint)
     }
 
     private fun isLargeScreenLayout(): Boolean =
         resources.configuration.smallestScreenWidthDp >= 600
 
-    private fun pageContentWidth(): Float =
-        min(viewWidth - dp(36f), dp(if (isLargeScreenLayout()) 920f else 540f))
+    private fun pageContentWidth(): Float = ViewportLayoutCalculator.centeredContentWidth(
+        viewWidth = viewWidth.toFloat(),
+        density = dp(1f),
+        horizontalInsetDp = 36f,
+        maxWidthDp = if (isLargeScreenLayout()) 920f else 540f
+    )
 
-    private fun pageContentLeft(): Float = (viewWidth - pageContentWidth()) * 0.5f
+    private fun pageContentLeft(): Float =
+        ViewportLayoutCalculator.centeredLeft(viewWidth.toFloat(), pageContentWidth())
 
-    private fun pageContentRight(): Float = pageContentLeft() + pageContentWidth()
+    private fun pageContentRight(): Float =
+        ViewportLayoutCalculator.contentRight(pageContentLeft(), pageContentWidth())
 
     private fun layoutButtons() {
         GameplayHudRenderer.layoutToolbarButtons(

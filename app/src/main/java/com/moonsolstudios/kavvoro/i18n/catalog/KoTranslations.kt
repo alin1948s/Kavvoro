@@ -511,5 +511,16 @@ internal object KoTranslations {
         "local price from Play Billing" to "Play Billing의 현지 가격",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ 성능 모드: 켬 (에코 60FPS / 최소 셰이더)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ 성능 모드: 끔 (최고 AAA 그래픽 품질)",
+        "No app can open this link." to "이 링크를 열 수 있는 앱이 없습니다.",
+        "Brainrot Vault // 50 Meme Legends" to "브레인롯 금고 // 밈 전설 50종",
+        "Global Hall of Fame // Top Sigmas" to "글로벌 명예의 전당 // 최상위 시그마",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "9:16 MP4 동영상 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "브레인롯 카오스: Kavvoro",
+        "Beat This Run" to "이 기록에 도전하세요",
+        "Beat This Rift" to "이 균열을 돌파하세요",
+        "Document unavailable" to "문서를 사용할 수 없습니다",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "인터넷에 연결한 뒤 다시 시도하여 MoonSol Studios의 최신 문서를 확인하세요.",
+        "Retry" to "다시 시도",
+        "Kavvoro" to "Kavvoro",
     )
 }

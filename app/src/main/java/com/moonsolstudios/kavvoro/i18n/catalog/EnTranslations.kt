@@ -511,5 +511,16 @@ internal object EnTranslations {
         "local price from Play Billing" to "local price from Play Billing",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)",
+        "No app can open this link." to "No app can open this link.",
+        "Brainrot Vault // 50 Meme Legends" to "Brainrot Vault // 50 Meme Legends",
+        "Global Hall of Fame // Top Sigmas" to "Global Hall of Fame // Top Sigmas",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "9:16 video MP4 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Brainrot Chaos: Kavvoro",
+        "Beat This Run" to "Beat This Run",
+        "Beat This Rift" to "Beat This Rift",
+        "Document unavailable" to "Document unavailable",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Connect to the internet and try again to read the current MoonSol Studios document.",
+        "Retry" to "Retry",
+        "Kavvoro" to "Kavvoro",
     )
 }

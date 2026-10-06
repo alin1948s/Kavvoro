@@ -511,5 +511,16 @@ internal object ArTranslations {
         "local price from Play Billing" to "السعر المحلي من Play Billing",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ وضع الأداء: تشغيل (اقتصادي 60 إطارًا / ظلال أدنى)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ وضع الأداء: إيقاف (أقصى دقة AAA)",
+        "No app can open this link." to "لا يمكن لأي تطبيق فتح هذا الرابط.",
+        "Brainrot Vault // 50 Meme Legends" to "خزنة Brainrot // 50 أسطورة ميم",
+        "Global Hall of Fame // Top Sigmas" to "قاعة الشهرة العالمية // أفضل سيغما",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "فيديو MP4 بنسبة 9:16 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "فوضى Brainrot: Kavvoro",
+        "Beat This Run" to "تغلّب على هذه الجولة",
+        "Beat This Rift" to "تغلّب على هذا الصدع",
+        "Document unavailable" to "المستند غير متاح",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "اتصل بالإنترنت وحاول مرة أخرى لقراءة مستند MoonSol Studios الحالي.",
+        "Retry" to "إعادة المحاولة",
+        "Kavvoro" to "Kavvoro",
     )
 }

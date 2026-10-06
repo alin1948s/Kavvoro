@@ -61,6 +61,18 @@ class ProjectArchitectureRulesTest {
     }
 
     @Test
+    fun `ChaosGameView delegates drawing and screen viewport geometry`() {
+        val root = locateProjectRoot()
+        val source = File(root, "app/src/main/java/com/moonsolstudios/kavvoro/ui/ChaosGameView.kt").readText()
+
+        assertFalse("ChaosGameView must delegate Canvas drawing to renderers", Regex("\\bcanvas\\.draw[A-Z]\\w*\\s*\\(").containsMatchIn(source))
+        assertTrue("Shared viewport geometry should live in ui/layout", source.contains("ViewportLayoutCalculator"))
+        assertFalse("Collection viewport inset should live in its screen layout calculator", source.contains("viewHeight - dp(78f)"))
+        assertFalse("Page centering arithmetic should live outside the screen orchestrator", source.contains("(viewWidth - pageContentWidth()) * 0.5f"))
+        assertFalse("Settings centering arithmetic should live outside the screen orchestrator", source.contains("(viewWidth - settingsContentWidth()) * 0.5f"))
+    }
+
+    @Test
     fun `screen packages have zero cross-screen imports and shared ui layers never import screens`() {
         val root = locateProjectRoot()
         val uiRoots = listOf(

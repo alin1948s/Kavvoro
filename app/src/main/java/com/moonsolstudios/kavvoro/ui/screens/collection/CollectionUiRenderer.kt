@@ -123,7 +123,8 @@ object CollectionUiRenderer {
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.create("sans-serif", Typeface.BOLD)
         textPaint.textSize = 7.5f * dp
         textPaint.color = 0xFF1DE8C8.toInt()
-        canvas.drawText("✦ BRAINROT VAULT // 50 MEME LEGENDS ✦", left + 14f * dp, top + 14f * dp, textPaint)
+        val kicker = fitText(t("Brainrot Vault // 50 Meme Legends").uppercase(), (right - left - 28f * dp).coerceAtLeast(50f * dp))
+        canvas.drawText("✦ $kicker ✦", left + 14f * dp, top + 14f * dp, textPaint)
 
         // Main title
         textPaint.textSize = 17f * dp
@@ -373,7 +374,7 @@ object CollectionUiRenderer {
         canvas.drawRoundRect(scratchRect, 5f * dp, 5f * dp, paint)
         val auraVal = CollectionTouchController.calculateAura(focusedSkin, emptyList())
         textPaint.color = 0xFFFFCF4A.toInt()
-        canvas.drawText("👑 +$auraVal AURA", scratchRect.centerX(), scratchRect.centerY() + 2.5f * dp, textPaint)
+        canvas.drawText("👑 +$auraVal ${t("AURA").uppercase()}", scratchRect.centerX(), scratchRect.centerY() + 2.5f * dp, textPaint)
 
         // 3. Specimen Name (clean, generous clearance from rarity pill above)
         textPaint.reset()
@@ -600,7 +601,7 @@ object CollectionUiRenderer {
                 textPaint.textSize = 9.2f * dp
                 textPaint.color = 0xFFFFCF4A.toInt()
                 val missing = (hypePrice - hypeBalance).coerceAtLeast(0)
-                canvas.drawText("🔒 ${formatHypeAmount(hypeBalance)} / ${formatHypeAmount(hypePrice)} HYPE (+${formatHypeAmount(missing)})", scratchRect.centerX(), scratchRect.centerY() + 3.2f * dp, textPaint)
+                canvas.drawText("🔒 ${formatHypeAmount(hypeBalance)} / ${formatHypeAmount(hypePrice)} ${t("HYPE").uppercase()} (+${formatHypeAmount(missing)})", scratchRect.centerX(), scratchRect.centerY() + 3.2f * dp, textPaint)
             }
 
             else -> {

@@ -511,5 +511,16 @@ internal object IdTranslations {
         "local price from Play Billing" to "harga lokal dari Play Billing",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ MODE PERFORMA: AKTIF (ECO 60FPS / SHADER MINIMAL)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ MODE PERFORMA: NONAKTIF (KUALITAS AAA MAKSIMAL)",
+        "No app can open this link." to "Tidak ada aplikasi yang dapat membuka tautan ini.",
+        "Brainrot Vault // 50 Meme Legends" to "Vault Brainrot // 50 legenda meme",
+        "Global Hall of Fame // Top Sigmas" to "Hall of Fame Global // sigma teratas",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "Video 9:16 MP4 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Kekacauan Brainrot: Kavvoro",
+        "Beat This Run" to "Kalahkan run ini",
+        "Beat This Rift" to "Taklukkan rift ini",
+        "Document unavailable" to "Dokumen tidak tersedia",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Sambungkan ke internet dan coba lagi untuk membaca dokumen terbaru MoonSol Studios.",
+        "Retry" to "Coba lagi",
+        "Kavvoro" to "Kavvoro",
     )
 }

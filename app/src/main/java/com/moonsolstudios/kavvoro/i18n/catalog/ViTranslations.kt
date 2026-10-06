@@ -511,5 +511,16 @@ internal object ViTranslations {
         "local price from Play Billing" to "giá địa phương từ Play Billing",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ CHẾ ĐỘ HIỆU NĂNG: BẬT (ECO 60FPS / SHADER TỐI THIỂU)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ CHẾ ĐỘ HIỆU NĂNG: TẮT (ĐỘ CHI TIẾT AAA TỐI ĐA)",
+        "No app can open this link." to "Không có ứng dụng nào mở được liên kết này.",
+        "Brainrot Vault // 50 Meme Legends" to "Kho Brainrot // 50 huyền thoại meme",
+        "Global Hall of Fame // Top Sigmas" to "Đại sảnh Danh vọng Toàn cầu // sigma hàng đầu",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "Video MP4 9:16 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Hỗn loạn Brainrot: Kavvoro",
+        "Beat This Run" to "Vượt qua lượt chơi này",
+        "Beat This Rift" to "Chinh phục khe nứt này",
+        "Document unavailable" to "Tài liệu không khả dụng",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Kết nối Internet và thử lại để đọc tài liệu hiện tại của MoonSol Studios.",
+        "Retry" to "Thử lại",
+        "Kavvoro" to "Kavvoro",
     )
 }

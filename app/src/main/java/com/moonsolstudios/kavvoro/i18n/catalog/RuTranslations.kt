@@ -511,5 +511,16 @@ internal object RuTranslations {
         "local price from Play Billing" to "местная цена из Play Billing",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ РЕЖИМ ПРОИЗВОДИТЕЛЬНОСТИ: ВКЛ. (ЭКО 60FPS / МИНИМУМ ШЕЙДЕРОВ)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ РЕЖИМ ПРОИЗВОДИТЕЛЬНОСТИ: ВЫКЛ. (МАКСИМАЛЬНОЕ КАЧЕСТВО AAA)",
+        "No app can open this link." to "Ни одно приложение не может открыть эту ссылку.",
+        "Brainrot Vault // 50 Meme Legends" to "Хранилище Brainrot // 50 мем-легенд",
+        "Global Hall of Fame // Top Sigmas" to "Мировой зал славы // лучшие сигмы",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "Видео 9:16 MP4 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Хаос Brainrot: Kavvoro",
+        "Beat This Run" to "Побей этот забег",
+        "Beat This Rift" to "Пройди этот разлом",
+        "Document unavailable" to "Документ недоступен",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Подключитесь к интернету и попробуйте снова, чтобы прочитать актуальный документ MoonSol Studios.",
+        "Retry" to "Повторить",
+        "Kavvoro" to "Kavvoro",
     )
 }

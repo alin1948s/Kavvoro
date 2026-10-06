@@ -511,5 +511,16 @@ internal object CsTranslations {
         "local price from Play Billing" to "místní cena z Google Play",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ VÝKONNOSTNÍ REŽIM: ZAP. (ECO 60FPS / MINIMÁLNÍ SHADERY)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ VÝKONNOSTNÍ REŽIM: VYP. (MAXIMÁLNÍ KVALITA AAA)",
+        "No app can open this link." to "Žádná aplikace nemůže otevřít tento odkaz.",
+        "Brainrot Vault // 50 Meme Legends" to "Trezor Brainrot // 50 meme legend",
+        "Global Hall of Fame // Top Sigmas" to "Světová síň slávy // nejlepší sigmy",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "Video 9:16 MP4 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Chaos Brainrot: Kavvoro",
+        "Beat This Run" to "Překonej tento běh",
+        "Beat This Rift" to "Překonej tento rift",
+        "Document unavailable" to "Dokument není dostupný",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Připojte se k internetu a zkuste to znovu, abyste si přečetli aktuální dokument MoonSol Studios.",
+        "Retry" to "Zkusit znovu",
+        "Kavvoro" to "Kavvoro",
     )
 }

@@ -511,5 +511,16 @@ internal object RoTranslations {
         "local price from Play Billing" to "preț local din Google Play",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ MOD PERFORMANȚĂ: PORNIT (ECO 60FPS / SHADERE MINIME)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ MOD PERFORMANȚĂ: OPRIT (FIDELITATE AAA MAXIMĂ)",
+        "No app can open this link." to "Nicio aplicație nu poate deschide acest link.",
+        "Brainrot Vault // 50 Meme Legends" to "Seiful Brainrot // 50 de legende meme",
+        "Global Hall of Fame // Top Sigmas" to "Sala gloriei globală // sigma de top",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "Format video 9:16 MP4 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Haos Brainrot: Kavvoro",
+        "Beat This Run" to "Bate această rundă",
+        "Beat This Rift" to "Învinge acest rift",
+        "Document unavailable" to "Document indisponibil",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Conectează-te la internet și încearcă din nou pentru a citi documentul actual MoonSol Studios.",
+        "Retry" to "Reîncearcă",
+        "Kavvoro" to "Kavvoro",
     )
 }

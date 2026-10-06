@@ -511,5 +511,16 @@ internal object FiTranslations {
         "local price from Play Billing" to "paikallinen hinta Google Playsta",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ SUORITUSKYKYTILA: PÄÄLLÄ (EKO 60FPS / MINIMIVARJOSTIMET)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ SUORITUSKYKYTILA: POIS (MAKSIMI AAA-LAATU)",
+        "No app can open this link." to "Mikään sovellus ei voi avata tätä linkkiä.",
+        "Brainrot Vault // 50 Meme Legends" to "Brainrot-holvi // 50 meemilegendaa",
+        "Global Hall of Fame // Top Sigmas" to "Maailman Hall of Fame // parhaat sigmat",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "9:16 MP4-video / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Brainrot-kaos: Kavvoro",
+        "Beat This Run" to "Päihitä tämä kierros",
+        "Beat This Rift" to "Päihitä tämä rift",
+        "Document unavailable" to "Asiakirja ei ole saatavilla",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Yhdistä internetiin ja yritä uudelleen lukeaksesi MoonSol Studiosin uusimman asiakirjan.",
+        "Retry" to "Yritä uudelleen",
+        "Kavvoro" to "Kavvoro",
     )
 }

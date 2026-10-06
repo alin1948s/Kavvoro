@@ -11,6 +11,12 @@ import kotlin.math.min
  */
 object CollectionLayoutCalculator {
 
+    fun viewportTop(sortButtonBottom: Float?, heroStageBottom: Float?, dp: Float): Float = when {
+        sortButtonBottom != null -> sortButtonBottom + dp * 6f
+        heroStageBottom != null -> heroStageBottom + dp * 68f
+        else -> dp * 284f
+    }
+
     fun layoutCollectionFilters(
         side: Float,
         contentWidth: Float,

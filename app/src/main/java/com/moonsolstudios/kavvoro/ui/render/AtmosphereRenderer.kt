@@ -19,6 +19,12 @@ import kotlin.math.sin
 
 object AtmosphereRenderer {
 
+    fun drawFlash(canvas: Canvas, width: Float, height: Float, color: Int, paint: Paint) {
+        paint.style = Paint.Style.FILL
+        paint.color = color
+        canvas.drawRect(0f, 0f, width, height, paint)
+    }
+
     fun drawScreenTransition(
         canvas: Canvas,
         screenTransitionTimer: Float,
@@ -32,7 +38,8 @@ object AtmosphereRenderer {
         paint: Paint,
         textPaint: Paint,
         scratch: RectF,
-        portalBitmap: Bitmap?
+        portalBitmap: Bitmap?,
+        t: (String) -> String
     ) {
         if (screenTransitionTimer <= 0f) return
         val progress = (screenTransitionTimer / 0.34f).coerceIn(0f, 1f)
@@ -89,7 +96,7 @@ object AtmosphereRenderer {
         textPaint.textSize = dp * 13f
         textPaint.letterSpacing = 0.10f
         textPaint.color = withAlpha(0xFFFFFFFF.toInt(), (220f * ease).roundToInt())
-        canvas.drawText("✦ KAVVORO RIFT ✦", cx, cy + dp * 72f, textPaint)
+        canvas.drawText("✦ ${t("Brainrot Chaos: Kavvoro").uppercase()} ✦", cx, cy + dp * 72f, textPaint)
         textPaint.letterSpacing = 0f
     }
 
@@ -114,7 +121,8 @@ object AtmosphereRenderer {
         starPath: Path,
         worldBitmap: (String) -> Bitmap?,
         backgroundBitmap: (String) -> Bitmap?,
-        worldToScreen: (Float) -> Float
+        worldToScreen: (Float) -> Float,
+        t: (String) -> String
     ) {
         if (screen == Screen.COLLECTION || screen == Screen.LEADERBOARDS || screen == Screen.SETTINGS || screen == Screen.LANGUAGE || (screen == Screen.MENU && menuState == MenuState.MODE_ACTION)) {
             val isModeSelect = (screen == Screen.MENU && menuState == MenuState.MODE_ACTION)

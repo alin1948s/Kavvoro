@@ -403,4 +403,3 @@ class HomeMenuTouchController(
         return MenuButton.NONE
     }
 }
-

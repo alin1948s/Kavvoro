@@ -511,5 +511,16 @@ internal object EsTranslations {
         "local price from Play Billing" to "precio local de Google Play",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ MODO RENDIMIENTO: ACTIVADO (ECO 60FPS / SOMBREADORES MÍNIMOS)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ MODO RENDIMIENTO: DESACTIVADO (MÁXIMA FIDELIDAD AAA)",
+        "No app can open this link." to "Ninguna aplicación puede abrir este enlace.",
+        "Brainrot Vault // 50 Meme Legends" to "Bóveda Brainrot // 50 leyendas meme",
+        "Global Hall of Fame // Top Sigmas" to "Salón de la fama global // sigmas destacados",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "Formato de video 9:16 MP4 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Caos Brainrot: Kavvoro",
+        "Beat This Run" to "Supera esta partida",
+        "Beat This Rift" to "Supera este rift",
+        "Document unavailable" to "Documento no disponible",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Conéctate a Internet e inténtalo de nuevo para leer el documento actual de MoonSol Studios.",
+        "Retry" to "Reintentar",
+        "Kavvoro" to "Kavvoro",
     )
 }

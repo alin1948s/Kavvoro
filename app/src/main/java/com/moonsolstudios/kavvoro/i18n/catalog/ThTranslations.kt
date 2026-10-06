@@ -511,5 +511,16 @@ internal object ThTranslations {
         "local price from Play Billing" to "ราคาในประเทศจาก Google Play",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ โหมดประสิทธิภาพ: เปิด (ประหยัด 60FPS / เชดเดอร์ต่ำสุด)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ โหมดประสิทธิภาพ: ปิด (ความคมชัด AAA สูงสุด)",
+        "No app can open this link." to "ไม่มีแอปใดเปิดลิงก์นี้ได้",
+        "Brainrot Vault // 50 Meme Legends" to "คลัง Brainrot // 50 ตำนานมีม",
+        "Global Hall of Fame // Top Sigmas" to "หอเกียรติยศระดับโลก // ซิกมาชั้นนำ",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "วิดีโอ MP4 9:16 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "ความโกลาหล Brainrot: Kavvoro",
+        "Beat This Run" to "เอาชนะรอบนี้",
+        "Beat This Rift" to "พิชิตรอยแยกนี้",
+        "Document unavailable" to "เอกสารไม่พร้อมใช้งาน",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "เชื่อมต่ออินเทอร์เน็ตแล้วลองอีกครั้งเพื่ออ่านเอกสารฉบับปัจจุบันของ MoonSol Studios",
+        "Retry" to "ลองอีกครั้ง",
+        "Kavvoro" to "Kavvoro",
     )
 }

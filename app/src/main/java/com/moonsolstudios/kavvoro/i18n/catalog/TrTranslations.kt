@@ -511,5 +511,16 @@ internal object TrTranslations {
         "local price from Play Billing" to "Google Play'den yerel fiyat",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ PERFORMANS MODU: AÇIK (EKO 60FPS / MİNİMAL GÖLGELENDİRİCİ)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ PERFORMANS MODU: KAPALI (MAKSİMUM AAA KALİTESİ)",
+        "No app can open this link." to "Bu bağlantıyı hiçbir uygulama açamıyor.",
+        "Brainrot Vault // 50 Meme Legends" to "Brainrot Kasası // 50 Meme Efsanesi",
+        "Global Hall of Fame // Top Sigmas" to "Küresel Şöhretler Salonu // en iyi sigmalar",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "9:16 MP4 video / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Brainrot Kaosu: Kavvoro",
+        "Beat This Run" to "Bu koşuyu geç",
+        "Beat This Rift" to "Bu rift'i geç",
+        "Document unavailable" to "Belge kullanılamıyor",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Güncel MoonSol Studios belgesini okumak için internete bağlanıp yeniden deneyin.",
+        "Retry" to "Yeniden dene",
+        "Kavvoro" to "Kavvoro",
     )
 }

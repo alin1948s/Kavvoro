@@ -91,7 +91,8 @@ object LeaderboardUiRenderer {
         textPaint.typeface = oxaniumBold
         textPaint.textSize = 7.5f * dp
         textPaint.color = 0xFF1DE8C8.toInt()
-        canvas.drawText("✦ GLOBAL HALL OF FAME // TOP SIGMAS ✦", left + 14f * dp, top + 14f * dp, textPaint)
+        val kicker = fitText(t("Global Hall of Fame // Top Sigmas").uppercase(), (right - left - 28f * dp).coerceAtLeast(50f * dp))
+        canvas.drawText("✦ $kicker ✦", left + 14f * dp, top + 14f * dp, textPaint)
 
         textPaint.textSize = 17f * dp
         textPaint.color = 0xFFF7F4FF.toInt()

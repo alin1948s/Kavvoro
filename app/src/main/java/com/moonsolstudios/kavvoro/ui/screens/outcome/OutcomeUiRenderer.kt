@@ -556,4 +556,3 @@ object OutcomeUiRenderer {
         }
     }
 }
-

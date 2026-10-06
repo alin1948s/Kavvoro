@@ -511,5 +511,16 @@ internal object NlTranslations {
         "local price from Play Billing" to "lokale prijs via Google Play",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ PRESTATIEMODUS: AAN (ECO 60FPS / MINIMALE SHADERS)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ PRESTATIEMODUS: UIT (MAXIMALE AAA-KWALITEIT)",
+        "No app can open this link." to "Geen app kan deze link openen.",
+        "Brainrot Vault // 50 Meme Legends" to "Brainrotkluis // 50 memelegendes",
+        "Global Hall of Fame // Top Sigmas" to "Wereldwijde eregalerij // top-sigma’s",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "9:16 MP4-video / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Brainrot-chaos: Kavvoro",
+        "Beat This Run" to "Versla deze run",
+        "Beat This Rift" to "Versla deze rift",
+        "Document unavailable" to "Document niet beschikbaar",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Maak verbinding met internet en probeer het opnieuw om het huidige document van MoonSol Studios te lezen.",
+        "Retry" to "Opnieuw proberen",
+        "Kavvoro" to "Kavvoro",
     )
 }

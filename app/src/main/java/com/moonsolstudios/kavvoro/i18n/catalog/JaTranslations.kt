@@ -511,5 +511,16 @@ internal object JaTranslations {
         "local price from Play Billing" to "現地価格 Play Billing から",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ パフォーマンスモード：オン（エコ60FPS / 最小シェーダー）",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ パフォーマンスモード：オフ（最高AAA品質）",
+        "No app can open this link." to "このリンクを開けるアプリがありません。",
+        "Brainrot Vault // 50 Meme Legends" to "Brainrotの保管庫 // ミームの伝説50選",
+        "Global Hall of Fame // Top Sigmas" to "世界の殿堂 // トップシグマ",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "9:16 MP4動画 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Brainrotの混沌：Kavvoro",
+        "Beat This Run" to "このプレイを超えろ",
+        "Beat This Rift" to "このリフトを制覇",
+        "Document unavailable" to "ドキュメントを表示できません",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "インターネットに接続して再試行すると、MoonSol Studiosの最新ドキュメントを読めます。",
+        "Retry" to "再試行",
+        "Kavvoro" to "Kavvoro",
     )
 }

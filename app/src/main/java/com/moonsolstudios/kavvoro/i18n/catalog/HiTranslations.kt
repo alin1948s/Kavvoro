@@ -511,5 +511,16 @@ internal object HiTranslations {
         "local price from Play Billing" to "Play Billing से स्थानीय कीमत",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ परफॉर्मेंस मोड: चालू (इको 60FPS / न्यूनतम शेडर्स)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ परफॉर्मेंस मोड: बंद (अधिकतम AAA गुणवत्ता)",
+        "No app can open this link." to "कोई ऐप इस लिंक को नहीं खोल सकता।",
+        "Brainrot Vault // 50 Meme Legends" to "ब्रेनरॉट वॉल्ट // 50 मीम दिग्गज",
+        "Global Hall of Fame // Top Sigmas" to "वैश्विक हॉल ऑफ़ फ़ेम // शीर्ष सिग्मा",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "9:16 MP4 वीडियो / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "ब्रेनरॉट अराजकता: Kavvoro",
+        "Beat This Run" to "इस दौड़ को हराएँ",
+        "Beat This Rift" to "इस रिफ्ट को हराएँ",
+        "Document unavailable" to "दस्तावेज़ उपलब्ध नहीं है",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "MoonSol Studios का वर्तमान दस्तावेज़ पढ़ने के लिए इंटरनेट से जुड़ें और फिर कोशिश करें।",
+        "Retry" to "फिर कोशिश करें",
+        "Kavvoro" to "Kavvoro",
     )
 }

@@ -540,7 +540,8 @@ object HomeMenuRenderer {
         paint: Paint,
         dp: Float,
         worldBitmap: (String) -> Bitmap?,
-        formatHypeAmount: (Int) -> String
+        formatHypeAmount: (Int) -> String,
+        t: (String) -> String
     ) {
         // 1. Brand Logo
         calculator.brandRect.toRectF(scratch)
@@ -556,7 +557,7 @@ object HomeMenuRenderer {
             textPaint.textSize = scratch.height() * 0.7f
             textPaint.color = 0xFFFFFFFF.toInt()
             textPaint.textAlign = Paint.Align.LEFT
-            canvas.drawText("KAVVORO", scratch.left, scratch.bottom - 4f * dp, textPaint)
+            canvas.drawText(t("Kavvoro").uppercase(), scratch.left, scratch.bottom - 4f * dp, textPaint)
         }
 
         // 2. Brand Motto ("SMALL MINDS BIG WORLDS")
@@ -1270,7 +1271,8 @@ object HomeMenuRenderer {
                 paint = paint,
                 dp = dp,
                 worldBitmap = worldBitmap,
-                formatHypeAmount = formatHypeAmount
+                formatHypeAmount = formatHypeAmount,
+                t = t
             )
         } else {
             drawPlayModeScreen(canvas, calculator.contentRect.left, calculator.contentRect.width(), calculator.brandRect.top)

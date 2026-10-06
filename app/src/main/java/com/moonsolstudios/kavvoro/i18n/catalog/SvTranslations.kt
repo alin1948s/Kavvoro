@@ -511,5 +511,16 @@ internal object SvTranslations {
         "local price from Play Billing" to "lokalt pris från Google Play",
         "⚡ PERFORMANCE MODE: ON (ECO 60FPS / MINIMAL SHADERS)" to "⚡ PRESTANDALÄGE: PÅ (EKO 60FPS / MINIMALA SHADERS)",
         "✦ PERFORMANCE MODE: OFF (MAXIMUM AAA FIDELITY)" to "✦ PRESTANDALÄGE: AV (MAXIMAL AAA-KVALITET)",
+        "No app can open this link." to "Ingen app kan öppna den här länken.",
+        "Brainrot Vault // 50 Meme Legends" to "Brainrotvalvet // 50 memlegender",
+        "Global Hall of Fame // Top Sigmas" to "Världens berömmelsehall // bästa sigmas",
+        "9:16 video MP4 / TikTok / Reels / Shorts" to "Videoformat 9:16 MP4 / TikTok / Reels / Shorts",
+        "Brainrot Chaos: Kavvoro" to "Brainrotkaos: Kavvoro",
+        "Beat This Run" to "Slå den här rundan",
+        "Beat This Rift" to "Besegra denna rift",
+        "Document unavailable" to "Dokumentet är inte tillgängligt",
+        "Connect to the internet and try again to read the current MoonSol Studios document." to "Anslut till internet och försök igen för att läsa det aktuella dokumentet från MoonSol Studios.",
+        "Retry" to "Försök igen",
+        "Kavvoro" to "Kavvoro",
     )
 }

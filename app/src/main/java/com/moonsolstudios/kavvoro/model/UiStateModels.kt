@@ -93,4 +93,3 @@ enum class DailyRiftButton {
     ACTION,
     CLOSE
 }
-
