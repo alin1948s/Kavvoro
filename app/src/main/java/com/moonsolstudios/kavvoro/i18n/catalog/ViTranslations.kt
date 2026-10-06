@@ -115,6 +115,7 @@ internal object ViTranslations {
         "DATA" to "DỮ LIỆU",
         "DATA DELETION" to "XÓA DỮ LIỆU",
         "DIVISION 1" to "HẠNG 1",
+        "DIFFERENT WORLDS. SAME CHAOS." to "NHỮNG THẾ GIỚI KHÁC NHAU.\nCÙNG MỘT HỖN LOẠN.",
         "DODGE CRASH NODES. THEY END THE RUN." to "TRÁNH CÁC NÚT VA CHẠM. CHÚNG KẾT THÚC LƯỢT CHƠI.",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "ĐỪNG GIỮ MÃI. NĂNG LƯỢNG CÓ HẠN.",
         "EARNED SUPERPOWER" to "SIÊU NĂNG LỰC ĐÃ NHẬN",

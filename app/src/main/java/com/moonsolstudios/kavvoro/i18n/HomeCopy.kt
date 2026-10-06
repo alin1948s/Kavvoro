@@ -19,6 +19,7 @@ object HomeCopy {
         "LEVEL",
         "COINS",
         "SMALL MINDS BIG WORLDS",
+        "DIFFERENT WORLDS. SAME CHAOS.",
         "LEVELS",
         "MULTIVERSE PORTAL",
         "DIVISION 1",
@@ -71,4 +72,10 @@ object HomeCopy {
 
     fun brandMotto(context: Context): String = KavvoroI18n.t(context, "SMALL MINDS BIG WORLDS")
     fun brandMotto(language: KavvoroLanguage): String = KavvoroI18n.t(language, "SMALL MINDS BIG WORLDS")
+
+    fun landscapeWatermark(context: Context): String =
+        KavvoroI18n.t(context, "DIFFERENT WORLDS. SAME CHAOS.")
+
+    fun landscapeWatermark(language: KavvoroLanguage): String =
+        KavvoroI18n.t(language, "DIFFERENT WORLDS. SAME CHAOS.")
 }

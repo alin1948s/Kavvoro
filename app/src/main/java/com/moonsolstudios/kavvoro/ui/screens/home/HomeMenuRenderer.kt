@@ -14,11 +14,14 @@ import android.graphics.Typeface
 import androidx.core.content.ContextCompat
 import com.moonsolstudios.kavvoro.R
 import com.moonsolstudios.kavvoro.i18n.HomeCopy
+import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.model.LayoutMode
 import com.moonsolstudios.kavvoro.model.MenuButton
 import com.moonsolstudios.kavvoro.model.MenuState
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.BrandTitleRenderer
+import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
+import com.moonsolstudios.kavvoro.ui.layout.LocaleLayoutPolicy
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -42,7 +45,6 @@ object HomeMenuRenderer {
     private val laserPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val badgePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val GEAR_ANGLE_FACTORS = floatArrayOf(-0.50f, -0.34f, -0.21f, 0.21f, 0.34f, 0.50f)
-    private val WATERMARK_LINES = arrayOf("DIFFERENT", "WORLDS.", "SAME CHAOS.")
     private var cachedChevronDrawable: android.graphics.drawable.Drawable? = null
     private var cachedTrophyDrawable: android.graphics.drawable.Drawable? = null
 
@@ -100,7 +102,7 @@ object HomeMenuRenderer {
         paint.strokeWidth = 1.4f * dp
         paint.shader = LinearGradient(
             rect.left, rect.top, rect.right, rect.bottom,
-            0xFF00E5FF.toInt(), 0xFFD946EF.toInt(),
+            KavvoroPalette.cyan, KavvoroPalette.magenta,
             Shader.TileMode.CLAMP
         )
         canvas.drawRoundRect(rect, radius, radius, paint)
@@ -111,9 +113,15 @@ object HomeMenuRenderer {
         paint.strokeWidth = 1f * dp
         canvas.drawLine(rect.left + radius, rect.top + 1f * dp, rect.right - radius, rect.top + 1f * dp, paint)
 
+        val compact = rect.width() < 72f * dp
+
         // 4. Draw 3D icon on left
-        val iconSize = (rect.height() * 0.72f).coerceIn(20f * dp, 36f * dp)
-        val iconLeft = rect.left + 7f * dp
+        val iconSize = if (compact) {
+            (rect.height() * 0.38f).coerceIn(13f * dp, 18f * dp)
+        } else {
+            (rect.height() * 0.72f).coerceIn(20f * dp, 36f * dp)
+        }
+        val iconLeft = rect.left + if (compact) 3f * dp else 7f * dp
         val iconTop = rect.centerY() - iconSize * 0.5f
         if (iconBmp != null) {
             paint.alpha = 255
@@ -134,6 +142,33 @@ object HomeMenuRenderer {
             AssetResourceManager.oxaniumMedium()
         } else {
             AssetResourceManager.oxaniumBold()
+        }
+
+        if (compact) {
+            val textLeft = iconLeft + iconSize + 2f * dp
+            val maxTextWidth = (rect.right - 3f * dp - textLeft).coerceAtLeast(1f * dp)
+            val labelText = label.uppercase()
+            textPaint.textAlign = Paint.Align.LEFT
+            textPaint.letterSpacing = 0f
+            var labelSize = 6.5f * dp
+            textPaint.textSize = labelSize
+            while (labelSize > 4.5f * dp && textPaint.measureText(labelText) > maxTextWidth) {
+                labelSize -= 0.25f * dp
+                textPaint.textSize = labelSize
+            }
+            textPaint.color = Color.WHITE
+            canvas.drawText(labelText, textLeft, rect.centerY() - 2f * dp, textPaint)
+
+            var valueSize = (rect.height() * 0.34f).coerceIn(10f * dp, 15f * dp)
+            textPaint.textSize = valueSize
+            while (valueSize > 7f * dp && textPaint.measureText(value) > maxTextWidth) {
+                valueSize -= 0.5f * dp
+                textPaint.textSize = valueSize
+            }
+            textPaint.color = Color.WHITE
+            canvas.drawText(value, textLeft, rect.centerY() + 12f * dp, textPaint)
+            textPaint.letterSpacing = 0f
+            return
         }
 
         // Label
@@ -184,12 +219,12 @@ object HomeMenuRenderer {
         badgePaint.style = Paint.Style.FILL
         canvas.drawRoundRect(scratchRect2, badgeH * 0.5f, badgeH * 0.5f, badgePaint)
 
-        badgePaint.color = withAlpha(0xFF00E5FF.toInt(), (140 + pulse * 115).toInt())
+        badgePaint.color = withAlpha(KavvoroPalette.cyan, (140 + pulse * 115).toInt())
         badgePaint.style = Paint.Style.STROKE
         badgePaint.strokeWidth = 1.5f * dp
         canvas.drawRoundRect(scratchRect2, badgeH * 0.5f, badgeH * 0.5f, badgePaint)
 
-        badgePaint.color = 0xFF00E5FF.toInt()
+        badgePaint.color = KavvoroPalette.cyan
         badgePaint.style = Paint.Style.FILL
         val dotCx = scratchRect2.left + 10f * dp
         val dotCy = scratchRect2.centerY()
@@ -284,7 +319,7 @@ object HomeMenuRenderer {
         paint.strokeWidth = 2.0f * dp
         paint.shader = LinearGradient(
             rect.left, rect.top, rect.right, rect.top,
-            0xFFFFD54F.toInt(), 0xCCFFB300.toInt(),
+            0xFFFFD54F.toInt(), withAlpha(KavvoroPalette.gold, 204),
             Shader.TileMode.CLAMP
         )
         canvas.drawRoundRect(rect, radius, radius, paint)
@@ -311,7 +346,7 @@ object HomeMenuRenderer {
         paint.style = Paint.Style.FILL
         paint.shader = RadialGradient(
             scratchRect.centerX(), scratchRect.centerY(), scratchRect.width() * 0.68f,
-            intArrayOf(0x80FFB300.toInt(), 0x30FFD54F.toInt(), 0x00FFB300),
+            intArrayOf(withAlpha(KavvoroPalette.gold, 128), 0x30FFD54F.toInt(), withAlpha(KavvoroPalette.gold, 0)),
             floatArrayOf(0f, 0.55f, 1f),
             Shader.TileMode.CLAMP
         )
@@ -343,7 +378,7 @@ object HomeMenuRenderer {
                 emblemCx, emblemCy - emblemRadius,
                 emblemCx, emblemCy + emblemRadius,
                 0xFFFFE082.toInt(),
-                0xFFFFB300.toInt(),
+                KavvoroPalette.gold,
                 Shader.TileMode.CLAMP
             )
             canvas.drawCircle(emblemCx, emblemCy, emblemRadius, paint)
@@ -440,20 +475,29 @@ object HomeMenuRenderer {
         canvas.restore()
     }
 
-    private fun drawLeftSciFiWatermark(canvas: Canvas, calculator: HomeLayoutCalculator, dp: Float) {
+    private fun drawLeftSciFiWatermark(canvas: Canvas, calculator: HomeLayoutCalculator, context: Context, dp: Float) {
         if (calculator.landscapeClass == null) return
         val left = calculator.heroStageRect.left + 8f * dp
+        val right = calculator.heroStageRect.right - 8f * dp
         val top = calculator.heroStageRect.top + calculator.heroStageRect.height() * 0.22f
+        val language = KavvoroI18n.active(context)
+        val isRtl = LocaleLayoutPolicy.isRtl(language)
+        val textX = if (isRtl) right else left
+        val maxTextWidth = calculator.heroStageRect.width() * 0.42f
 
         // Glowing cyan accent line above watermark
-        val lineWidth = 28f * dp
+        val lineWidth = min(32f * dp, maxTextWidth * 0.35f)
         badgePaint.reset()
         badgePaint.isAntiAlias = true
         badgePaint.style = Paint.Style.STROKE
         badgePaint.strokeWidth = 2.2f * dp
         badgePaint.strokeCap = Paint.Cap.ROUND
-        badgePaint.color = 0xFF00E5FF.toInt()
-        canvas.drawLine(left, top, left + lineWidth, top, badgePaint)
+        badgePaint.color = KavvoroPalette.cyan
+        if (isRtl) {
+            canvas.drawLine(right - lineWidth, top, right, top, badgePaint)
+        } else {
+            canvas.drawLine(left, top, left + lineWidth, top, badgePaint)
+        }
 
         // Text lines (Oxanium Regular)
         textPaint.reset()
@@ -463,16 +507,25 @@ object HomeMenuRenderer {
         }
         textPaint.typeface = AssetResourceManager.oxaniumNormal()
         textPaint.textSize = 9.5f * dp
-        textPaint.color = 0xCCE5F2FF.toInt()
-        textPaint.letterSpacing = 0.20f
-        textPaint.textAlign = Paint.Align.LEFT
+        textPaint.color = KavvoroPalette.mutedText
+        textPaint.alpha = 204
+        textPaint.letterSpacing = 0.10f
+        textPaint.textAlign = if (isRtl) Paint.Align.RIGHT else Paint.Align.LEFT
 
         var curY = top + 15f * dp
         val lineSpacing = 14f * dp
-        for (line in WATERMARK_LINES) {
-            canvas.drawText(line, left, curY, textPaint)
+        val lines = LocaleLayoutPolicy.wrapText(HomeCopy.landscapeWatermark(context), maxTextWidth) {
+            textPaint.measureText(it)
+        }
+        for (line in lines) {
+            if (isRtl) {
+                canvas.drawTextRun(line, 0, line.length, 0, line.length, textX, curY, true, textPaint)
+            } else {
+                canvas.drawText(line, textX, curY, textPaint)
+            }
             curY += lineSpacing
         }
+        textPaint.alpha = 255
         textPaint.letterSpacing = 0f
     }
 
@@ -703,15 +756,15 @@ object HomeMenuRenderer {
         paint.reset()
         paint.isAntiAlias = true
         paint.style = Paint.Style.FILL
-        paint.color = if (active) 0xEE080E28.toInt() else 0xCC0B1234.toInt()
+        paint.color = if (active) 0xEE080E28.toInt() else KavvoroPalette.panel
         canvas.drawRoundRect(rect, radius, radius, paint)
 
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1.4f * dp
-        paint.color = if (active) 0xFF31E8FF.toInt() else 0x9931E8FF.toInt()
+        paint.color = if (active) KavvoroPalette.cyan else withAlpha(KavvoroPalette.cyan, 153)
         canvas.drawRoundRect(rect, radius, radius, paint)
 
-        val iconColor = if (active) 0xFF31E8FF.toInt() else Color.WHITE
+        val iconColor = if (active) KavvoroPalette.cyan else Color.WHITE
         drawGearIcon(canvas, rect.centerX(), rect.centerY(), rect.width() * 0.26f, iconColor, paint, dp)
 
         canvas.restore()
@@ -861,7 +914,7 @@ object HomeMenuRenderer {
             }
             textPaint.typeface = AssetResourceManager.oxaniumNormal()
             textPaint.isFakeBoldText = false
-            textPaint.color = 0xFFB8C2E8.toInt()
+            textPaint.color = KavvoroPalette.mutedText
             textPaint.textSize = (rect.height() * 0.043f).coerceIn(9f * dp, 12f * dp)
             textPaint.letterSpacing = 0.04f
             val maxSubW = rect.width() - 16f * dp
@@ -998,7 +1051,7 @@ object HomeMenuRenderer {
             textPaint.fontVariationSettings = "'wght' 400"
         }
         textPaint.typeface = AssetResourceManager.oxaniumNormal()
-        textPaint.color = 0xFF00E5FF.toInt()
+        textPaint.color = KavvoroPalette.cyan
         var subSize = (rect.height() * 0.20f).coerceIn(9f * dp, 11f * dp)
         textPaint.textSize = subSize
         textPaint.letterSpacing = 0.04f
@@ -1044,6 +1097,19 @@ object HomeMenuRenderer {
             )
         }
 
+        if (!calculator.reduceDecor) {
+            worldBitmap("asteroid_cluster_left")?.let { bitmap ->
+                calculator.asteroidLeftRect.toRectF(scratch)
+                paint.alpha = 160
+                drawBitmapAspectFit(canvas, bitmap, scratch, paint)
+            }
+            worldBitmap("asteroid_cluster_right")?.let { bitmap ->
+                calculator.asteroidRightRect.toRectF(scratch)
+                paint.alpha = 160
+                drawBitmapAspectFit(canvas, bitmap, scratch, paint)
+            }
+        }
+
         paint.alpha = 255
     }
 
@@ -1075,7 +1141,7 @@ object HomeMenuRenderer {
             )
 
             // 2. LEFT SCI-FI WATERMARK TEXT
-            drawLeftSciFiWatermark(canvas, calculator, dp)
+            drawLeftSciFiWatermark(canvas, calculator, context, dp)
 
             // 3. PORTAL BEAM (Both Portrait & Landscape, behind Brainball)
             val beamBmp = worldBitmap("portal_beam")
@@ -1122,22 +1188,19 @@ object HomeMenuRenderer {
                 drawBitmapAspectFit(canvas, platformBmp, scratch, paint)
             }
 
-            // 6. PLAY NOW CTA BUTTON (Cyber Chassis in BOTH Portrait and Landscape)
+            // 6. PLAY NOW CTA BUTTON (procedural gradient with localized runtime text)
             calculator.playCtaRect.toRectF(scratch)
             val isPlayActive = activeMenuButton == MenuButton.PLAY
-            val playChassisBmp = worldBitmap("home_play_chassis")
             SciFiCtaButtonRenderer.draw(
                 canvas = canvas,
                 rect = scratch,
                 active = isPlayActive,
-                paint = paint,
                 density = calculator.density,
                 context = context,
                 playTitle = HomeCopy.ctaPlay(context),
                 playTitleShort = HomeCopy.ctaPlayShort(context),
                 playSubtitle = HomeCopy.ctaSubtitle(context),
-                showSubtitle = calculator.showPlaySubtitle,
-                chassisBitmap = playChassisBmp
+                showSubtitle = calculator.showPlaySubtitle
             )
 
             // 7. NAVIGATION CARDS (Localized via drawNavCard)
@@ -1170,7 +1233,7 @@ object HomeMenuRenderer {
                 subtitle = HomeCopy.skinsSubtitle(context),
                 showSubtitle = calculator.showCardSubtitles,
                 iconRes = R.drawable.ic_skins,
-                accentColor = 0xFFFF2E93.toInt(),
+                accentColor = KavvoroPalette.pink,
                 active = activeMenuButton == MenuButton.COLLECTION,
                 pulseGlow = false,
                 stateElapsed = stateElapsed,
@@ -1190,7 +1253,7 @@ object HomeMenuRenderer {
                 subtitle = HomeCopy.missionsSubtitle(context),
                 showSubtitle = calculator.showCardSubtitles,
                 iconRes = R.drawable.ic_missions,
-                accentColor = 0xFF00E5FF.toInt(),
+                accentColor = KavvoroPalette.cyan,
                 active = activeMenuButton == MenuButton.DAILY_RIFT,
                 pulseGlow = dailyReady,
                 stateElapsed = stateElapsed,

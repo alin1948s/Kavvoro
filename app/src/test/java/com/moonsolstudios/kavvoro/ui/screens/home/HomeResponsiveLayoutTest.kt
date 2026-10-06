@@ -125,6 +125,18 @@ class HomeResponsiveLayoutTest {
     }
 
     @Test
+    fun testReferencePhoneHeaderKeepsStatsAlongsideLogo() {
+        val calculator = HomeLayoutCalculator()
+        calculator.calculate(1080f, 2400f, 2.625f)
+
+        assertTrue("Reference phone stats should share the logo row", calculator.statsRect.top < calculator.brandRect.bottom)
+        assertTrue("Reference phone stats should fit before the settings button", calculator.statsRect.right < calculator.settingsButtonRect.left)
+
+        calculator.calculate(320f, 640f, 1f)
+        assertTrue("Narrow phone stats should degrade below the logo row", calculator.statsRect.top >= calculator.headerRect.bottom)
+    }
+
+    @Test
     fun testLandscapeBreakpointsClassification() {
         val calculator = HomeLayoutCalculator()
 
@@ -180,14 +192,19 @@ class HomeResponsiveLayoutTest {
             val mascotRatio = mascotH / bodyH
             assertTrue("Mascot height ratio must be between 44% and 58% of body height, was $mascotRatio", mascotRatio in 0.42f..0.60f)
 
-            // D. Separation between Platform and PLAY CTA (10dp Hero Assembly)
+            // D. Separation between Platform and PLAY CTA (20dp Hero Assembly)
             val separation = calculator.playCtaRect.top - calculator.platformRect.bottom
-            assertTrue("Separation between platform and play CTA must be 10dp, was $separation", abs(separation - calculator.dp(10f)) < 0.2f)
+            assertTrue("Separation between platform and play CTA must be 20dp, was $separation", abs(separation - calculator.dp(20f)) < 0.2f)
 
-            // E. PLAY CTA Dimensions (118-190dp)
+            // E. PLAY CTA Dimensions (76-98dp)
             val playH = calculator.playCtaRect.height()
-            assertTrue("Play CTA height must be >= 118dp, was $playH", playH >= calculator.dp(118f) - 0.1f)
-            assertTrue("Play CTA height must be <= 190dp, was $playH", playH <= calculator.dp(190f) + 0.1f)
+            assertTrue("Play CTA height must be >= 76dp, was $playH", playH >= calculator.dp(76f) - 0.1f)
+            assertTrue("Play CTA height must be <= 98dp, was $playH", playH <= calculator.dp(98f) + 0.1f)
+            assertTrue(
+                "Play CTA width must follow the approved 76% / 620dp cap",
+                calculator.playCtaRect.width() <= minOf(calculator.heroStageRect.width() * 0.76f, calculator.dp(620f)) + 0.1f
+            )
+            assertEquals("Play CTA must be centered in the hero", calculator.heroStageRect.centerX(), calculator.playCtaRect.centerX(), 0.1f)
 
             // F. 2+1 Navigation Deck Structure
             // Row 1: Skins + Missions side-by-side
@@ -251,13 +268,9 @@ class HomeResponsiveLayoutTest {
     }
 
     @Test
-    fun testSciFiCtaButtonChassisContract() {
-        // Architectural Contract:
-        // SciFiCtaButtonRenderer uses intact raster background chassis with dynamic localized text overlay.
-        assertTrue(
-            "SciFiCtaButtonRenderer uses raster background chassis",
-            SciFiCtaButtonRenderer.usesRasterBackground
-        )
+    fun testSciFiCtaButtonUsesProceduralRendering() {
+        // The approved Home pack requires a runtime-rendered gradient CTA.
+        assertFalse("SciFiCtaButtonRenderer must not use a raster chassis", SciFiCtaButtonRenderer.usesRasterBackground)
     }
 
     @Test
@@ -327,8 +340,7 @@ class HomeResponsiveLayoutTest {
             assertTrue("Subtitle for $lang must not be empty", subtitle.isNotBlank())
         }
 
-        // Chassis contract assertion
-        assertTrue("SciFiCtaButtonRenderer uses raster background chassis", SciFiCtaButtonRenderer.usesRasterBackground)
+        assertFalse("SciFiCtaButtonRenderer must not use a raster chassis", SciFiCtaButtonRenderer.usesRasterBackground)
     }
 
     @Test
@@ -365,14 +377,16 @@ class HomeResponsiveLayoutTest {
             assertTrue("Mascot ratio $mascotRatio must be in [0.44, 0.58]", mascotRatio in 0.43f..0.59f)
 
             val playH = calculator.playCtaRect.height()
-            val minPlayH = calculator.dp(118f) - 0.1f
-            val maxPlayH = calculator.dp(190f) + 0.1f
-            assertTrue("Play CTA height $playH must be >= 118dp ($minPlayH)", playH >= minPlayH)
-            assertTrue("Play CTA height $playH must be <= 190dp ($maxPlayH)", playH <= maxPlayH)
+            val minPlayH = calculator.dp(76f) - 0.1f
+            val maxPlayH = calculator.dp(98f) + 0.1f
+            assertTrue("Play CTA height $playH must be >= 76dp ($minPlayH)", playH >= minPlayH)
+            assertTrue("Play CTA height $playH must be <= 98dp ($maxPlayH)", playH <= maxPlayH)
 
             // Celestial decor rects
             assertFalse("planetBlueRect must not be empty in landscape", calculator.planetBlueRect.isEmpty())
             assertFalse("planetPinkRect must not be empty in landscape", calculator.planetPinkRect.isEmpty())
+            assertFalse("asteroidLeftRect must not be empty in landscape", calculator.asteroidLeftRect.isEmpty())
+            assertFalse("asteroidRightRect must not be empty in landscape", calculator.asteroidRightRect.isEmpty())
         }
     }
 

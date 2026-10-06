@@ -115,6 +115,7 @@ internal object JaTranslations {
         "DATA" to "データ",
         "DATA DELETION" to "データを削除",
         "DIVISION 1" to "ディビジョン1",
+        "DIFFERENT WORLDS. SAME CHAOS." to "異なる世界。\n同じカオス。",
         "DODGE CRASH NODES. THEY END THE RUN." to "クラッシュノードを回避します。彼らはランを終了します。",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "いつまでも保持しないでください。エネルギーには限りがあります。",
         "EARNED SUPERPOWER" to "獲得したスーパーパワー",

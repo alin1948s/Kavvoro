@@ -115,6 +115,7 @@ internal object ThTranslations {
         "DATA" to "ข้อมูล",
         "DATA DELETION" to "ลบข้อมูล",
         "DIVISION 1" to "ดิวิชัน 1",
+        "DIFFERENT WORLDS. SAME CHAOS." to "โลกที่แตกต่าง\nความโกลาหลเดิม",
         "DODGE CRASH NODES. THEY END THE RUN." to "หลบจุดชนสีชมพู เพราะจะทำให้จบเกมทันที",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "อย่ากดค้างตลอดเวลา พลังงานมีจำกัด",
         "EARNED SUPERPOWER" to "ได้รับพลังพิเศษ",

@@ -8,6 +8,7 @@ import android.graphics.RadialGradient
 import android.graphics.RectF
 import android.graphics.Shader
 import com.moonsolstudios.kavvoro.ui.render.CyberShapeRenderer
+import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
 import kotlin.math.min
 
@@ -70,8 +71,8 @@ object SettingsIconRenderer {
         )
 
         val badgeAccent = when (id) {
-            SettingsIconId.MUSIC_VOLUME, SettingsIconId.RESET -> 0xFFFF4D8D.toInt()
-            SettingsIconId.DATA_DELETION -> 0xFFFFCF4A.toInt()
+            SettingsIconId.MUSIC_VOLUME, SettingsIconId.RESET -> KavvoroPalette.pink
+            SettingsIconId.DATA_DELETION -> KavvoroPalette.gold
             else -> accent
         }
 
@@ -106,7 +107,7 @@ object SettingsIconRenderer {
         val wellRadius = badgeSize * 0.38f
         paint.shader = RadialGradient(
             cx, cy, wellRadius,
-            intArrayOf(0x35000000, withAlpha(badgeAccent, 45), 0x55020710),
+            intArrayOf(0x35000000, withAlpha(badgeAccent, 45), withAlpha(KavvoroPalette.background, 85)),
             floatArrayOf(0f, 0.7f, 1f),
             Shader.TileMode.CLAMP
         )
@@ -163,7 +164,7 @@ object SettingsIconRenderer {
 
         when (id) {
             SettingsIconId.MASTER_VOLUME -> drawMasterVolume(canvas, cx, cy, badgeAccent, paint, dp)
-            SettingsIconId.MUSIC_VOLUME -> drawMusicVolume(canvas, cx, cy, 0xFFFF4D8D.toInt(), paint, dp)
+            SettingsIconId.MUSIC_VOLUME -> drawMusicVolume(canvas, cx, cy, KavvoroPalette.pink, paint, dp)
             SettingsIconId.SFX_VOLUME -> drawSfxVolume(canvas, cx, cy, badgeAccent, paint, dp)
             SettingsIconId.HAPTIC -> drawHaptic(canvas, cx, cy, badgeAccent, paint, dp)
             SettingsIconId.SCREEN_SHAKE -> drawScreenShake(canvas, cx, cy, badgeAccent, paint, dp)
@@ -172,9 +173,9 @@ object SettingsIconRenderer {
             SettingsIconId.ACCOUNT -> drawAccount(canvas, cx, cy, badgeAccent, paint, dp)
             SettingsIconId.PRIVACY -> drawPrivacy(canvas, cx, cy, badgeAccent, paint, dp)
             SettingsIconId.TERMS -> drawTerms(canvas, cx, cy, badgeAccent, paint, dp)
-            SettingsIconId.DATA_DELETION -> drawDataDeletion(canvas, cx, cy, 0xFFFFCF4A.toInt(), paint, dp)
+            SettingsIconId.DATA_DELETION -> drawDataDeletion(canvas, cx, cy, KavvoroPalette.gold, paint, dp)
             SettingsIconId.ABOUT -> drawAbout(canvas, cx, cy, badgeAccent, paint, dp)
-            SettingsIconId.RESET -> drawReset(canvas, cx, cy, 0xFFFF4D8D.toInt(), paint, dp)
+            SettingsIconId.RESET -> drawReset(canvas, cx, cy, KavvoroPalette.pink, paint, dp)
         }
         canvas.restore()
 
@@ -204,7 +205,7 @@ object SettingsIconRenderer {
         // Heat-sink vertical rib lines
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 0.9f * dp
-        paint.color = 0xAA020710.toInt()
+        paint.color = withAlpha(KavvoroPalette.background, 170).toInt()
         canvas.drawLine(cx - 8f * dp, cy - 3.8f * dp, cx - 8f * dp, cy + 3.8f * dp, paint)
         canvas.drawLine(cx - 6.2f * dp, cy - 3.8f * dp, cx - 6.2f * dp, cy + 3.8f * dp, paint)
 
@@ -270,7 +271,7 @@ object SettingsIconRenderer {
     private fun drawMusicVolume(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
         // Dual Holographic Synthwave Notes in Hot Pink & Neon White
         val pink = accent
-        val cyan = 0xFF45F2FF.toInt()
+        val cyan = KavvoroPalette.cyan
 
         // Note Head 1 (Left)
         paint.style = Paint.Style.FILL
@@ -334,7 +335,7 @@ object SettingsIconRenderer {
     // 3. SFX VOLUME: Quantum Sonic Resonance Cannon & Particle Spark
     // ─────────────────────────────────────────────────────────────────────────────
     private fun drawSfxVolume(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
-        val pink = 0xFFFF4D8D.toInt()
+        val pink = KavvoroPalette.pink
 
         // Acoustic Emitter Horn
         tempPath.reset()
@@ -395,7 +396,7 @@ object SettingsIconRenderer {
     // 4. HAPTIC: Industrial Linear Actuator & Electromagnetic Coils
     // ─────────────────────────────────────────────────────────────────────────────
     private fun drawHaptic(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
-        val pink = 0xFFFF4D8D.toInt()
+        val pink = KavvoroPalette.pink
 
         // Actuator Heavy Chassis
         scratchRect.set(cx - 5.5f * dp, cy - 9.5f * dp, cx + 5.5f * dp, cy + 9.5f * dp)
@@ -415,7 +416,7 @@ object SettingsIconRenderer {
 
         // Internal Copper/Neon Solenoid Coils
         paint.style = Paint.Style.FILL
-        paint.color = 0xFFFFCF4A.toInt()
+        paint.color = KavvoroPalette.gold
         scratchRect2.set(cx - 3.8f * dp, cy - 7f * dp, cx + 3.8f * dp, cy - 4.5f * dp)
         canvas.drawRoundRect(scratchRect2, 1f * dp, 1f * dp, paint)
         scratchRect2.set(cx - 3.8f * dp, cy + 4.5f * dp, cx + 3.8f * dp, cy + 7f * dp)
@@ -457,7 +458,7 @@ object SettingsIconRenderer {
     // 5. SCREEN SHAKE: Tactical Impact HUD Seismograph
     // ─────────────────────────────────────────────────────────────────────────────
     private fun drawScreenShake(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
-        val pink = 0xFFFF4D8D.toInt()
+        val pink = KavvoroPalette.pink
 
         // Tactical Display HUD Monitor Frame
         scratchRect.set(cx - 10f * dp, cy - 7f * dp, cx + 10f * dp, cy + 7f * dp)
@@ -605,7 +606,7 @@ object SettingsIconRenderer {
     // ─────────────────────────────────────────────────────────────────────────────
     private fun drawLanguage(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
         val radius = 9f * dp
-        val pink = 0xFFFF4D8D.toInt()
+        val pink = KavvoroPalette.pink
 
         // 3D Shaded Celestial Holosphere
         paint.style = Paint.Style.FILL
@@ -662,7 +663,7 @@ object SettingsIconRenderer {
     // 8. ACCOUNT: Cyber-Commander Helm & Biometric Crest
     // ─────────────────────────────────────────────────────────────────────────────
     private fun drawAccount(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
-        val pink = 0xFFFF4D8D.toInt()
+        val pink = KavvoroPalette.pink
 
         // Angular Commander Helmet Crown
         tempPath.reset()
@@ -722,7 +723,7 @@ object SettingsIconRenderer {
     // 9. PRIVACY: Cryptographic Quantum Aegis Shield
     // ─────────────────────────────────────────────────────────────────────────────
     private fun drawPrivacy(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
-        val pink = 0xFFFF4D8D.toInt()
+        val pink = KavvoroPalette.pink
 
         // Heavy Faceted Armor Shield
         tempPath.reset()
@@ -786,7 +787,7 @@ object SettingsIconRenderer {
     // 10. TERMS: Encrypted Military Smart-Contract Datapad
     // ─────────────────────────────────────────────────────────────────────────────
     private fun drawTerms(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
-        val pink = 0xFFFF4D8D.toInt()
+        val pink = KavvoroPalette.pink
 
         // Datapad Slab with Folded Upper Right Corner
         tempPath.reset()
@@ -838,9 +839,9 @@ object SettingsIconRenderer {
 
         // Verification Seal / Checkmark in lower right
         paint.style = Paint.Style.FILL
-        paint.color = 0xFF45F2FF.toInt()
+        paint.color = KavvoroPalette.cyan
         canvas.drawCircle(cx + 4.8f * dp, cy + 5.2f * dp, 1.8f * dp, paint)
-        paint.color = 0xFF020710.toInt()
+        paint.color = KavvoroPalette.background
         canvas.drawCircle(cx + 4.8f * dp, cy + 5.2f * dp, 0.7f * dp, paint)
     }
 
@@ -849,7 +850,7 @@ object SettingsIconRenderer {
     // ─────────────────────────────────────────────────────────────────────────────
     private fun drawDataDeletion(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
         val amber = accent
-        val pink = 0xFFFF4D8D.toInt()
+        val pink = KavvoroPalette.pink
 
         // Reinforced Canister Drum
         tempPath.reset()
@@ -885,7 +886,7 @@ object SettingsIconRenderer {
         // Diagonal Hazard Stripes in Deep Carbon
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1.6f * dp
-        paint.color = 0xFF020710.toInt()
+        paint.color = KavvoroPalette.background
         canvas.drawLine(cx - 4.2f * dp, cy - 2f * dp, cx - 1.2f * dp, cy + 2f * dp, paint)
         canvas.drawLine(cx + 0.2f * dp, cy - 2f * dp, cx + 3.2f * dp, cy + 2f * dp, paint)
 
@@ -901,7 +902,7 @@ object SettingsIconRenderer {
     // 12. ABOUT: Interstellar Flagship & Lunar Orbit Emblem
     // ─────────────────────────────────────────────────────────────────────────────
     private fun drawAbout(canvas: Canvas, cx: Float, cy: Float, accent: Int, paint: Paint, dp: Float) {
-        val pink = 0xFFFF4D8D.toInt()
+        val pink = KavvoroPalette.pink
 
         // Background Lunar Orbital Crescent
         tempPath.reset()

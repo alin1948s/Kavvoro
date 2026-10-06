@@ -115,6 +115,7 @@ internal object ZhTranslations {
         "DATA" to "数据",
         "DATA DELETION" to "删除数据",
         "DIVISION 1" to "第1赛区",
+        "DIFFERENT WORLDS. SAME CHAOS." to "不同的世界。\n同樣的混亂。",
         "DODGE CRASH NODES. THEY END THE RUN." to "躲避崩溃节点。他们结束了跑步。",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "不要永远持有。能量是有限的。",
         "EARNED SUPERPOWER" to "获得超能力",

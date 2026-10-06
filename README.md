@@ -11,7 +11,9 @@ vertical replays.
 ## Current Status
 
 - Package: `com.moonsolstudios.kavvoro`
-- Target platform: Android phones and tablets, portrait-only.
+- Target platform: Android phones and tablets; phones use portrait, while
+  tablets follow the device orientation sensor and support a native landscape
+  Home layout.
 - Modes: Classic Mode and Chaos Mode, each with its own progression, streak,
   tutorial sequence, and infinite level generation.
 - Tutorial: the first five levels of each mode introduce the core controls,
@@ -19,8 +21,10 @@ vertical replays.
 - Collection: 50 Brainballs total — 38 shared universe characters/assets and
   12 Kavvoro-exclusive extras — with unlock rules, superpowers, and
   premium-content hooks.
-- UI: responsive phone/tablet layouts, localized interface and tutorial copy,
-  animated menu, collection, leaderboards, and release-oriented privacy flow.
+- UI: Home uses the approved portrait and landscape direction, supplied
+  Brainball/logo masters, a runtime CTA, and localized watermark copy. Age
+  Check is now a real first-launch flow that stores only an age group; Settings
+  shares the Home palette. Remaining screens follow the active redesign plan.
 - Sharing: vertical 9:16 MP4 replay export through the Android share sheet,
   including the ball, control trail, tether, score, and challenge code.
 - Monetization: AdMob interstitial/rewarded-ad gates with test IDs in debug
@@ -42,17 +46,16 @@ vertical replays.
   The remaining release gate is visual evidence for the five added locales and
   full review of tutorial, Collection, and result states.
   Home copy resolves through the same catalog since 2026-09-23: `HomeCopy`
-  delegates all 15 strings to `KavvoroI18n.t` and is guarded by
+  delegates all 16 strings to `KavvoroI18n.t` and is guarded by
   `HomeCopyCatalogCoverageTest`. Before that change Home carried its own table
   covering only 7 languages and fell back to English for the other 17.
-- UI audit: `docs/ui-design-audit-2026-09-23.md` records the audited UI/design
-  and accessibility findings with their fixes, and is indexed from
-  `docs/README.md`. Home header touch targets now reach a full 48dp through
-  derived touch rects that leave the reference composition untouched
-  (`HomeTouchTargetTest`), and the Home TalkBack provider publishes nodes only
-  while the Home surface is on screen instead of announcing stale Home controls
-  over Settings, Language, and gameplay. Per-screen accessibility node sets and
-  the motion, palette, and contrast items remain open.
+- UI redesign: [`docs/ui-redesign-plan.md`](docs/ui-redesign-plan.md) is the
+  active screen-by-screen plan based only on the approved Home portrait and
+  landscape packs. Home and the first Age Check pass are implemented; Settings
+  now shares their palette. Language, Collection, Leaderboards, Gameplay, and
+  the remaining overlays follow. Home touch targets meet 48dp
+  (`HomeTouchTargetTest`); broader TalkBack coverage, reduced motion, and
+  redundant contrast cues remain in scope.
 - Store package: the default Google Play listing has its icon, feature graphic,
   videos, seven phone screenshots, seven dedicated 7-inch screenshots, seven
   dedicated 10-inch screenshots, and the complete Play Games on PC image set.
@@ -69,8 +72,9 @@ vertical replays.
 
 ## Screenshots
 
-Reference QA captures from a **1080×2400 px phone profile at 420 dpi**. The
-images below are checked-in captures from the app; see
+Reference QA captures include a **1080×2400 px phone profile at 420 dpi** and a
+**1920×1200 px tablet landscape profile at 240 dpi**. The images below are
+checked-in captures from the app; see
 [`screenshots/README.md`](screenshots/README.md) and
 [`tools/screenshot-capture/README.md`](tools/screenshot-capture/README.md) for
 the capture policy and repeatable scripts.
@@ -78,6 +82,14 @@ the capture policy and repeatable scripts.
 | Home | Mode picker | Language selector | Settings |
 | --- | --- | --- | --- |
 | <img src="screenshots/home/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Home screen at 1080 by 2400 pixels"> | <img src="screenshots/play-mode/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro mode picker at 1080 by 2400 pixels"> | <img src="screenshots/language/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro language selector at 1080 by 2400 pixels"> | <img src="screenshots/settings/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro settings screen at 1080 by 2400 pixels"> |
+
+**Age Check — phone 1080×2400 px at 420 dpi:**
+
+<img src="screenshots/age-check/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Age Check at 1080 by 2400 pixels">
+
+**Home landscape, tablet 1920×1200 px at 240 dpi:**
+
+<img src="screenshots/home/tablet-landscape-1920x1200-240dpi.png" width="600" alt="Kavvoro Home screen in tablet landscape at 1920 by 1200 pixels">
 
 ## Repository Structure
 
@@ -90,7 +102,6 @@ Kavvoro/
 ├── app/                  Android application, resources, and mirrored tests
 ├── art/                  editable/source artwork
 ├── docs/                 current docs plus explicitly archived plans/specs
-├── figma-assets/         canonical editable UI exports
 ├── gradle/               Gradle wrapper support
 ├── screenshots/          curated QA evidence grouped by screen/flow
 ├── store-assets/         canonical Play Store source assets
@@ -120,7 +131,7 @@ match the directory.
 | `engine` | physics, level generation, scoring, and gameplay rules |
 | `repository` | canonical catalog/progress persistence access |
 | `i18n` | language selection, `i18n/catalog/*Translations.kt` catalogs, formatting, and translated copy |
-| `ui/screens/<screen>` | isolated per-screen renderers, layout calculators, and touch controllers (`home`, `gameplay`, `outcome`, `collection`, `leaderboards`, `settings`, `language`, `ad`, `modals`) |
+| `ui/screens/<screen>` | isolated per-screen UI (`home`, `agecheck`, `gameplay`, `outcome`, `collection`, `leaderboards`, `settings`, `language`, `ad`, `modals`) |
 | `ui/layout` | shared locale-aware layout policy |
 | `ui/render` | shared Canvas primitives, brand header, and resource caching |
 | `ui/controller` | shared game-loop director and adaptive quality controller |

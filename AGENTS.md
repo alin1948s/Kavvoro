@@ -31,6 +31,7 @@ Codul sursă (`app/src/main/java/com/moonsolstudios/kavvoro/`) este împărțit 
   - `tutorial/` — `TutorialCardLayout`, `TutorialInputGate`, `TutorialRenderer`, `TutorialTouchController`
   - `screens/` — **Fiecare ecran are propriul sub-pachet izolat:**
     - `screens/home/` — Ecranul Home + Mode Picker (`HomeLayoutCalculator`, `HomeMenuRenderer`, `HomeMenuTouchController`, `HomeAccessibilityTouchHelper`, `ModePickerLayoutCalculator`, `ModePickerRenderer`, `SciFiCtaButtonRenderer`)
+    - `screens/agecheck/` — Ecranul de selecție a vârstei la prima pornire (`AgeCheckScreenView`)
     - `screens/gameplay/` — Arena de joc și HUD-ul (`GameplayArenaRenderer`, `GameplayHudRenderer`, `GameplayTouchController`)
     - `screens/outcome/` — Ecranul de Victorie / Înfrângere (`OutcomeUiRenderer`, `OutcomeTouchController`)
     - `screens/collection/` — Ecranul Skins / Colecție (`CollectionLayoutCalculator`, `CollectionUiRenderer`, `CollectionTouchController`, `BallSkinRenderer`)
@@ -45,7 +46,7 @@ Codul sursă (`app/src/main/java/com/moonsolstudios/kavvoro/`) este împărțit 
    - **Niciun fișier `.kt`** (`*Renderer.kt`, `*TouchController.kt`, `*LayoutCalculator.kt`, `*Helper.kt`) din `ui/screens/<ecranA>/` nu are voie să importe din `ui/screens/<ecranB>/`.
    - Pachetele de infrastructură UI partajată (`ui/render/`, `ui/layout/`, `ui/controller/`, `ui/tutorial/`) nu au voie să importe niciodată din `ui/screens/*`. Orice helper vizual sau de layout partajat pe mai multe ecrane stă în `ui/render/` sau `ui/layout/`, iar enum-urile de stare stau în `model/UiStateModels.kt`.
 2. **Zero `RectF` de Ecran în `ChaosGameView.kt`**: `ChaosGameView.kt` are voie să aloce **doar** `private val scratch = RectF()`. Toate dreptunghiurile de hit-testing (`RectF`) pentru butoane sau carduri trebuie deținute de `*TouchController` sau `*LayoutCalculator` din pachetul ecranului respectiv.
-3. **Interdicție de Umflare a `ChaosGameView.kt`**: Nu adăuga metode de desenare (`Canvas`), calcule de layout sau hit-testing direct în `ChaosGameView.kt`. Orice funcționalitate nouă pe un ecran se implementează în `ui/screens/<screen>/` și este doar apelată din `ChaosGameView.kt` (plafon maxim: `3,350` linii).
+3. **Interdicție de Umflare a `ChaosGameView.kt`**: Nu adăuga metode de desenare (`Canvas`), calcule de layout sau hit-testing direct în `ChaosGameView.kt`. Orice funcționalitate nouă pe un ecran se implementează în `ui/screens/<screen>/` și este apelată din coordonatorul potrivit: `ChaosGameView.kt` pentru ecranele jocului, respectiv `MainActivity` pentru Age Check la pornire (plafon maxim `3,350` linii pentru `ChaosGameView.kt`).
 4. **Izolarea `engine/` și `model/`**: Pachetele `engine/` și `model/` nu au voie să importe absolut nimic din `com.moonsolstudios.kavvoro.ui.*`.
 5. **Bridges în Pachetele de Domeniu**: Toate interfețele Bridge (`AdBridge`, `AccountBridge`, `LeaderboardBridge`, `PrivacyBridge`, `PurchaseBridge`) stau în pachetele lor de domeniu (`ads/`, `playgames/`, `privacy/`, `billing/`), niciodată imbricate în `ChaosGameView` sau `MainActivity`.
 6. **Alinierea Pachetelor de Teste (`app/src/test/java/`)**: Toate fișierele `.kt` din `src/main/java` și `src/test/java` trebuie să aibă declarația `package` identică cu calea directorului, iar testele pe ecrane stau în `ui/screens/<screen>/`.

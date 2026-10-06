@@ -115,6 +115,7 @@ internal object ArTranslations {
         "DATA" to "البيانات",
         "DATA DELETION" to "حذف البيانات",
         "DIVISION 1" to "القسم 1",
+        "DIFFERENT WORLDS. SAME CHAOS." to "عَوَالِمُ مُخْتَلِفَة.\nالفَوْضَى نَفْسُهَا.",
         "DODGE CRASH NODES. THEY END THE RUN." to "تجنب عُقد التحطم. فهي تنهي الجولة.",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "لا تضغط للأبد. الطاقة محدودة.",
         "EARNED SUPERPOWER" to "قوة خارقة مكتسبة",

@@ -115,6 +115,7 @@ internal object ZhTwTranslations {
         "DATA" to "資料",
         "DATA DELETION" to "刪除資料",
         "DIVISION 1" to "第1賽區",
+        "DIFFERENT WORLDS. SAME CHAOS." to "不同的世界。\n相同的混亂。",
         "DODGE CRASH NODES. THEY END THE RUN." to "避開碰撞節點。它們會直接結束遊戲。",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "不要一直按住。能量是有限的。",
         "EARNED SUPERPOWER" to "已獲得超能力",

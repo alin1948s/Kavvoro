@@ -6,7 +6,7 @@ nu este sursă canonică și nu se versioneză, cu excepția acestui manifest.
 Folosește direct sursele versionate:
 
 - aplicație și teste: `app/`;
-- artă sursă: `art/` și `figma-assets/`;
+- artă sursă: `art/`, inclusiv master-ele Home aprobate din `art/ui/home-approved/`;
 - capturi QA curate: `screenshots/`;
 - materiale Google Play: `store-assets/`;
 - documentație și decizii: `docs/`.

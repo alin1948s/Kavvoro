@@ -9,7 +9,9 @@ APK și matricea celor 11 rezoluții. SDK-ul se rezolvă din `ANDROID_HOME` sau
 
 Păstrăm aici doar automatizări care pot fi reluate pe alt calculator. Scripturile
 exploratorii de crop/PSD și outputurile lor intermediare nu se versioneză;
-asset-urile canonice sunt în `app/src/main/res`, `art/` și `figma-assets/`.
+asset-urile Android canonice sunt în `app/src/main/res`, iar master-ele editabile
+sunt în `art/`. Referințele aprobate pentru redesign sunt în
+`docs/ui-redesign/references/`.
 
 ## Captura Age Check
 
@@ -17,7 +19,9 @@ asset-urile canonice sunt în `app/src/main/res`, `art/` și `figma-assets/`.
 python .\tools\screenshot-capture\retake_age_check_11.py
 ```
 
-Scriptul capturează setul standard actual în `screenshots/age-check`.
+Scriptul capturează setul standard actual în `screenshots/age-check`, în
+portrait pe telefoane și tablete. Captura verifică și nodul accesibil al
+selectorului, ca să nu accepte din greșeală ecranul Home.
 
 ## Captura Settings
 
@@ -53,3 +57,15 @@ Funcționalități și mecanisme de siguranță:
 3. **Detecție vizuală în memorie (`exec-out screencap`)**: Elimină I/O lent pe disk și detectează tranziția de la splash (1.45s) direct la Home complet randat.
 4. **Verificare post-captură și retry automat**: Verifică integritatea imaginii, dimensiunile exacte, lipsa ecranelor negre/splash/age-gate și prezența elementelor de UI active (header + footer neon). Dacă verificarea eșuează, relansează automat procesul până la capturarea unui cadru valid.
 5. **Restaurare automată**: Restaurează `wm size` și `wm density` la finalul rulării.
+
+## Captura Home landscape
+
+```powershell
+python .\tools\screenshot-capture\retake_home_landscape.py
+```
+
+Scriptul capturează profilul tabletă landscape aprobat de `1920×1200@240dpi`
+în `screenshots/home/tablet-landscape-1920x1200-240dpi.png`. Așteaptă viewport-ul
+landscape, închide promptul Android de ecran complet numai după ce îi detectează
+textul și verifică dimensiunea capturii. Densitatea și orientarea emulatorului
+sunt restaurate la final.

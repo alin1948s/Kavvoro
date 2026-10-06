@@ -142,7 +142,7 @@ class HomeLayoutCalculator {
         width: Float,
         height: Float,
         displayDensity: Float,
-        brandAspect: Float = 1422f / 675f,
+        brandAspect: Float = 1415f / 661f,
         portalAspect: Float = 1254f / 1225f,
         platformAspect: Float = 2075f / 524f
     ) {
@@ -224,7 +224,7 @@ class HomeLayoutCalculator {
 
         // 3 chips: Streak, Level, Coins
         val availableChipsWidth = (settingsButtonRect.left - actionGap) - (brandRect.right + actionGap)
-        val chipsFitInRow = availableChipsWidth >= dp(140f) * scaleFactor
+        val chipsFitInRow = availableChipsWidth >= dp(145f)
 
         if (chipsFitInRow) {
             val chipGap = dp(6f * scaleFactor)
@@ -343,8 +343,8 @@ class HomeLayoutCalculator {
         val mascotBottom = platformTop + platformHeight * 0.13f
         val heroSpan = (mascotBottom - heroTop).coerceAtLeast(dp(100f))
         val maxMascotHFromSpan = heroSpan * 0.96f
-        val mascotHeight = min(maxMascotW / 1.161f, maxMascotHFromSpan)
-        val mascotWidth = mascotHeight * 1.161f
+        val mascotHeight = min(maxMascotW / BRAINBALL_ASPECT, maxMascotHFromSpan)
+        val mascotWidth = mascotHeight * BRAINBALL_ASPECT
         val mascotTop = mascotBottom - mascotHeight
 
         characterRect.set(
@@ -491,8 +491,7 @@ class HomeLayoutCalculator {
         // 3. Stage Gutter & 62/38 Split
         val stageGap = dp(24f * scaleFactor)
         val heroWidth = (bodyWidth - stageGap) * 0.62f
-        val deckShiftX = screenWidth * 0.025f
-        val deckLeft = bodyRect.left + heroWidth + stageGap - deckShiftX
+        val deckLeft = bodyRect.left + heroWidth + stageGap
         val deckWidth = bodyRect.right - deckLeft
         val deckWidthDp = pxToDp(deckWidth)
         val availableWidthDp = pxToDp(safeRight - safeLeft)
@@ -522,24 +521,24 @@ class HomeLayoutCalculator {
         // 4. Hero Stage (Left ~62%)
         val heroCx = heroStageRect.centerX()
 
-        // Brainball Mascot: occupies 44-58% of body height
+        // Brainball uses the approved asset's native aspect and occupies 44-58% of body height.
         val mascotHeight = min(
             bodyHeight * 0.58f,
-            heroWidth * 0.60f / 1.161f
+            heroWidth * 0.60f / BRAINBALL_ASPECT
         ).coerceAtLeast(bodyHeight * 0.44f)
-        val mascotWidth = mascotHeight * 1.161f
+        val mascotWidth = mascotHeight * BRAINBALL_ASPECT
 
-        // Platform / Portal disc: aspect ~5.1:1
-        val platformWidth = heroWidth * 0.72f
+        // Platform / Portal disc follows the approved landscape hero proportions.
+        val platformWidth = heroWidth * 0.64f
         val platformHeight = platformWidth / 5.1f
         val discBelowMascot = platformHeight * 0.87f
 
-        // PLAY NOW CTA: ~88% of hero width, chunky ~3.25:1
-        val playWidth = heroWidth * 0.88f
-        val playHeight = playWidth / 3.25f
+        // PLAY NOW CTA: 76% of the hero (capped at 620dp), sized to the landscape spec.
+        val playWidth = min(heroWidth * 0.76f, dp(620f))
+        val playHeight = (bodyHeight * 0.115f).coerceIn(dp(76f), dp(98f))
 
-        // Separation: 10dp (Hero Assembly)
-        val portalPlayGap = dp(10f)
+        // Keep the play action visually attached to the portal without crowding it.
+        val portalPlayGap = dp(20f)
 
         // Hero Stack Vertical Layout
         val heroStackHeight = mascotHeight + discBelowMascot + portalPlayGap + playHeight
@@ -563,11 +562,10 @@ class HomeLayoutCalculator {
         portalRect.set(platformRect)
         portalFrontRect.set(platformRect)
 
-        // PLAY CTA directly below platform with 10dp separation, shifted ~2% right
-        val playShiftX = screenWidth * 0.02f
+        // PLAY CTA directly below the platform and centered within the hero.
         val playTop = platformBottom + portalPlayGap
         val playBottom = min(playTop + playHeight, heroStageRect.bottom)
-        playCtaRect.set(heroCx - playWidth * 0.5f + playShiftX, playTop, heroCx + playWidth * 0.5f + playShiftX, playBottom)
+        playCtaRect.set(heroCx - playWidth * 0.5f, playTop, heroCx + playWidth * 0.5f, playBottom)
 
         // Portal Beam radiating behind mascot
         val beamW = platformWidth * 0.78f
@@ -641,6 +639,20 @@ class HomeLayoutCalculator {
             screenWidth + pinkSize * 0.28f,
             headerTop + pinkSize * 1.08f
         )
+
+        val asteroidSize = min(bodyWidth * 0.16f, bodyHeight * 0.30f)
+        asteroidLeftRect.set(
+            heroStageRect.left - asteroidSize * 0.42f,
+            heroStageRect.bottom - asteroidSize * 0.94f,
+            heroStageRect.left + asteroidSize * 0.58f,
+            heroStageRect.bottom + asteroidSize * 0.06f
+        )
+        asteroidRightRect.set(
+            screenWidth - asteroidSize * 0.12f,
+            navigationDeckRect.top + asteroidSize * 0.22f,
+            screenWidth + asteroidSize * 0.88f,
+            navigationDeckRect.top + asteroidSize * 1.22f
+        )
     }
 
     fun brandTop(scaleFactor: Float = (pxToDp(screenHeight) / 800f).coerceIn(0.72f, 1.25f)): Float =
@@ -648,6 +660,7 @@ class HomeLayoutCalculator {
 
     companion object {
         const val BRAND_ASPECT = 440f / 110f
+        const val BRAINBALL_ASPECT = 1254f / 1239f
 
         /**
          * Platform minimum interactive size. Short phones used to shrink the header gear and

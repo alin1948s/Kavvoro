@@ -115,6 +115,7 @@ internal object RuTranslations {
         "DATA" to "ДАННЫЕ",
         "DATA DELETION" to "УДАЛЕНИЕ ДАННЫХ",
         "DIVISION 1" to "ДИВИЗИОН 1",
+        "DIFFERENT WORLDS. SAME CHAOS." to "РАЗНЫЕ МИРЫ.\nТОТ ЖЕ ХАОС.",
         "DODGE CRASH NODES. THEY END THE RUN." to "УКЛОНЯЙСЯ ОТ УЗЛОВ СБОЯ. ОНИ ЗАКАНЧИВАЮТ ЗАБЕГ.",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "НЕ ДЕРЖИ ВЕЧНО. ЭНЕРГИЯ ОГРАНИЧЕНА.",
         "EARNED SUPERPOWER" to "ПОЛУЧЕННАЯ СУПЕРСИЛА",

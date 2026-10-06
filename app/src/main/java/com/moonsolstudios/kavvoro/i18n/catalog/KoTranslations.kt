@@ -115,6 +115,7 @@ internal object KoTranslations {
         "DATA" to "데이터",
         "DATA DELETION" to "데이터 삭제",
         "DIVISION 1" to "디비전 1",
+        "DIFFERENT WORLDS. SAME CHAOS." to "서로 다른 세계.\n똑같은 혼돈.",
         "DODGE CRASH NODES. THEY END THE RUN." to "충돌 노드를 피하세요. 그들은 실행을 종료합니다.",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "영원히 붙잡지 마십시오. 에너지는 제한되어 있습니다.",
         "EARNED SUPERPOWER" to "초능력을 얻었습니다",

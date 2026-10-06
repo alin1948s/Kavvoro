@@ -115,6 +115,7 @@ internal object UkTranslations {
         "DATA" to "ДАНІ",
         "DATA DELETION" to "ВИДАЛЕННЯ ДАНИХ",
         "DIVISION 1" to "ДИВІЗІОН 1",
+        "DIFFERENT WORLDS. SAME CHAOS." to "РІЗНІ СВІТИ.\nТЕ САМЕ ХАОС.",
         "DODGE CRASH NODES. THEY END THE RUN." to "УНИКАЙ ВУЗЛІВ ЗБОЮ. ВОНИ ЗАВЕРШУЮТЬ ЗАБІГ.",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "НЕ ТРИМАЙ ВІЧНО. ЕНЕРГІЯ ОБМЕЖЕНА.",
         "EARNED SUPERPOWER" to "ОТРИМАНА СУПЕРСИЛА",

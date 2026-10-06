@@ -31,7 +31,8 @@ class HomeCopyCatalogCoverageTest {
         "streak" to { language -> HomeCopy.streak(language) },
         "level" to { language -> HomeCopy.level(language) },
         "coins" to { language -> HomeCopy.coins(language) },
-        "brandMotto" to { language -> HomeCopy.brandMotto(language) }
+        "brandMotto" to { language -> HomeCopy.brandMotto(language) },
+        "landscapeWatermark" to { language -> HomeCopy.landscapeWatermark(language) }
     )
 
     private val homeSourceKeys = listOf(
@@ -50,6 +51,7 @@ class HomeCopyCatalogCoverageTest {
         "LEVEL",
         "COINS",
         "SMALL MINDS BIG WORLDS",
+        "DIFFERENT WORLDS. SAME CHAOS.",
         "LEVELS",
         "MULTIVERSE PORTAL",
         "DIVISION 1",

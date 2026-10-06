@@ -115,6 +115,7 @@ internal object HiTranslations {
         "DATA" to "डेटा",
         "DATA DELETION" to "डेटा हटाएँ",
         "DIVISION 1" to "डिवीजन 1",
+        "DIFFERENT WORLDS. SAME CHAOS." to "अलग-अलग दुनिया।\nवही अराजकता।",
         "DODGE CRASH NODES. THEY END THE RUN." to "टक्कर नोड से बचें। वे रन खत्म कर देते हैं।",
         "DON'T HOLD FOREVER. ENERGY IS LIMITED." to "हमेशा दबाए न रखें। ऊर्जा सीमित है।",
         "EARNED SUPERPOWER" to "अर्जित सुपरपावर",

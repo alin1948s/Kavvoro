@@ -22,9 +22,11 @@ import com.moonsolstudios.kavvoro.privacy.AgeProfileStore
 import com.moonsolstudios.kavvoro.privacy.PrivacyAdsController
 import com.moonsolstudios.kavvoro.startup.FirstFrameStartupGate
 import com.moonsolstudios.kavvoro.ui.ChaosGameView
+import com.moonsolstudios.kavvoro.ui.screens.agecheck.AgeCheckScreenView
 
 class MainActivity : ComponentActivity() {
     private var gameView: ChaosGameView? = null
+    private var ageCheckView: AgeCheckScreenView? = null
     private var billingController: PlayBillingController? = null
     private var privacyAdsController: PrivacyAdsController? = null
     private var accountController: PlayGamesAccountController? = null
@@ -52,11 +54,22 @@ class MainActivity : ComponentActivity() {
         })
         hideSystemBars()
 
-        val savedAgeGroup = AgeProfileStore.read(this) ?: AgeGroup.ADULT
-        if (AgeProfileStore.read(this) == null) {
-            AgeProfileStore.save(this, savedAgeGroup)
+        val savedAgeGroup = AgeProfileStore.read(this)
+        if (savedAgeGroup == null) {
+            showAgeCheck(AgeCheckScreenView.AGE_OF_ADULTHOOD)
+        } else {
+            startGame(savedAgeGroup)
         }
-        startGame(savedAgeGroup)
+    }
+
+    private fun showAgeCheck(initialAge: Int) {
+        val view = AgeCheckScreenView(this, initialAge = initialAge, onConfirm = { ageGroup ->
+            AgeProfileStore.save(this, ageGroup)
+            ageCheckView = null
+            startGame(ageGroup)
+        })
+        ageCheckView = view
+        setContentView(view)
     }
 
     private fun startGame(ageGroup: AgeGroup) {
@@ -148,11 +161,13 @@ class MainActivity : ComponentActivity() {
         billingController = null
         gameView?.releaseGame()
         gameView = null
+        ageCheckView = null
         super.onDestroy()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        ageCheckView?.onHostConfigurationChanged()
         hideSystemBars()
     }
 

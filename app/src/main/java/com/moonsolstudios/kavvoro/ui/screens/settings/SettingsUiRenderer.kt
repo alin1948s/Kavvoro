@@ -17,6 +17,7 @@ import com.moonsolstudios.kavvoro.model.SettingsTab
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.BrandTitleRenderer
 import com.moonsolstudios.kavvoro.ui.render.CyberShapeRenderer
+import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
 import kotlin.math.cos
 import kotlin.math.sin
@@ -69,18 +70,26 @@ object SettingsUiRenderer {
     ) {
         paint.style = Paint.Style.FILL
         paint.shader = null
-        paint.color = 0x66020710.toInt()
+        paint.color = KavvoroPalette.background
         canvas.drawRect(0f, 0f, width, height, paint)
 
         paint.shader = RadialGradient(
             centerX - 115f * dp, height * 0.46f, 360f * dp,
-            intArrayOf(0x1622DFFF, 0x060B4C7A, 0x00020710), null, Shader.TileMode.CLAMP
+            intArrayOf(
+                withAlpha(KavvoroPalette.cyan, 22),
+                withAlpha(KavvoroPalette.blue, 6),
+                withAlpha(KavvoroPalette.background, 0)
+            ), null, Shader.TileMode.CLAMP
         )
         canvas.drawRect(0f, 0f, width, height, paint)
 
         paint.shader = RadialGradient(
             centerX + 155f * dp, height * 0.52f, 330f * dp,
-            intArrayOf(0x102A0B44, 0x050D0924, 0x00020710), null, Shader.TileMode.CLAMP
+            intArrayOf(
+                withAlpha(KavvoroPalette.magenta, 16),
+                withAlpha(KavvoroPalette.purple, 5),
+                withAlpha(KavvoroPalette.background, 0)
+            ), null, Shader.TileMode.CLAMP
         )
         canvas.drawRect(0f, 0f, width, height, paint)
         paint.shader = null
@@ -107,11 +116,11 @@ object SettingsUiRenderer {
         // 1. Left line with fade from left
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1.2f * dp
-        paint.shader = LinearGradient(left, y, centerX - notch, y, 0x0045F2FF, 0xDD45F2FF.toInt(), Shader.TileMode.CLAMP)
+        paint.shader = LinearGradient(left, y, centerX - notch, y, withAlpha(KavvoroPalette.cyan, 0), withAlpha(KavvoroPalette.cyan, 221), Shader.TileMode.CLAMP)
         canvas.drawLine(left, y, centerX - notch, y, paint)
 
         // 2. Right line with fade to right
-        paint.shader = LinearGradient(centerX + notch, y, right, y, 0xDDFF4D8D.toInt(), 0x00FF4D8D, Shader.TileMode.CLAMP)
+        paint.shader = LinearGradient(centerX + notch, y, right, y, withAlpha(KavvoroPalette.pink, 221), withAlpha(KavvoroPalette.pink, 0), Shader.TileMode.CLAMP)
         canvas.drawLine(centerX + notch, y, right, y, paint)
         paint.shader = null
 
@@ -124,19 +133,19 @@ object SettingsUiRenderer {
         tempPath.close()
 
         paint.style = Paint.Style.FILL
-        paint.color = 0xFF45F2FF.toInt()
+        paint.color = KavvoroPalette.cyan
         canvas.drawPath(tempPath, paint)
 
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1f * dp
-        paint.color = 0xFFFF4D8D.toInt()
+        paint.color = KavvoroPalette.pink
         canvas.drawPath(tempPath, paint)
 
         // Subtle side bracket ticks
         paint.strokeWidth = 1f * dp
-        paint.color = 0xAA45F2FF.toInt()
+        paint.color = withAlpha(KavvoroPalette.cyan, 170)
         canvas.drawLine(centerX - notch, y - 2.5f * dp, centerX - notch, y + 2.5f * dp, paint)
-        paint.color = 0xAAFF4D8D.toInt()
+        paint.color = withAlpha(KavvoroPalette.pink, 170)
         canvas.drawLine(centerX + notch, y - 2.5f * dp, centerX + notch, y + 2.5f * dp, paint)
     }
 
@@ -154,7 +163,7 @@ object SettingsUiRenderer {
 
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 0.8f * dp
-        paint.color = 0x4045F2FF.toInt()
+        paint.color = withAlpha(KavvoroPalette.cyan, 64)
         canvas.drawRoundRect(scratchRect, grooveHeight * 0.5f, grooveHeight * 0.5f, paint)
 
         // 2. Segmented Guide Pips along the groove (every 25%)
@@ -171,7 +180,7 @@ object SettingsUiRenderer {
             paint.style = Paint.Style.FILL
             paint.shader = LinearGradient(
                 rect.left, cy, rect.left + fillWidth, cy,
-                intArrayOf(0xFF45F2FF.toInt(), accent),
+                intArrayOf(KavvoroPalette.cyan, accent),
                 null,
                 Shader.TileMode.CLAMP
             )
@@ -227,7 +236,7 @@ object SettingsUiRenderer {
         paint.style = Paint.Style.FILL
         paint.shader = LinearGradient(
             rect.left, rect.top, rect.right, rect.bottom,
-            if (enabled) 0x5545F2FF.toInt() else 0x550A1420.toInt(),
+            if (enabled) withAlpha(KavvoroPalette.cyan, 85) else 0x550A1420.toInt(),
             if (enabled) 0x30102A44.toInt() else 0x7003060C.toInt(),
             Shader.TileMode.CLAMP
         )
@@ -237,7 +246,7 @@ object SettingsUiRenderer {
         // 2. Precision Laser Border
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1.2f * dp
-        paint.color = if (enabled) withAlpha(accent, if (active) 255 else 200) else 0x4045F2FF.toInt()
+        paint.color = if (enabled) withAlpha(accent, if (active) 255 else 200) else withAlpha(KavvoroPalette.cyan, 64)
         canvas.drawRoundRect(rect, corner, corner, paint)
 
         // 3. Status LED Diode on inactive side
@@ -247,16 +256,16 @@ object SettingsUiRenderer {
             // ON side indicator (left)
             val ledX = rect.left + rect.width() * 0.28f
             paint.style = Paint.Style.FILL
-            paint.color = 0xFF45F2FF.toInt()
+            paint.color = KavvoroPalette.cyan
             canvas.drawCircle(ledX, ledY, ledRadius, paint)
             // Tiny glow
-            paint.color = 0x5545F2FF.toInt()
+            paint.color = withAlpha(KavvoroPalette.cyan, 85)
             canvas.drawCircle(ledX, ledY, ledRadius * 2.2f, paint)
         } else {
             // OFF side indicator (right)
             val ledX = rect.right - rect.width() * 0.28f
             paint.style = Paint.Style.FILL
-            paint.color = 0x50FF4D8D.toInt()
+            paint.color = withAlpha(KavvoroPalette.pink, 80)
             canvas.drawCircle(ledX, ledY, ledRadius, paint)
         }
 
@@ -358,14 +367,14 @@ object SettingsUiRenderer {
 
         // 5. Border
         paint.strokeWidth = if (active) 2f * dp else 1.4f * dp
-        paint.color = if (active) 0xFFFFFFFF.toInt() else 0xFF45F2FF.toInt()
+        paint.color = if (active) 0xFFFFFFFF.toInt() else KavvoroPalette.cyan
         canvas.drawPath(tempPath, paint)
 
         // 6. Tactical Corner End Ticks
         paint.style = Paint.Style.FILL
-        paint.color = 0xFF45F2FF.toInt()
+        paint.color = KavvoroPalette.cyan
         canvas.drawCircle(scratchRect2.left + notch + 4f * dp, scratchRect2.centerY(), 1.5f * dp, paint)
-        paint.color = 0xFFFF4D8D.toInt()
+        paint.color = KavvoroPalette.pink
         canvas.drawCircle(scratchRect2.right - notch - 4f * dp, scratchRect2.centerY(), 1.5f * dp, paint)
 
         // 7. High-Contrast Text with Dual Chevrons
@@ -399,7 +408,7 @@ object SettingsUiRenderer {
         val notch = 4f * dp
         val depth = 2f * dp
         val press = if (isPressed) 1f * dp else 0f
-        val accent = if (isSelected) 0xFF45F2FF.toInt() else 0x9945F2FF.toInt()
+        val accent = if (isSelected) KavvoroPalette.cyan else withAlpha(KavvoroPalette.cyan, 153)
 
         if (isSelected) {
             // 3D Bottom Lip
@@ -440,12 +449,12 @@ object SettingsUiRenderer {
 
             scratchRect2.set(rect.left, rect.top + press, rect.right, rect.bottom - depth + press)
             CyberShapeRenderer.createChamferPath(tempPath, scratchRect2, corner, notch)
-            paint.color = if (isPressed) 0x2845F2FF.toInt() else 0xCC0C1828.toInt()
+            paint.color = if (isPressed) withAlpha(KavvoroPalette.cyan, 40) else 0xCC0C1828.toInt()
             canvas.drawPath(tempPath, paint)
 
             paint.style = Paint.Style.STROKE
             paint.strokeWidth = 0.9f * dp
-            paint.color = 0x5545F2FF.toInt()
+            paint.color = withAlpha(KavvoroPalette.cyan, 85)
             canvas.drawPath(tempPath, paint)
         }
 
@@ -460,7 +469,7 @@ object SettingsUiRenderer {
             val cx = rect.centerX()
             val notchW = rect.width() * 0.48f
             paint.strokeWidth = 2.4f * dp
-            paint.color = 0xFF45F2FF.toInt()
+            paint.color = KavvoroPalette.cyan
             canvas.drawLine(cx - notchW * 0.5f, rect.bottom - 1.2f * dp, cx + notchW * 0.5f, rect.bottom - 1.2f * dp, paint)
 
             // Diamond Center Pip
@@ -640,7 +649,7 @@ object SettingsUiRenderer {
         canvas.drawRoundRect(scratchRect, 14f * dp, 14f * dp, paint)
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1.2f * dp
-        paint.shader = LinearGradient(scratchRect.left, scratchRect.top, scratchRect.right, scratchRect.bottom, 0xFF45F2FF.toInt(), 0xFFFF4D8D.toInt(), Shader.TileMode.CLAMP)
+        paint.shader = LinearGradient(scratchRect.left, scratchRect.top, scratchRect.right, scratchRect.bottom, KavvoroPalette.cyan, KavvoroPalette.pink, Shader.TileMode.CLAMP)
         canvas.drawRoundRect(scratchRect, 14f * dp, 14f * dp, paint)
         paint.shader = null
         textPaint.reset()
@@ -648,7 +657,7 @@ object SettingsUiRenderer {
         textPaint.textAlign = Paint.Align.CENTER
         textPaint.typeface = Typeface.DEFAULT_BOLD
         textPaint.textSize = 18f * dp
-        textPaint.color = 0xFFFF4D8D.toInt()
+        textPaint.color = KavvoroPalette.pink
         canvas.drawText(t("RESET PROGRESS?"), scratchRect.centerX(), scratchRect.top + 40f * dp, textPaint)
         textPaint.typeface = Typeface.DEFAULT
         textPaint.textSize = 11f * dp
@@ -662,7 +671,7 @@ object SettingsUiRenderer {
         textPaint.textSize = 10f * dp
         textPaint.color = 0xFFF7F4FF.toInt()
         canvas.drawText(t("CANCEL"), cancelButton.centerX(), cancelButton.centerY() + 3f * dp, textPaint)
-        textPaint.color = 0xFFFF4D8D.toInt()
+        textPaint.color = KavvoroPalette.pink
         canvas.drawText(t("RESET"), confirmButton.centerX(), confirmButton.centerY() + 3f * dp, textPaint)
     }
 
@@ -747,7 +756,7 @@ object SettingsUiRenderer {
         // 4. Razor-Sharp Specular Top Highlight Bevel Line
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1f * dp
-        val highlightColor = if (isDanger) 0x60FF4D8D.toInt() else 0x40FFFFFF
+        val highlightColor = if (isDanger) withAlpha(KavvoroPalette.pink, 96) else 0x40FFFFFF
         paint.shader = LinearGradient(
             cardRect.left + 16f * dp, cardRect.top + 1f * dp,
             cardRect.right - 16f * dp, cardRect.top + 1f * dp,
@@ -935,7 +944,7 @@ object SettingsUiRenderer {
     ) {
         val isPink = (iconId == SettingsIconRenderer.SettingsIconId.RESET)
         val isYellow = (iconId == SettingsIconRenderer.SettingsIconId.DATA_DELETION)
-        val effectiveAccent = if (isYellow) 0xFFFFCF4A.toInt() else accent
+        val effectiveAccent = if (isYellow) KavvoroPalette.gold else accent
 
         // 1. Modular Tactical Sub-Card Plate
         drawSubCardPlate(canvas, rect, effectiveAccent, false, paint, dp, isDanger = isPink)
@@ -971,7 +980,7 @@ object SettingsUiRenderer {
 
         val textLeft = iconLeft + badgeSize + gap
         val maxTextWidth = (rect.right - chevronSlotW - textLeft).coerceAtLeast(24f * dp)
-        val titleColor = if (isPink) 0xFFFF4D8D.toInt() else if (isYellow) 0xFFFFCF4A.toInt() else 0xFFFFFFFF.toInt()
+        val titleColor = if (isPink) KavvoroPalette.pink else if (isYellow) KavvoroPalette.gold else 0xFFFFFFFF.toInt()
         drawRowCopy(canvas, rect, title, subtitle, textLeft, maxTextWidth, titleColor, compact, dp, breakpoint, vw, vh)
     }
 
@@ -987,7 +996,7 @@ object SettingsUiRenderer {
         viewWidth: Float = 0f,
         viewHeight: Float = 0f
     ) {
-        val accent = 0xFFFF4D8D.toInt()
+        val accent = KavvoroPalette.pink
 
         // 1. Hazard Warning Sub-Card Plate
         drawSubCardPlate(canvas, rect, accent, false, paint, dp, isDanger = true)
@@ -1016,7 +1025,7 @@ object SettingsUiRenderer {
         canvas.drawCircle(chevronCx, chevronCy, 12f * dp, paint)
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 0.8f * dp
-        paint.color = 0x66FF4D8D.toInt()
+        paint.color = withAlpha(KavvoroPalette.pink, 102)
         canvas.drawCircle(chevronCx, chevronCy, 12f * dp, paint)
 
         drawChevron(canvas, chevronCx, chevronCy, accent, paint, dp)
@@ -1249,31 +1258,31 @@ object SettingsUiRenderer {
 
         drawSectionLabel(
             canvas, headerTitle.uppercase(), pLeft + sectionInset, pRight - sectionInset, pTop,
-            compact, 0xFF45F2FF.toInt(), paint, dp, viewWidth, viewHeight
+            compact, KavvoroPalette.cyan, paint, dp, viewWidth, viewHeight
         )
 
-        val rowDividerColor = 0x1245F2FF.toInt()
+        val rowDividerColor = withAlpha(KavvoroPalette.cyan, 18)
         when (activeSettingsTab) {
             SettingsTab.AUDIO -> {
                 if (!settingsMasterButton.isEmpty) {
-                    drawSliderRow(canvas, settingsMasterButton, settingsMasterSlider, t("MASTER VOLUME"), t("Main game volume"), settingsMasterVolume, 0xFF45F2FF.toInt(), SettingsIconRenderer.SettingsIconId.MASTER_VOLUME, activeSettingsButton == SettingsButton.MASTER_VOLUME, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawSliderRow(canvas, settingsMasterButton, settingsMasterSlider, t("MASTER VOLUME"), t("Main game volume"), settingsMasterVolume, KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.MASTER_VOLUME, activeSettingsButton == SettingsButton.MASTER_VOLUME, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsMasterButton.left, settingsMasterButton.right, settingsMasterButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsMusicButton.isEmpty) {
-                    drawSliderRow(canvas, settingsMusicButton, settingsMusicSlider, t("MUSIC VOLUME"), t("Synthwave soundtrack"), settingsMusicVolume, 0xFFFF4D8D.toInt(), SettingsIconRenderer.SettingsIconId.MUSIC_VOLUME, activeSettingsButton == SettingsButton.MUSIC_VOLUME, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawSliderRow(canvas, settingsMusicButton, settingsMusicSlider, t("MUSIC VOLUME"), t("Synthwave soundtrack"), settingsMusicVolume, KavvoroPalette.pink, SettingsIconRenderer.SettingsIconId.MUSIC_VOLUME, activeSettingsButton == SettingsButton.MUSIC_VOLUME, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsMusicButton.left, settingsMusicButton.right, settingsMusicButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsSfxButton.isEmpty) {
-                    drawSliderRow(canvas, settingsSfxButton, settingsSfxSlider, t("SOUND EFFECTS"), t("Arcade sound effects"), settingsSfxVolume, 0xFF45F2FF.toInt(), SettingsIconRenderer.SettingsIconId.SFX_VOLUME, activeSettingsButton == SettingsButton.SFX_VOLUME, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawSliderRow(canvas, settingsSfxButton, settingsSfxSlider, t("SOUND EFFECTS"), t("Arcade sound effects"), settingsSfxVolume, KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.SFX_VOLUME, activeSettingsButton == SettingsButton.SFX_VOLUME, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsSfxButton.left, settingsSfxButton.right, settingsSfxButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsHapticToggle.isEmpty) {
-                    drawToggleRow(canvas, settingsHapticToggle, t("HAPTIC FEEDBACK"), t("Vibration on actions"), settingsHapticEnabled, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.HAPTIC, SettingsIconRenderer.SettingsIconId.HAPTIC, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawToggleRow(canvas, settingsHapticToggle, t("HAPTIC FEEDBACK"), t("Vibration on actions"), settingsHapticEnabled, KavvoroPalette.cyan, activeSettingsButton == SettingsButton.HAPTIC, SettingsIconRenderer.SettingsIconId.HAPTIC, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                 }
             }
             SettingsTab.GAMEPLAY -> {
                 if (!settingsShakeToggle.isEmpty) {
-                    drawToggleRow(canvas, settingsShakeToggle, t("SCREEN SHAKE"), t("Shake the screen on impact"), settingsScreenShake, 0xFF45F2FF.toInt(), activeSettingsButton == SettingsButton.SCREEN_SHAKE, SettingsIconRenderer.SettingsIconId.SCREEN_SHAKE, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawToggleRow(canvas, settingsShakeToggle, t("SCREEN SHAKE"), t("Shake the screen on impact"), settingsScreenShake, KavvoroPalette.cyan, activeSettingsButton == SettingsButton.SCREEN_SHAKE, SettingsIconRenderer.SettingsIconId.SCREEN_SHAKE, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsShakeToggle.left, settingsShakeToggle.right, settingsShakeToggle.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsPerformanceToggle.isEmpty) {
@@ -1282,7 +1291,7 @@ object SettingsUiRenderer {
                     } else {
                         t("OFF • Maximum AAA Visuals & Shaders")
                     }
-                    val perfColor = if (settingsPerformanceMode) 0xFF64E572.toInt() else 0xFF45F2FF.toInt()
+                    val perfColor = if (settingsPerformanceMode) 0xFF64E572.toInt() else KavvoroPalette.cyan
                     drawToggleRow(
                         canvas,
                         settingsPerformanceToggle,
@@ -1304,11 +1313,11 @@ object SettingsUiRenderer {
             }
             SettingsTab.SYSTEM -> {
                 if (!settingsLanguageButton.isEmpty) {
-                    drawNavRow(canvas, settingsLanguageButton, t("LANGUAGE"), selectedLanguageLabel, 0xFF45F2FF.toInt(), SettingsIconRenderer.SettingsIconId.LANGUAGE, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawNavRow(canvas, settingsLanguageButton, t("LANGUAGE"), selectedLanguageLabel, KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.LANGUAGE, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsLanguageButton.left, settingsLanguageButton.right, settingsLanguageButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsAccountButton.isEmpty) {
-                    drawNavRow(canvas, settingsAccountButton, t("ACCOUNT"), accountStatusLabel, 0xFF45F2FF.toInt(), SettingsIconRenderer.SettingsIconId.ACCOUNT, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawNavRow(canvas, settingsAccountButton, t("ACCOUNT"), accountStatusLabel, KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.ACCOUNT, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsAccountButton.left, settingsAccountButton.right, settingsAccountButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsResetButton.isEmpty) {
@@ -1317,19 +1326,19 @@ object SettingsUiRenderer {
             }
             SettingsTab.INFO -> {
                 if (!settingsAboutButton.isEmpty) {
-                    drawNavRow(canvas, settingsAboutButton, t("ABOUT MOONSOL STUDIOS"), "Kavvoro v$versionName", 0xFF45F2FF.toInt(), SettingsIconRenderer.SettingsIconId.ABOUT, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawNavRow(canvas, settingsAboutButton, t("ABOUT MOONSOL STUDIOS"), "Kavvoro v$versionName", KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.ABOUT, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsAboutButton.left, settingsAboutButton.right, settingsAboutButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsPrivacyButton.isEmpty) {
-                    drawNavRow(canvas, settingsPrivacyButton, t("PRIVACY POLICY"), t("Privacy details & terms"), 0xFF45F2FF.toInt(), SettingsIconRenderer.SettingsIconId.PRIVACY, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawNavRow(canvas, settingsPrivacyButton, t("PRIVACY POLICY"), t("Privacy details & terms"), KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.PRIVACY, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsPrivacyButton.left, settingsPrivacyButton.right, settingsPrivacyButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsTermsButton.isEmpty) {
-                    drawNavRow(canvas, settingsTermsButton, t("TERMS OF SERVICE"), t("Terms and conditions"), 0xFF45F2FF.toInt(), SettingsIconRenderer.SettingsIconId.TERMS, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawNavRow(canvas, settingsTermsButton, t("TERMS OF SERVICE"), t("Terms and conditions"), KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.TERMS, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsTermsButton.left, settingsTermsButton.right, settingsTermsButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsDataDeletionButton.isEmpty) {
-                    drawNavRow(canvas, settingsDataDeletionButton, t("DATA DELETION"), t("Erase all local app data"), 0xFFFFCF4A.toInt(), SettingsIconRenderer.SettingsIconId.DATA_DELETION, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawNavRow(canvas, settingsDataDeletionButton, t("DATA DELETION"), t("Erase all local app data"), KavvoroPalette.gold, SettingsIconRenderer.SettingsIconId.DATA_DELETION, true, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
                 }
             }
         }
@@ -1380,14 +1389,14 @@ object SettingsUiRenderer {
         if (lineLeftEnd > left + 8f * dp) {
             paint.shader = LinearGradient(
                 left, lineY, lineLeftEnd, lineY,
-                0x0045F2FF, 0xAA45F2FF.toInt(), Shader.TileMode.CLAMP
+                withAlpha(KavvoroPalette.cyan, 0), withAlpha(KavvoroPalette.cyan, 170), Shader.TileMode.CLAMP
             )
             canvas.drawLine(left, lineY, lineLeftEnd, lineY, paint)
 
             // Diamond tick at lineLeftEnd
             paint.shader = null
             paint.style = Paint.Style.FILL
-            paint.color = 0xFF45F2FF.toInt()
+            paint.color = KavvoroPalette.cyan
             val dSize = 2.2f * dp
             tempPath.reset()
             tempPath.moveTo(lineLeftEnd, lineY - dSize)
@@ -1402,14 +1411,14 @@ object SettingsUiRenderer {
             paint.strokeWidth = 1.2f * dp
             paint.shader = LinearGradient(
                 lineRightStart, lineY, right, lineY,
-                0xAA45F2FF.toInt(), 0x0045F2FF, Shader.TileMode.CLAMP
+                withAlpha(KavvoroPalette.cyan, 170), withAlpha(KavvoroPalette.cyan, 0), Shader.TileMode.CLAMP
             )
             canvas.drawLine(lineRightStart, lineY, right, lineY, paint)
 
             // Diamond tick at lineRightStart
             paint.shader = null
             paint.style = Paint.Style.FILL
-            paint.color = 0xFF45F2FF.toInt()
+            paint.color = KavvoroPalette.cyan
             val dSize = 2.2f * dp
             tempPath.reset()
             tempPath.moveTo(lineRightStart, lineY - dSize)
@@ -1503,7 +1512,7 @@ object SettingsUiRenderer {
         paint.strokeJoin = Paint.Join.MITER
         paint.strokeMiter = 4f
         paint.pathEffect = null
-        paint.color = 0xFF45F2FF.toInt()
+        paint.color = KavvoroPalette.cyan
         canvas.drawCircle(cx, cy - unit * 0.55f, unit * 0.72f, paint)
         tempPath.reset()
         tempPath.moveTo(cx - unit * 1.45f, cy + unit * 1.55f)
@@ -1534,7 +1543,7 @@ object SettingsUiRenderer {
         paint.pathEffect = null
         paint.shader = null
         paint.strokeWidth = 1.2f * dp
-        paint.color = 0xCC45F2FF.toInt()
+        paint.color = withAlpha(KavvoroPalette.cyan, 204)
         canvas.drawPath(tempPath, paint)
     }
 
