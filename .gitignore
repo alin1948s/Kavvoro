@@ -1,4 +1,5 @@
 .gradle/
+.kotlin/
 build/
 local.properties
 captures/
@@ -28,6 +29,13 @@ release/
 /verify-*.mp4
 
 # Root-level runtime and device-debug artifacts
+/*.png
+/*.webp
+/scratch/
+/temp_crops/
+/temp_*/
+/preview/
+/implementation_pack/
 /_qa_*.png
 /screen_verify*.png
 /screenshot_*.png

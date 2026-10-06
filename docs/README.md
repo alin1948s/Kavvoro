@@ -9,7 +9,10 @@ Current operational documents:
 - `localization-qa-matrix.md` — current catalog and visual QA coverage;
 - `localized-voice-inventory.md` — shipped voice-asset contract;
 - `play-console-compliance.md` — Play/Ads/privacy declarations;
-- `release-polish-checklist.md` — remaining release checks.
+- `release-polish-checklist.md` — remaining release checks;
+- `ui-design-audit-2026-09-23.md` — audited UI/design and accessibility findings
+  (Home localization parity, TalkBack virtual nodes, touch targets, motion, palette
+  tokens) with a prioritized implementation plan.
 
 `archive/` contains superseded plans and design records retained only for
 historical context. Archived documents may mention old paths, counts, or

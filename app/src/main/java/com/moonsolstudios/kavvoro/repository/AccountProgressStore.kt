@@ -3,6 +3,7 @@ package com.moonsolstudios.kavvoro.repository
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
+import com.moonsolstudios.kavvoro.model.GameMode
 import java.security.MessageDigest
 
 /**
@@ -27,18 +28,23 @@ class AccountProgressStore(context: Context) {
     fun activePreferences(): SharedPreferences = activePrefs
 
     /**
-     * Activates a player slot. The first authenticated player inherits existing
-     * guest progress so a pre-login session is not lost; later new players start
-     * with a clean slot.
+     * Activates a player slot. Local/guest progress is never replaced by an empty
+     * or older account slot. The first authenticated player inherits the current
+     * guest save; a later sign-in only switches away when that slot already has
+     * equal or richer gameplay progress. There is no Play Games cloud snapshot.
      */
     fun onSignedIn(playerId: String?): SharedPreferences {
         val normalized = playerId?.trim()?.takeIf { it.isNotEmpty() } ?: return activePrefs
         val target = profilePreferences(normalized)
-        if (!metadata.getBoolean(initializedKey(normalized), false)) {
-            if (metadata.getString(FIRST_ACCOUNT_ID_KEY, null) == null) {
-                copyPreferences(activePrefs, target)
-                metadata.edit { putString(FIRST_ACCOUNT_ID_KEY, normalized) }
-            }
+        val uninitialized = !metadata.getBoolean(initializedKey(normalized), false)
+        val firstAccount = metadata.getString(FIRST_ACCOUNT_ID_KEY, null) == null
+        if (uninitialized && firstAccount) {
+            copyPreferences(activePrefs, target)
+            metadata.edit { putString(FIRST_ACCOUNT_ID_KEY, normalized) }
+        } else if (shouldPreserveLocalProgress(activePrefs.all, target.all)) {
+            copyPreferences(activePrefs, target)
+        }
+        if (uninitialized) {
             metadata.edit { putBoolean(initializedKey(normalized), true) }
         }
         return switchTo(normalized)
@@ -124,6 +130,24 @@ class AccountProgressStore(context: Context) {
             GameProgressRepository.SETTINGS_SCREEN_SHAKE_KEY,
             GameProgressRepository.SETTINGS_PERFORMANCE_KEY
         )
+
+        internal fun gameplayScore(values: Map<String, *>): Int {
+            fun intVal(key: String): Int = (values[key] as? Int) ?: 0
+            val classic = maxOf(intVal(GameProgressRepository.progressKey(GameMode.CLASSIC)), intVal("unlocked_level"))
+            val chaos = intVal(GameProgressRepository.progressKey(GameMode.CHAOS))
+            val highest = intVal("highest_level_classic") + intVal("highest_level_chaos")
+            val streaks = intVal("streak_classic") + intVal("streak_chaos") +
+                intVal(GameProgressRepository.BEST_STREAK_KEY) + intVal("clear_streak")
+            val skins = values.keys.count { key ->
+                key.startsWith("skin_unlocked_") || key.startsWith("skin_purchased_")
+            }
+            return classic + chaos + highest + streaks + skins * 10
+        }
+
+        internal fun shouldPreserveLocalProgress(
+            local: Map<String, *>,
+            account: Map<String, *>
+        ): Boolean = gameplayScore(local) > gameplayScore(account)
 
         fun profilePreferencesName(profileId: String): String {
             val digest = MessageDigest.getInstance("SHA-256")

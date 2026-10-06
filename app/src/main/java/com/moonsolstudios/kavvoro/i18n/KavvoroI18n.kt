@@ -39,9 +39,11 @@ enum class KavvoroLanguage(
         /** Languages exposed in the in-game selector. SYSTEM remains a legacy
          * value so installs that stored it can still migrate to the device locale. */
         val selectableLanguages: List<KavvoroLanguage> = entries.filterNot { it == SYSTEM }
+        private val byCode: Map<String, KavvoroLanguage> = entries.associateBy { it.code }
 
         fun fromCode(code: String?): KavvoroLanguage {
-            return entries.firstOrNull { it.code == code } ?: SYSTEM
+            if (code == null) return SYSTEM
+            return byCode[code] ?: SYSTEM
         }
     }
 }
@@ -49,10 +51,31 @@ enum class KavvoroLanguage(
 object KavvoroI18n {
     const val PREF_KEY = "ui_language"
     private const val PREFS_NAME = "kavvoro_locale"
+    private const val UNSET_RAW_CODE = "__kavvoro_unset__"
+
+    @Volatile
+    private var cachedRawCode: String? = UNSET_RAW_CODE
+
+    @Volatile
+    private var cachedStoredLanguage: KavvoroLanguage = KavvoroLanguage.SYSTEM
+
+    @Volatile
+    private var cachedDefaultLocale: Locale? = null
+
+    @Volatile
+    private var cachedDeviceLanguage: KavvoroLanguage = KavvoroLanguage.EN
 
     fun selected(context: Context): KavvoroLanguage {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val stored = KavvoroLanguage.fromCode(prefs.getString(PREF_KEY, null))
+        val stored = if (cachedRawCode !== UNSET_RAW_CODE) {
+            cachedStoredLanguage
+        } else {
+            val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            val rawCode = prefs.getString(PREF_KEY, null)
+            KavvoroLanguage.fromCode(rawCode).also {
+                cachedStoredLanguage = it
+                cachedRawCode = rawCode
+            }
+        }
         return when (stored) {
             KavvoroLanguage.SYSTEM -> deviceLanguage()
             else -> stored
@@ -64,8 +87,11 @@ object KavvoroI18n {
     }
 
     internal fun deviceLanguage(locale: Locale = Locale.getDefault()): KavvoroLanguage {
+        if (locale === cachedDefaultLocale) {
+            return cachedDeviceLanguage
+        }
         val language = locale.language.lowercase(Locale.US)
-        return when (language) {
+        val resolved = when (language) {
             "ro" -> KavvoroLanguage.RO
             "es" -> KavvoroLanguage.ES
             "fr" -> KavvoroLanguage.FR
@@ -90,7 +116,7 @@ object KavvoroI18n {
             "zh" -> {
                 val script = locale.script.lowercase(Locale.US)
                 val country = locale.country.uppercase(Locale.US)
-                if (script.contains("hant") || country in listOf("TW", "HK", "MO")) {
+                if (script.contains("hant") || country == "TW" || country == "HK" || country == "MO") {
                     KavvoroLanguage.ZH_TW
                 } else {
                     KavvoroLanguage.ZH
@@ -98,9 +124,16 @@ object KavvoroI18n {
             }
             else -> KavvoroLanguage.EN
         }
+        if (locale === Locale.getDefault()) {
+            cachedDefaultLocale = locale
+            cachedDeviceLanguage = resolved
+        }
+        return resolved
     }
 
     fun setSelected(context: Context, language: KavvoroLanguage) {
+        cachedStoredLanguage = language
+        cachedRawCode = if (language == KavvoroLanguage.SYSTEM) null else language.code
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit {
             if (language == KavvoroLanguage.SYSTEM) remove(PREF_KEY)
             else putString(PREF_KEY, language.code)

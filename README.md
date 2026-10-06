@@ -41,6 +41,18 @@ vertical replays.
   locales; the capture tool now follows all 24 entries in the canonical enum.
   The remaining release gate is visual evidence for the five added locales and
   full review of tutorial, Collection, and result states.
+  Home copy resolves through the same catalog since 2026-09-23: `HomeCopy`
+  delegates all 15 strings to `KavvoroI18n.t` and is guarded by
+  `HomeCopyCatalogCoverageTest`. Before that change Home carried its own table
+  covering only 7 languages and fell back to English for the other 17.
+- UI audit: `docs/ui-design-audit-2026-09-23.md` records the audited UI/design
+  and accessibility findings with their fixes, and is indexed from
+  `docs/README.md`. Home header touch targets now reach a full 48dp through
+  derived touch rects that leave the reference composition untouched
+  (`HomeTouchTargetTest`), and the Home TalkBack provider publishes nodes only
+  while the Home surface is on screen instead of announcing stale Home controls
+  over Settings, Language, and gameplay. Per-screen accessibility node sets and
+  the motion, palette, and contrast items remain open.
 - Store package: the default Google Play listing has its icon, feature graphic,
   videos, seven phone screenshots, seven dedicated 7-inch screenshots, seven
   dedicated 10-inch screenshots, and the complete Play Games on PC image set.
@@ -73,6 +85,7 @@ Kavvoro/
 ├── tools/                repeatable generators, validators, and capture tools
 ├── web/                  hosted project support files
 ├── handoff/              ignored temporary delivery output; policy only in Git
+├── AGENTS.md             mandatory architectural & i18n rules for AI agents
 ├── README.md             project status, architecture, and contribution rules
 └── *.gradle.kts          build configuration
 ```
@@ -94,11 +107,12 @@ match the directory.
 | `model` | dependency-light domain and UI state values; no Android services |
 | `engine` | physics, level generation, scoring, and gameplay rules |
 | `repository` | canonical catalog/progress persistence access |
-| `i18n` | language selection, catalogs, formatting, and translated copy |
-| `ui/layout` | deterministic geometry and locale-aware layout policy |
-| `ui/render` | Canvas drawing; reads state but does not own persistence |
-| `ui/controller` | touch interpretation and screen actions |
-| `ui/tutorial` | tutorial-only layout and input policy |
+| `i18n` | language selection, `i18n/catalog/*Translations.kt` catalogs, formatting, and translated copy |
+| `ui/screens/<screen>` | isolated per-screen renderers, layout calculators, and touch controllers (`home`, `gameplay`, `outcome`, `collection`, `leaderboards`, `settings`, `language`, `ad`, `modals`) |
+| `ui/layout` | shared locale-aware layout policy |
+| `ui/render` | shared Canvas primitives, brand header, and resource caching |
+| `ui/controller` | shared game-loop director and adaptive quality controller |
+| `ui/tutorial` | tutorial-only layout, renderer, and input policy |
 | `audio`, `ads`, `billing`, `playgames`, `privacy`, `share` | bounded platform integrations |
 
 `ChaosGameView` is the runtime coordinator and current SurfaceView state owner.

@@ -19,16 +19,31 @@ python .\tools\screenshot-capture\retake_age_check_11.py
 
 Scriptul capturează setul standard actual în `screenshots/age-check`.
 
+## Captura Settings
+
+```powershell
+python .\tools\screenshot-capture\retake_settings_11.py
+```
+
+Scriptul capturează setul standard actual în `screenshots/settings`, pe tab-ul SYSTEM.
+Numele include DPI-ul, de exemplu `phone-360x800-160dpi.png`, `phone-1080x2400-420dpi.png`, `tablet-1600x2560-320dpi.png`.
+
+- telefoane: `360x800@160`, `412x915@160`, `480x854@160`, `720x1280@320`, `1080x2400@420`
+- tablete: `600x1024@160`, `800x1280@160`, `1024x1366@160`, `1200x1920@240`, `1536x2048@240`, `1600x2560@320`
+
+Lansează debug extra `screen=settings` și `tab=system`. Densitatea este per-rezoluție, nu 160 dpi global: telefoanele 360/412/480 rămân 160 dpi (1 px = 1 dp), iar 720/1080/1200/1536/1600 folosesc DPI realist. Altfel 1600×2560 ar fi tratat ca 1600 dp (card centrat, text mic) în loc de ~800 dp cât are un Pixel Tablet.
+
 ## Captura Home Screen
 
 ```powershell
 python .\tools\screenshot-capture\retake_home_11.py
 ```
 
-Scriptul capturează setul standard actual în `screenshots/home`:
+Scriptul capturează setul standard actual în `screenshots/home`.
+Numele include DPI-ul, de exemplu `phone-360x800-160dpi.png`.
 
-- telefoane: `360x800`, `412x915`, `480x854`, `720x1280`, `1080x2400`
-- tablete: `600x1024`, `800x1280`, `1024x1366`, `1200x1920`, `1536x2048`, `1600x2560`
+- telefoane: `360x800@160`, `412x915@160`, `480x854@160`, `720x1280@320`, `1080x2400@420`
+- tablete: `600x1024@160`, `800x1280@160`, `1024x1366@160`, `1200x1920@240`, `1536x2048@240`, `1600x2560@320`
 
 Funcționalități și mecanisme de siguranță:
 1. **Bypass automat Age Gate**: Injectează fixture-ul sintetic

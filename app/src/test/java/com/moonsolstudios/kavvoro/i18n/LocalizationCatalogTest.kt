@@ -44,6 +44,58 @@ class LocalizationCatalogTest {
     }
 
     @Test
+    fun everyHomeKeyBelongsToTheUnifiedRenderedInventory() {
+        assertTrue(
+            "Home keys missing from unified inventory",
+            LocalizationCatalog.requiredKeys.containsAll(HomeCopy.requiredKeys)
+        )
+    }
+
+    @Test
+    fun everyModuleKeySetIsStrictlyDisjoint() {
+        val modules = listOf(
+            "renderedSourceKeys" to LocalizationCatalog.renderedSourceKeys,
+            "TutorialCopy.requiredKeys" to TutorialCopy.requiredKeys,
+            "UiTranslations.requiredKeys" to UiTranslations.requiredKeys,
+            "HomeCopy.requiredKeys" to HomeCopy.requiredKeys
+        )
+        for (i in modules.indices) {
+            for (j in i + 1 until modules.size) {
+                val (nameA, setA) = modules[i]
+                val (nameB, setB) = modules[j]
+                val overlap = setA.intersect(setB)
+                assertTrue(
+                    "Overlap between $nameA and $nameB: $overlap",
+                    overlap.isEmpty()
+                )
+            }
+        }
+    }
+
+    @Test
+    fun everyStaticTCallInCodebaseBelongsToTheStrictCatalog() {
+        val srcDir = java.io.File("src/main/java")
+        if (!srcDir.isDirectory) return
+        val tCallRegex = Regex("""\bt\(\s*(?:[a-zA-Z0-9_.]+\s*,\s*)?"((?:\\.|[^"\\])*)"\s*\)""")
+        val missing = mutableListOf<String>()
+        srcDir.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" }
+            .forEach { file ->
+                val text = file.readText(Charsets.UTF_8)
+                tCallRegex.findAll(text).forEach { match ->
+                    val key = match.groupValues[1]
+                    if ('$' !in key && key !in LocalizationCatalog.requiredKeys) {
+                        missing += "${file.relativeTo(srcDir).path}: \"$key\""
+                    }
+                }
+            }
+        assertTrue(
+            "Uncataloged t(...) calls found in source: $missing",
+            missing.isEmpty()
+        )
+    }
+
+    @Test
     fun proceduralUiVocabularyIsExplicitlyLocalizedForEveryLanguage() {
         assertTrue(LocalizationCatalog.requiredKeys.containsAll(UiTranslations.requiredKeys))
         KavvoroLanguage.entries

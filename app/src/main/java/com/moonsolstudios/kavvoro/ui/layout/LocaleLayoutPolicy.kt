@@ -23,13 +23,6 @@ object LocaleLayoutPolicy {
     fun safeHorizontalPadding(basePadding: Float, language: KavvoroLanguage): Float =
         basePadding + if (isRtl(language)) RTL_EXTRA_PADDING else 0f
 
-    fun safeContentWidth(
-        containerWidth: Float,
-        reservedWidth: Float,
-        language: KavvoroLanguage
-    ): Float = (containerWidth - reservedWidth - if (isRtl(language)) RTL_EXTRA_PADDING * 2f else 0f)
-        .coerceAtLeast(0f)
-
     fun minimumTextSizeDp(language: KavvoroLanguage, role: LocaleTextRole): Float {
         return when (language) {
             KavvoroLanguage.AR -> when (role) {

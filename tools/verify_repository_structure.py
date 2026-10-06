@@ -14,6 +14,7 @@ ALLOWED_TRACKED_ROOT_FILES = {
     ".firebaserc",
     ".gitattributes",
     ".gitignore",
+    "AGENTS.md",
     "README.md",
     "build.gradle.kts",
     "firebase.json",

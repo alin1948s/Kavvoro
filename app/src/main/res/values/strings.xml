@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Brainrot Chaos: Kavvoro</string>
+    <string name="app_name" translatable="false">Brainrot Chaos: Kavvoro</string>
     <string name="game_services_project_id" translatable="false">101451625405</string>
     <string name="leaderboard_classic_level_id" translatable="false">CgkIvefz9_kCEAIQAQ</string>
     <string name="leaderboard_chaos_level_id" translatable="false">CgkIvefz9_kCEAIQAg</string>

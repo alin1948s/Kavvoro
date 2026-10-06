@@ -45,22 +45,33 @@ data class Hazard(
     val speed: Float = 0f,
     val phase: Float = 0f
 ) {
-    fun positionAt(elapsedSeconds: Float): Point2 {
-        if (motion == HazardMotion.STATIC || travel <= 0f || speed == 0f) return center
+    fun positionXAt(elapsedSeconds: Float): Float {
+        if (motion == HazardMotion.STATIC || travel <= 0f || speed == 0f) return center.x
         val time = elapsedSeconds * speed + phase
         return when (motion) {
-            HazardMotion.STATIC -> center
-            HazardMotion.HORIZONTAL -> Point2(center.x + sin(time) * travel, center.y)
-            HazardMotion.VERTICAL -> Point2(center.x, center.y + sin(time) * travel)
-            HazardMotion.ORBIT -> Point2(
-                center.x + cos(time) * travel,
-                center.y + sin(time) * travel
-            )
-            HazardMotion.FIGURE_EIGHT -> Point2(
-                center.x + sin(time) * travel,
-                center.y + sin(time * 2f) * travel * 0.5f
-            )
+            HazardMotion.STATIC,
+            HazardMotion.VERTICAL -> center.x
+            HazardMotion.HORIZONTAL,
+            HazardMotion.FIGURE_EIGHT -> center.x + sin(time) * travel
+            HazardMotion.ORBIT -> center.x + cos(time) * travel
         }
+    }
+
+    fun positionYAt(elapsedSeconds: Float): Float {
+        if (motion == HazardMotion.STATIC || travel <= 0f || speed == 0f) return center.y
+        val time = elapsedSeconds * speed + phase
+        return when (motion) {
+            HazardMotion.STATIC,
+            HazardMotion.HORIZONTAL -> center.y
+            HazardMotion.VERTICAL,
+            HazardMotion.ORBIT -> center.y + sin(time) * travel
+            HazardMotion.FIGURE_EIGHT -> center.y + sin(time * 2f) * travel * 0.5f
+        }
+    }
+
+    fun positionAt(elapsedSeconds: Float): Point2 {
+        if (motion == HazardMotion.STATIC || travel <= 0f || speed == 0f) return center
+        return Point2(positionXAt(elapsedSeconds), positionYAt(elapsedSeconds))
     }
 
     val isMoving: Boolean
@@ -134,7 +145,12 @@ data class LevelSpec(
     val curses: List<CurseSpec> = emptyList(),
     val mascotName: String = "KAVVI",
     val tutorialHint: String = ""
-)
+) {
+    val curseMask: Int = curses.fold(0) { acc, curse -> acc or (1 shl curse.type.ordinal) }
+    val movingHazardCount: Int = hazards.count { it.isMoving }
+
+    fun hasCurse(type: CurseType): Boolean = (curseMask and (1 shl type.ordinal)) != 0
+}
 
 fun Point2.coerceToPlayableLane(extraMargin: Float = 0f): Point2 {
     val minX = (STAGE_SAFE_CENTER_X + extraMargin).coerceAtMost(STAGE_WIDTH * 0.5f)

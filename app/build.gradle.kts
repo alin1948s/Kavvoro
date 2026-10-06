@@ -10,6 +10,7 @@ val releaseKeystoreProperties = Properties().apply {
 
 plugins {
     id("com.android.application")
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
 }
@@ -55,7 +56,7 @@ android {
             manifestPlaceholders["admobApplicationId"] = "ca-app-pub-3940256099942544~3347511713"
             buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
             buildConfigField("String", "ADMOB_REWARDED_CONTINUE_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
-            buildConfigField("boolean", "FORCE_UNLOCK_ALL_BRAINBALLS", "true")
+            buildConfigField("boolean", "FORCE_UNLOCK_ALL_BRAINBALLS", "false")
         }
         release {
             signingConfig = signingConfigs.findByName("release")
@@ -77,6 +78,7 @@ android {
 
     buildFeatures {
         buildConfig = true
+        compose = true
     }
 
     compileOptions {
@@ -89,9 +91,24 @@ android {
             jvmTarget.set(JvmTarget.JVM_17)
         }
     }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
 }
 
 dependencies {
+    val composeBom = platform("androidx.compose:compose-bom:2024.10.01")
+    implementation(composeBom)
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.activity:activity-compose:1.9.2")
+    debugImplementation("androidx.compose.ui:ui-tooling")
+
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.activity:activity-ktx:1.9.2")
     implementation(platform("com.google.firebase:firebase-bom:34.15.0"))

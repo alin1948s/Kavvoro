@@ -28,8 +28,14 @@ class PlayGamesAccountController(
     @Volatile
     private var currentProfileId: String? = null
 
+    @Volatile
+    private var currentDisplayName: String? = null
+
     override val profileId: String?
         get() = currentProfileId
+
+    override val displayName: String?
+        get() = currentDisplayName
 
     private var stateListener: ((AccountState) -> Unit)? = null
 
@@ -50,9 +56,10 @@ class PlayGamesAccountController(
         PlayGames.getGamesSignInClient(activity).isAuthenticated
             .addOnCompleteListener(activity) { task ->
                 if (task.isSuccessful && task.result.isAuthenticated) {
-                    loadProfileId { publish(AccountState.SIGNED_IN) }
+                    loadPlayerProfile { publish(AccountState.SIGNED_IN) }
                 } else {
                     currentProfileId = null
+                    currentDisplayName = null
                     publish(AccountState.SIGNED_OUT)
                 }
             }
@@ -67,9 +74,10 @@ class PlayGamesAccountController(
         PlayGames.getGamesSignInClient(activity).signIn()
             .addOnCompleteListener(activity) { task ->
                 if (task.isSuccessful && task.result.isAuthenticated) {
-                    loadProfileId { publish(AccountState.SIGNED_IN) }
+                    loadPlayerProfile { publish(AccountState.SIGNED_IN) }
                 } else {
                     currentProfileId = null
+                    currentDisplayName = null
                     publish(AccountState.SIGNED_OUT)
                     Toast.makeText(
                         activity,
@@ -93,7 +101,7 @@ class PlayGamesAccountController(
         PlayGames.getGamesSignInClient(activity).isAuthenticated
             .addOnCompleteListener(activity) { task ->
                 if (task.isSuccessful && task.result.isAuthenticated) {
-                    loadProfileId {
+                    loadPlayerProfile {
                         publish(AccountState.SIGNED_IN)
                         onAuthenticated()
                     }
@@ -102,12 +110,13 @@ class PlayGamesAccountController(
                     PlayGames.getGamesSignInClient(activity).signIn()
                         .addOnCompleteListener(activity) { signInTask ->
                             if (signInTask.isSuccessful && signInTask.result.isAuthenticated) {
-                                loadProfileId {
+                                loadPlayerProfile {
                                     publish(AccountState.SIGNED_IN)
                                     onAuthenticated()
                                 }
                             } else {
                                 currentProfileId = null
+                                currentDisplayName = null
                                 publish(AccountState.SIGNED_OUT)
                                 onFailure()
                             }
@@ -121,13 +130,16 @@ class PlayGamesAccountController(
         stateListener?.invoke(next)
     }
 
-    private fun loadProfileId(onLoaded: () -> Unit) {
-        PlayGames.getPlayersClient(activity).currentPlayerId
+    private fun loadPlayerProfile(onLoaded: () -> Unit) {
+        PlayGames.getPlayersClient(activity).currentPlayer
             .addOnCompleteListener(activity) { task ->
-                currentProfileId = if (task.isSuccessful) {
-                    task.result?.takeIf { it.isNotBlank() }
+                if (task.isSuccessful) {
+                    val player = task.result
+                    currentProfileId = player?.playerId?.takeIf { it.isNotBlank() }
+                    currentDisplayName = player?.displayName?.takeIf { it.isNotBlank() }
                 } else {
-                    null
+                    currentProfileId = null
+                    currentDisplayName = null
                 }
                 if (currentProfileId == null) {
                     Log.w(TAG, "Play Games authenticated without a player ID; using guest progress")

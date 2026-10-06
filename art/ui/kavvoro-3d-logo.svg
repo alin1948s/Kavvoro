@@ -1,0 +1,19 @@
+<svg viewBox="0 0 320 80" width="320" height="80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Eyebrow: BRAINROT CHAOS -->
+  <circle cx="6" cy="14" r="5" fill="#00E5FF" opacity="0.25" />
+  <circle cx="6" cy="14" r="2.5" fill="#00E5FF" />
+  <circle cx="6" cy="14" r="1.2" fill="#FFFFFF" />
+
+  <text x="16" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="900" letter-spacing="2.8" fill="#00E5FF">BRAINROT</text>
+  <circle cx="107" cy="14" r="2" fill="#FFD700" />
+  <text x="117" y="18" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="900" letter-spacing="2.8" fill="#FF2E93">CHAOS</text>
+
+  <!-- Main Title: KAVVORO in Native Bold Sans-Serif -->
+  <text x="4" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="900" letter-spacing="3" fill="#01040A" opacity="0.9" dx="0" dy="2.5">KAVVORO</text>
+  <text x="4" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="900" letter-spacing="3" fill="none" stroke="#07111D" stroke-width="4">KAVVORO</text>
+  <text x="4" y="58" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="44" font-weight="900" letter-spacing="3" fill="#FFFFFF">KAVVORO</text>
+
+  <!-- Accent Rail at Base -->
+  <rect x="4" y="67" width="138" height="2" rx="1" fill="#00E5FF" />
+  <rect x="146" y="67" width="138" height="2" rx="1" fill="#FF2E93" />
+</svg>

@@ -4,7 +4,7 @@ enum class GameMode(val label: String) {
     CLASSIC("CLASSIC"),
     CHAOS("CHAOS");
 
-    fun menuTitle(t: (String) -> String = { it }): String = when (this) {
+    fun menuTitle(t: (String) -> String): String = when (this) {
         CLASSIC -> t("CLASSIC").uppercase()
         CHAOS -> t("CHAOS").uppercase()
     }

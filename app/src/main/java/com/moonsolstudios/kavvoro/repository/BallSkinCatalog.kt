@@ -117,4 +117,11 @@ BallSkin("prism_king", "VORO PRIME", "unlimited aura final boss", 0xFFF7F4FF.toI
         "aura_titan" to R.drawable.brainball_aura_titan,
         "final_voro" to R.drawable.brainball_final_voro
     )
+
+    private val SKIN_BY_ID: Map<String, BallSkin> = ALL_SKINS.associateBy { it.id }
+    private val INDEX_BY_ID: Map<String, Int> = ALL_SKINS.mapIndexed { index, skin -> skin.id to index }.toMap()
+
+    fun byId(id: String): BallSkin = SKIN_BY_ID[id] ?: ALL_SKINS.first()
+
+    fun indexOf(id: String): Int = INDEX_BY_ID[id] ?: 0
 }

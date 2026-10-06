@@ -10,7 +10,9 @@ import android.graphics.RectF
  */
 object CyberShapeRenderer {
 
-    private val tempPath = Path()
+    private val chamferRectPath = Path()
+    private val dualRailLeftPath = Path()
+    private val dualRailRightPath = Path()
 
     fun drawCyberChamferRect(
         canvas: Canvas,
@@ -19,19 +21,19 @@ object CyberShapeRenderer {
         notch: Float,
         fillPaint: Paint
     ) {
-        tempPath.reset()
+        chamferRectPath.rewind()
         val c = corner
         val n = notch * 0.85f
-        tempPath.moveTo(rect.left + c + n, rect.top)
-        tempPath.lineTo(rect.right - c - n, rect.top)
-        tempPath.lineTo(rect.right, rect.top + c + n)
-        tempPath.lineTo(rect.right, rect.bottom - c - n)
-        tempPath.lineTo(rect.right - c - n, rect.bottom)
-        tempPath.lineTo(rect.left + c + n, rect.bottom)
-        tempPath.lineTo(rect.left, rect.bottom - c - n)
-        tempPath.lineTo(rect.left, rect.top + c + n)
-        tempPath.close()
-        canvas.drawPath(tempPath, fillPaint)
+        chamferRectPath.moveTo(rect.left + c + n, rect.top)
+        chamferRectPath.lineTo(rect.right - c - n, rect.top)
+        chamferRectPath.lineTo(rect.right, rect.top + c + n)
+        chamferRectPath.lineTo(rect.right, rect.bottom - c - n)
+        chamferRectPath.lineTo(rect.right - c - n, rect.bottom)
+        chamferRectPath.lineTo(rect.left + c + n, rect.bottom)
+        chamferRectPath.lineTo(rect.left, rect.bottom - c - n)
+        chamferRectPath.lineTo(rect.left, rect.top + c + n)
+        chamferRectPath.close()
+        canvas.drawPath(chamferRectPath, fillPaint)
     }
 
     fun drawDualRailCyberBorder(
@@ -51,24 +53,43 @@ object CyberShapeRenderer {
         paint.strokeWidth = strokeW
 
         paint.color = cyan
-        tempPath.reset()
-        tempPath.moveTo(midX, rect.top)
-        tempPath.lineTo(rect.left + c + n, rect.top)
-        tempPath.lineTo(rect.left, rect.top + c + n)
-        tempPath.lineTo(rect.left, rect.bottom - c - n)
-        tempPath.lineTo(rect.left + c + n, rect.bottom)
-        tempPath.lineTo(midX, rect.bottom)
-        canvas.drawPath(tempPath, paint)
+        dualRailLeftPath.rewind()
+        dualRailLeftPath.moveTo(midX, rect.top)
+        dualRailLeftPath.lineTo(rect.left + c + n, rect.top)
+        dualRailLeftPath.lineTo(rect.left, rect.top + c + n)
+        dualRailLeftPath.lineTo(rect.left, rect.bottom - c - n)
+        dualRailLeftPath.lineTo(rect.left + c + n, rect.bottom)
+        dualRailLeftPath.lineTo(midX, rect.bottom)
+        canvas.drawPath(dualRailLeftPath, paint)
 
         paint.color = pink
-        tempPath.reset()
-        tempPath.moveTo(midX, rect.top)
-        tempPath.lineTo(rect.right - c - n, rect.top)
-        tempPath.lineTo(rect.right, rect.top + c + n)
-        tempPath.lineTo(rect.right, rect.bottom - c - n)
-        tempPath.lineTo(rect.right - c - n, rect.bottom)
-        tempPath.lineTo(midX, rect.bottom)
-        canvas.drawPath(tempPath, paint)
+        dualRailRightPath.rewind()
+        dualRailRightPath.moveTo(midX, rect.top)
+        dualRailRightPath.lineTo(rect.right - c - n, rect.top)
+        dualRailRightPath.lineTo(rect.right, rect.top + c + n)
+        dualRailRightPath.lineTo(rect.right, rect.bottom - c - n)
+        dualRailRightPath.lineTo(rect.right - c - n, rect.bottom)
+        dualRailRightPath.lineTo(midX, rect.bottom)
+        canvas.drawPath(dualRailRightPath, paint)
     }
 
+    fun createChamferPath(
+        path: Path,
+        rect: RectF,
+        corner: Float,
+        notch: Float
+    ) {
+        path.reset()
+        val c = corner
+        val n = notch * 0.85f
+        path.moveTo(rect.left + c + n, rect.top)
+        path.lineTo(rect.right - c - n, rect.top)
+        path.lineTo(rect.right, rect.top + c + n)
+        path.lineTo(rect.right, rect.bottom - c - n)
+        path.lineTo(rect.right - c - n, rect.bottom)
+        path.lineTo(rect.left + c + n, rect.bottom)
+        path.lineTo(rect.left, rect.bottom - c - n)
+        path.lineTo(rect.left, rect.top + c + n)
+        path.close()
+    }
 }

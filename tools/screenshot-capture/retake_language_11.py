@@ -5,7 +5,7 @@ import time
 import numpy as np
 from PIL import Image
 
-from capture_support import ADB, PACKAGE, PRIVACY_XML, PROJECT_ROOT, TARGETS
+from capture_support import ADB, PACKAGE, PRIVACY_XML, PROJECT_ROOT, TARGETS, restore_emulator_display
 
 OUTPUT = PROJECT_ROOT / "screenshots" / "language"
 
@@ -128,11 +128,10 @@ def main() -> None:
     run_adb("shell", "wm", "dismiss-keyguard")
     run_adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
     run_adb("shell", "settings", "put", "system", "user_rotation", "1")
-    run_adb("shell", "wm", "density", "320")
-
     print(f"Capturing {len(TARGETS)} Language Screen resolutions to {OUTPUT}...", flush=True)
     try:
-        for name, width, height in TARGETS:
+        for name, width, height, density in TARGETS:
+            run_adb("shell", "wm", "density", str(density))
             t0 = time.monotonic()
             run_adb("shell", "wm", "size", f"{height}x{width}")
             wait_for_viewport(width, height)
@@ -143,10 +142,7 @@ def main() -> None:
             elapsed = time.monotonic() - t0
             print(f"-> [PASS] {name:20s} ({width}x{height}) {len(png_bytes):7d} bytes in {elapsed:4.1f}s", flush=True)
     finally:
-        run_adb("shell", "wm", "size", "reset")
-        run_adb("shell", "wm", "density", "reset")
-        run_adb("shell", "am", "force-stop", PACKAGE)
-        run_adb("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
+        restore_emulator_display(lambda *args: run_adb(*args))
         print("ALL DONE! Emulator restored.", flush=True)
 
 

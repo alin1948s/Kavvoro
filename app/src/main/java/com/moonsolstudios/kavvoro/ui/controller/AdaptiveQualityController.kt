@@ -74,13 +74,37 @@ object AdaptiveQualityController {
         settingsPerformanceMode: Boolean,
         profile: RenderProfile,
         adaptiveQuality: Float
-    ): Boolean = settingsPerformanceMode || profile == RenderProfile.LOW || adaptiveQuality < 0.64f
+    ): Boolean = if (settingsPerformanceMode) {
+        true
+    } else {
+        adaptiveQuality < 0.25f
+    }
+
+    fun isRichEffects(
+        settingsPerformanceMode: Boolean,
+        profile: RenderProfile,
+        adaptiveQuality: Float
+    ): Boolean = if (settingsPerformanceMode) {
+        false
+    } else {
+        adaptiveQuality >= 0.30f
+    }
 
     fun isRichEffects(profile: RenderProfile, adaptiveQuality: Float): Boolean =
-        profile != RenderProfile.LOW && adaptiveQuality >= 0.8f
+        isRichEffects(false, profile, adaptiveQuality)
+
+    fun isFullEffects(
+        settingsPerformanceMode: Boolean,
+        profile: RenderProfile,
+        adaptiveQuality: Float
+    ): Boolean = if (settingsPerformanceMode) {
+        false
+    } else {
+        adaptiveQuality >= 0.35f
+    }
 
     fun isFullEffects(profile: RenderProfile, adaptiveQuality: Float): Boolean =
-        profile == RenderProfile.HIGH && adaptiveQuality >= 0.94f
+        isFullEffects(false, profile, adaptiveQuality)
 
     fun detectRenderProfile(): RenderProfile {
         val deviceText = listOf(

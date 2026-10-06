@@ -29,6 +29,7 @@ enum class MenuButton {
     LEADERBOARDS,
     VAULT,
     COLLECTION,
+    DAILY_RIFT,
     SETTINGS,
     PRIVACY,
     LANGUAGE,
@@ -50,10 +51,20 @@ enum class ButtonId {
     AD_CONTINUE
 }
 
+enum class SettingsTab {
+    AUDIO,
+    GAMEPLAY,
+    SYSTEM,
+    INFO
+}
+
 enum class SettingsButton {
     NONE,
     BACK,
-    HEADER_GEAR,
+    TAB_AUDIO,
+    TAB_GAMEPLAY,
+    TAB_SYSTEM,
+    TAB_INFO,
     MASTER_VOLUME,
     MUSIC_VOLUME,
     SFX_VOLUME,
@@ -75,3 +86,11 @@ enum class AdAction {
     CONTINUE_AFTER_FAIL,
     RESUME_RUN
 }
+
+enum class DailyRiftButton {
+    NONE,
+    CLAIM,
+    ACTION,
+    CLOSE
+}
+

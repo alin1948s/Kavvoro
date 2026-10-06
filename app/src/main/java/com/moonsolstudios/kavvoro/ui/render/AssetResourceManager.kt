@@ -12,14 +12,96 @@ import com.moonsolstudios.kavvoro.R
 import com.moonsolstudios.kavvoro.engine.BallPower
 import com.moonsolstudios.kavvoro.model.BallSkin
 import com.moonsolstudios.kavvoro.repository.BallSkinCatalog
+import android.graphics.BlurMaskFilter
+import android.graphics.Typeface
+import android.os.Build
 import kotlin.math.max
 
 object AssetResourceManager {
 
+    var oxaniumTypeface: Typeface? = null
+    var spaceGroteskTypeface: Typeface? = null
+    var manropeTypeface: Typeface? = null
+
+    private var oxaniumBoldTypeface: Typeface? = null
+    private var oxaniumNormalTypeface: Typeface? = null
+    private var oxaniumMediumTypeface: Typeface? = null
+    private var spaceGroteskBoldTypeface: Typeface? = null
+    private var spaceGroteskExtraBoldTypeface: Typeface? = null
+    private val blurFilterCache = HashMap<Int, BlurMaskFilter>(64)
+
+    private fun createWeightedTypeface(base: Typeface, weight: Int): Typeface {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            Typeface.create(base, weight, false)
+        } else {
+            Typeface.create(base, if (weight >= 600) Typeface.BOLD else Typeface.NORMAL)
+        }
+    }
+
+    fun initCustomTypefaces(oxanium: Typeface?, spaceGrotesk: Typeface?, manrope: Typeface?) {
+        oxaniumTypeface = oxanium
+        spaceGroteskTypeface = spaceGrotesk
+        manropeTypeface = manrope
+        oxaniumBoldTypeface = oxanium?.let { Typeface.create(it, Typeface.BOLD) }
+        oxaniumNormalTypeface = oxanium?.let { Typeface.create(it, Typeface.NORMAL) }
+        oxaniumMediumTypeface = oxanium?.let { createWeightedTypeface(it, 500) }
+        spaceGroteskBoldTypeface = spaceGrotesk?.let { Typeface.create(it, Typeface.BOLD) }
+        spaceGroteskExtraBoldTypeface = spaceGrotesk?.let { createWeightedTypeface(it, 800) }
+    }
+
+    fun requireSpaceGrotesk(): Typeface {
+        val face = spaceGroteskTypeface
+        if (com.moonsolstudios.kavvoro.BuildConfig.DEBUG) {
+            checkNotNull(face) {
+                "Space Grotesk must be loaded for Home UI"
+            }
+        }
+        return face ?: Typeface.DEFAULT
+    }
+
+    fun requireOxanium(): Typeface {
+        val face = oxaniumTypeface
+        if (com.moonsolstudios.kavvoro.BuildConfig.DEBUG) {
+            checkNotNull(face) {
+                "Oxanium must be loaded for Home UI"
+            }
+        }
+        return face ?: Typeface.DEFAULT
+    }
+
+    fun oxaniumBold(): Typeface =
+        oxaniumBoldTypeface ?: Typeface.create(requireOxanium(), Typeface.BOLD).also { oxaniumBoldTypeface = it }
+
+    fun oxaniumNormal(): Typeface =
+        oxaniumNormalTypeface ?: Typeface.create(requireOxanium(), Typeface.NORMAL).also { oxaniumNormalTypeface = it }
+
+    fun oxaniumMedium(): Typeface =
+        oxaniumMediumTypeface ?: createWeightedTypeface(requireOxanium(), 500).also { oxaniumMediumTypeface = it }
+
+    fun spaceGroteskBold(): Typeface =
+        spaceGroteskBoldTypeface ?: Typeface.create(requireSpaceGrotesk(), Typeface.BOLD).also { spaceGroteskBoldTypeface = it }
+
+    fun spaceGroteskExtraBold(): Typeface =
+        spaceGroteskExtraBoldTypeface ?: createWeightedTypeface(requireSpaceGrotesk(), 800).also { spaceGroteskExtraBoldTypeface = it }
+
+    fun cachedNormalBlur(radius: Float): BlurMaskFilter? {
+        val bucket = (radius * 4f + 0.5f).toInt()
+        if (bucket <= 0) return null
+        blurFilterCache[bucket]?.let { return it }
+        if (blurFilterCache.size >= 128) {
+            blurFilterCache.clear()
+        }
+        return BlurMaskFilter(bucket * 0.25f, BlurMaskFilter.Blur.NORMAL).also {
+            blurFilterCache[bucket] = it
+        }
+    }
+
     val WORLD_ART_RESOURCES = mapOf(
         "bg_menu" to R.drawable.world_bg_menu,
+        "bg_mode_select" to R.drawable.bg_mode_select,
+        "card_frame_classic" to R.drawable.card_frame_classic,
+        "card_frame_chaos" to R.drawable.card_frame_chaos,
         "bg_language" to R.drawable.bg_language,
-        "bg_tutorial" to R.drawable.world_bg_tutorial,
         "bg_tutorial_classic" to R.drawable.world_bg_tutorial_classic,
         "bg_tutorial_chaos" to R.drawable.world_bg_tutorial_chaos,
         "bg_classic" to R.drawable.world_bg_classic,
@@ -51,52 +133,56 @@ object AssetResourceManager {
         "ui_restore" to R.drawable.ui_icon_restore,
         "ui_sound" to R.drawable.ui_icon_sound,
         "ui_music" to R.drawable.ui_icon_music,
-        "home_background" to R.drawable.home_background,
-        "home_portal_back" to R.drawable.home_portal_back,
-        "home_platform" to R.drawable.home_platform,
-        "home_portal_platform" to R.drawable.home_portal_platform,
-        "home_portal_front" to R.drawable.home_portal_front,
-        "home_portal_front_fx" to R.drawable.home_portal_front_fx,
-        "home_play_cta_frame" to R.drawable.home_play_cta_frame,
-        "home_rift_status_frame" to R.drawable.home_rift_status_frame,
-        "brand_kavvoro" to R.drawable.brand_kavvoro,
-        "lang_header_frame" to R.drawable.lang_header_frame,
-        "lang_diamond" to R.drawable.lang_diamond,
-        "lang_back_button" to R.drawable.lang_back_button,
-        "lang_card_selected" to R.drawable.lang_card_selected,
-        "lang_card_left" to R.drawable.lang_card_left,
-        "lang_card_right" to R.drawable.lang_card_right,
-        "lang_radio_selected" to R.drawable.lang_radio_selected,
-        "lang_radio_unselected" to R.drawable.lang_radio_unselected,
-        "lang_footer_panel" to R.drawable.lang_footer_panel,
-        "flag_badge_en" to R.drawable.flag_badge_en,
-        "flag_badge_ro" to R.drawable.flag_badge_ro,
-        "flag_badge_es" to R.drawable.flag_badge_es,
-        "flag_badge_fr" to R.drawable.flag_badge_fr,
-        "flag_badge_de" to R.drawable.flag_badge_de,
-        "flag_badge_it" to R.drawable.flag_badge_it,
-        "flag_badge_pt" to R.drawable.flag_badge_pt,
-        "flag_badge_nl" to R.drawable.flag_badge_nl,
-        "flag_badge_pl" to R.drawable.flag_badge_pl,
-        "flag_badge_cs" to R.drawable.flag_badge_cs,
-        "flag_badge_sv" to R.drawable.flag_badge_sv,
-        "flag_badge_fi" to R.drawable.flag_badge_fi,
-        "flag_badge_tr" to R.drawable.flag_badge_tr,
-        "flag_badge_ru" to R.drawable.flag_badge_ru,
-        "flag_badge_uk" to R.drawable.flag_badge_uk,
-        "flag_badge_ar" to R.drawable.flag_badge_ar,
-        "flag_badge_hi" to R.drawable.flag_badge_hi,
-        "flag_badge_th" to R.drawable.flag_badge_th,
-        "flag_badge_id" to R.drawable.flag_badge_id,
-        "flag_badge_vi" to R.drawable.flag_badge_vi,
-        "flag_badge_ja" to R.drawable.flag_badge_ja,
-        "flag_badge_ko" to R.drawable.flag_badge_ko,
-        "flag_badge_zh" to R.drawable.flag_badge_zh,
-        "flag_badge_zh_tw" to R.drawable.flag_badge_zh_tw
+        "home_background" to R.drawable.home_bg_cosmic_clean,
+        "bg_space_base" to R.drawable.home_bg_cosmic_clean,
+        "bg_space_nebula" to R.drawable.home_bg_cosmic_clean,
+        "nebula_overlay" to R.drawable.nebula_overlay,
+        "kavvoro_logo" to R.drawable.kavvoro_logo,
+        "brainball_main" to R.drawable.brainball_main,
+        "portal_beam" to R.drawable.portal_beam,
+        "planet_cyan" to R.drawable.planet_blue_ring,
+        "planet_magenta" to R.drawable.planet_pink_wink,
+        "ic_stat_flame_3d" to R.drawable.ic_stat_flame_3d,
+        "ic_stat_star_3d" to R.drawable.ic_stat_star_3d,
+        "ic_stat_coin_3d" to R.drawable.ic_stat_coin_3d,
+        "btn_settings_3d" to R.drawable.btn_settings_3d,
+        "home_play_chassis" to R.drawable.home_play_chassis,
+        "home_portal_disc" to R.drawable.home_portal_disc,
+        "home_planet_blue" to R.drawable.home_planet_blue,
+        "home_planet_pink" to R.drawable.home_planet_pink,
+        "home_card_art_skins" to R.drawable.home_card_art_skins,
+        "home_card_art_missions" to R.drawable.home_card_art_missions,
+        "home_card_art_leaderboard" to R.drawable.home_card_art_leaderboard,
+        "home_banner_art" to R.drawable.home_banner_art
     )
     private val brainballBitmaps = mutableMapOf<String, Bitmap>()
     private val worldBitmaps = mutableMapOf<String, Bitmap>()
     private val scaledBackgroundBitmaps = mutableMapOf<String, Bitmap>()
+
+    fun preloadHomeAssets(resources: Resources, context: Context) {
+        val keys = listOf(
+            "bg_space_base",
+            "nebula_overlay",
+            "kavvoro_logo",
+            "brainball_main",
+            "portal_beam",
+            "home_planet_blue",
+            "home_planet_pink",
+            "home_portal_disc",
+            "home_play_chassis",
+            "home_card_art_skins",
+            "home_card_art_missions",
+            "home_card_art_leaderboard",
+            "home_banner_art",
+            "ic_stat_flame_3d",
+            "ic_stat_star_3d",
+            "ic_stat_coin_3d",
+            "btn_settings_3d"
+        )
+        for (k in keys) {
+            worldBitmap(k, resources, context)
+        }
+    }
 
     fun brainballBitmap(
         skin: BallSkin,
@@ -116,11 +202,23 @@ object AssetResourceManager {
     ): Bitmap? {
         worldBitmaps[key]?.let { return it }
         val resource = artResources[key] ?: return null
-        var bitmap = if (key.startsWith("bg_")) {
+        var bitmap = if (key == "home_background" || key == "bg_space_base" || key == "nebula_overlay" || key == "brainball_main" || key == "kavvoro_logo" || key.startsWith("planet_") || key.startsWith("portal_") || key.startsWith("asteroid_") || key.startsWith("spark_") || key.startsWith("graffiti_") || key.startsWith("asteroids_") || key.startsWith("home_")) {
             BitmapFactory.decodeResource(
                 resources,
                 resource,
-                BitmapFactory.Options().apply { inPreferredConfig = Bitmap.Config.RGB_565 }
+                BitmapFactory.Options().apply {
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                    inScaled = false
+                }
+            )
+        } else if (key.startsWith("bg_")) {
+            BitmapFactory.decodeResource(
+                resources,
+                resource,
+                BitmapFactory.Options().apply {
+                    inPreferredConfig = Bitmap.Config.ARGB_8888
+                    inScaled = false
+                }
             )
         } else {
             BitmapFactory.decodeResource(resources, resource)
@@ -129,9 +227,12 @@ object AssetResourceManager {
         if (bitmap == null) {
             val drawable = ContextCompat.getDrawable(context, resource)
             if (drawable != null) {
+                val density = resources.displayMetrics.density.coerceAtLeast(1f)
+                val baseWidth = if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else (420f * density).toInt()
+                val baseHeight = if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else (100f * density).toInt()
                 bitmap = Bitmap.createBitmap(
-                    if (drawable.intrinsicWidth > 0) drawable.intrinsicWidth else 209,
-                    if (drawable.intrinsicHeight > 0) drawable.intrinsicHeight else 50,
+                    baseWidth.coerceAtLeast(420),
+                    baseHeight.coerceAtLeast(100),
                     Bitmap.Config.ARGB_8888
                 )
                 val canvas = Canvas(bitmap)
@@ -143,6 +244,12 @@ object AssetResourceManager {
         return bitmap?.also { worldBitmaps[key] = it }
     }
 
+    private val centerCropScratch = RectF()
+    private var lastBgKey: String? = null
+    private var lastBgWidth: Int = -1
+    private var lastBgHeight: Int = -1
+    private var lastBgBitmap: Bitmap? = null
+
     fun backgroundBitmap(
         key: String,
         viewWidth: Int,
@@ -152,12 +259,28 @@ object AssetResourceManager {
         context: Context,
         artResources: Map<String, Int> = WORLD_ART_RESOURCES
     ): Bitmap? {
+        val cached = lastBgBitmap
+        if (cached != null && !cached.isRecycled && key == lastBgKey && viewWidth == lastBgWidth && viewHeight == lastBgHeight) {
+            return cached
+        }
         val cacheKey = "$key:${viewWidth}x$viewHeight"
-        scaledBackgroundBitmaps[cacheKey]?.takeIf { !it.isRecycled }?.let { return it }
+        scaledBackgroundBitmaps[cacheKey]?.takeIf { !it.isRecycled }?.let {
+            lastBgKey = key
+            lastBgWidth = viewWidth
+            lastBgHeight = viewHeight
+            lastBgBitmap = it
+            return it
+        }
         val source = worldBitmap(key, resources, context, artResources) ?: return null
         return try {
             Bitmap.createScaledBitmap(source, viewWidth, viewHeight, !isLowProfile)
-                .also { scaledBackgroundBitmaps[cacheKey] = it }
+                .also {
+                    scaledBackgroundBitmaps[cacheKey] = it
+                    lastBgKey = key
+                    lastBgWidth = viewWidth
+                    lastBgHeight = viewHeight
+                    lastBgBitmap = it
+                }
         } catch (_: OutOfMemoryError) {
             source
         } catch (_: IllegalArgumentException) {
@@ -166,6 +289,8 @@ object AssetResourceManager {
     }
 
     fun recycleScaledBackgrounds() {
+        lastBgBitmap = null
+        lastBgKey = null
         scaledBackgroundBitmaps.values.forEach { bitmap ->
             if (!bitmap.isRecycled) bitmap.recycle()
         }
@@ -203,11 +328,11 @@ object AssetResourceManager {
         val scaledHeight = bitmap.height * scale
         val left = target.centerX() - scaledWidth / 2f
         val top = target.centerY() - scaledHeight / 2f
-        val destination = RectF(left, top, left + scaledWidth, top + scaledHeight)
+        centerCropScratch.set(left, top, left + scaledWidth, top + scaledHeight)
 
         canvas.save()
         canvas.clipRect(target)
-        canvas.drawBitmap(bitmap, null, destination, paint)
+        canvas.drawBitmap(bitmap, null, centerCropScratch, paint)
         canvas.restore()
     }
 

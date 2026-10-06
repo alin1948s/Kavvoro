@@ -4,10 +4,27 @@ import com.moonsolstudios.kavvoro.engine.BallPower
 
 enum class CollectionFilter(val labelKey: String) {
     ALL("ALL"),
+    OWNED("OWNED"),
     SUPERPOWER("SUPERPOWER"),
     HYPE("HYPE"),
     PREMIUM("PREMIUM"),
     COSMETIC("COSMETIC")
+}
+
+enum class CollectionSort(val labelKey: String) {
+    AURA_DESC("SORT_AURA"),
+    RARITY("SORT_RARITY"),
+    POWER_FIRST("SORT_POWER"),
+    NAME_ASC("SORT_NAME"),
+    OWNED_FIRST("SORT_OWNED");
+
+    fun next(): CollectionSort = when (this) {
+        AURA_DESC -> RARITY
+        RARITY -> POWER_FIRST
+        POWER_FIRST -> NAME_ASC
+        NAME_ASC -> OWNED_FIRST
+        OWNED_FIRST -> AURA_DESC
+    }
 }
 
 enum class SkinStyle {

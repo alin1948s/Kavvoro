@@ -5,7 +5,7 @@ import time
 import numpy as np
 from PIL import Image
 
-from capture_support import ADB, PACKAGE, PRIVACY_XML, PROJECT_ROOT, TARGETS
+from capture_support import ADB, PACKAGE, PRIVACY_XML, PROJECT_ROOT, TARGETS, restore_emulator_display
 
 OUTPUT = PROJECT_ROOT / "screenshots" / "home"
 
@@ -29,17 +29,19 @@ def image_size(png_bytes: bytes) -> tuple[int, int]:
         return img.size
 
 
-def wait_for_viewport(width: int, height: int, timeout: float = 12.0) -> None:
+def wait_for_viewport(width: int, height: int, timeout: float = 20.0) -> None:
     deadline = time.monotonic() + timeout
+    last_seen = None
     while time.monotonic() < deadline:
         try:
             size = image_size(capture_png())
+            last_seen = size
             if size in ((width, height), (height, width)):
                 return
-        except Exception:
-            pass
+        except Exception as e:
+            last_seen = f"error: {e}"
         time.sleep(0.3)
-    raise RuntimeError(f"Viewport did not settle at {width}x{height}")
+    raise RuntimeError(f"Viewport did not settle at {width}x{height}, last_seen={last_seen}")
 
 
 def portrait_png(png_bytes: bytes, width: int, height: int) -> bytes:
@@ -71,6 +73,10 @@ def is_age_check(img: Image.Image) -> bool:
             if red > 125 and blue > 90 and green < 135:
                 magenta += 1
     if cyan < 20 or magenta < 20:
+        return False
+    # The Age Check dialog only has the small top logo badge (total cyan+magenta <= 600 in a 160x96 crop).
+    # The Home Screen features the large dual-tone Brainball mascot (cyan+magenta > 650).
+    if (cyan + magenta) > 650:
         return False
     balance = magenta / float(cyan)
     return 0.55 <= balance <= 1.90
@@ -114,10 +120,12 @@ def verify_home_screen(png_bytes: bytes, width: int, height: int) -> tuple[bool,
     if bot_pct < 5.0 or bot_mean < 14.0:
         return False, f"splash_or_empty_footer (bot_pct={bot_pct:.1f}%, bot_mean={bot_mean:.1f})"
 
-    if top_pct < 5.0:
-        return False, f"missing_header (top_pct={top_pct:.1f}%)"
+    mid_region = arr[int(h * 0.30) : int(h * 0.70), int(w * 0.20) : int(w * 0.80), :]
+    mid_mean = float(np.mean(mid_region))
+    if mid_mean < 35.0:
+        return False, f"empty_or_letterboxed_hero (mid_mean={mid_mean:.1f} < 35.0)"
 
-    return True, f"verified (mean={mean_rgb:.1f}, top_pct={top_pct:.1f}%, bot_pct={bot_pct:.1f}%, bytes={len(png_bytes)})"
+    return True, f"verified (mean={mean_rgb:.1f}, mid={mid_mean:.1f}, top_pct={top_pct:.1f}%, bot_pct={bot_pct:.1f}%, bytes={len(png_bytes)})"
 
 
 def ensure_privacy_profile() -> None:
@@ -126,7 +134,7 @@ def ensure_privacy_profile() -> None:
     run_adb("shell", "run-as", PACKAGE, "cp", "/data/local/tmp/privacy_profile.xml", "shared_prefs/privacy_profile.xml")
 
 
-def capture_home_target(name: str, width: int, height: int, max_attempts: int = 3) -> bytes:
+def capture_home_target(name: str, width: int, height: int, max_attempts: int = 4) -> bytes:
     for attempt in range(1, max_attempts + 1):
         ensure_privacy_profile()
         run_adb("shell", "am", "force-stop", PACKAGE)
@@ -134,7 +142,7 @@ def capture_home_target(name: str, width: int, height: int, max_attempts: int = 
 
         # Polling deadline: give emulator enough time for 1.45s splash + surface init + home render
         start_time = time.monotonic()
-        deadline = start_time + 10.0
+        deadline = start_time + 14.0
         last_reason = "timeout"
 
         while time.monotonic() < deadline:
@@ -166,11 +174,10 @@ def main() -> None:
     run_adb("shell", "wm", "dismiss-keyguard")
     run_adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
     run_adb("shell", "settings", "put", "system", "user_rotation", "1")
-    run_adb("shell", "wm", "density", "320")
-
     print(f"Capturing {len(TARGETS)} Home Screen resolutions to {OUTPUT}...", flush=True)
     try:
-        for name, width, height in TARGETS:
+        for name, width, height, density in TARGETS:
+            run_adb("shell", "wm", "density", str(density))
             t0 = time.monotonic()
             run_adb("shell", "wm", "size", f"{height}x{width}")
             wait_for_viewport(width, height)
@@ -180,10 +187,7 @@ def main() -> None:
             elapsed = time.monotonic() - t0
             print(f"-> [PASS] {name:20s} ({width}x{height}) {len(png_bytes):7d} bytes in {elapsed:4.1f}s", flush=True)
     finally:
-        run_adb("shell", "wm", "size", "reset")
-        run_adb("shell", "wm", "density", "reset")
-        run_adb("shell", "am", "force-stop", PACKAGE)
-        run_adb("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
+        restore_emulator_display(lambda *args: run_adb(*args))
         print("ALL DONE! Emulator restored.", flush=True)
 
 

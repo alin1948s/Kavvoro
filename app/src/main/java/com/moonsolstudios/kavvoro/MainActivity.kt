@@ -1,10 +1,9 @@
 package com.moonsolstudios.kavvoro
 
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.View
 import android.view.Window
 import android.view.WindowInsets
@@ -12,6 +11,7 @@ import android.view.WindowInsetsController
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.OnBackPressedCallback
+import com.moonsolstudios.kavvoro.ads.AdBridge
 import com.moonsolstudios.kavvoro.ads.InterstitialAdController
 import com.moonsolstudios.kavvoro.ads.RewardedAdController
 import com.moonsolstudios.kavvoro.billing.PlayBillingController
@@ -34,7 +34,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         requestWindowFeature(Window.FEATURE_NO_TITLE)
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        val sw = resources.configuration.smallestScreenWidthDp
+        if (sw < 600) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+        } else {
+            // On tablets, follow the device orientation sensor dynamically
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        }
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -64,7 +70,7 @@ class MainActivity : ComponentActivity() {
 
         val view = ChaosGameView(
             context = this,
-            adBridge = object : ChaosGameView.AdBridge {
+            adBridge = object : AdBridge {
                 override fun showInterstitial(onFinished: () -> Unit) {
                     runOnUiThread {
                         ads.show(onFinished)
@@ -88,7 +94,9 @@ class MainActivity : ComponentActivity() {
                     }
                     reportFullyDrawn()
                     accountStarted = true
-                    account.start { state -> gameView?.updateAccountState(state, account.profileId) }
+                    account.start { state ->
+                        gameView?.updateAccountState(state, account.profileId, account.displayName)
+                    }
                     privacy.start(ageGroup)
                     billing.start()
                 }
@@ -141,6 +149,11 @@ class MainActivity : ComponentActivity() {
         gameView?.releaseGame()
         gameView = null
         super.onDestroy()
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        hideSystemBars()
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {

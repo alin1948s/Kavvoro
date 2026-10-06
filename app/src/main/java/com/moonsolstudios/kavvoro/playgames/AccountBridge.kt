@@ -11,11 +11,29 @@ enum class AccountState {
     UNAVAILABLE
 }
 
+/** Header profile chip: guest shows "User"; signed-in shows the Play Games display name. */
+object AccountProfileDisplay {
+    fun headerName(
+        state: AccountState,
+        displayName: String?,
+        guestLabel: String = "User"
+    ): String {
+        if (state == AccountState.SIGNED_IN) {
+            val name = displayName?.trim().orEmpty()
+            if (name.isNotEmpty()) return name
+        }
+        return guestLabel
+    }
+}
+
 interface AccountBridge {
     val configured: Boolean
     val state: AccountState
     /** Stable Play Games player ID used to select the local progress slot. */
     val profileId: String?
+
+    /** Google Play Games display name, or null when signed out / unavailable. */
+    val displayName: String?
 
     fun start(onStateChanged: (AccountState) -> Unit)
 
@@ -29,6 +47,7 @@ interface AccountBridge {
             override val configured: Boolean = false
             override val state: AccountState = AccountState.UNAVAILABLE
             override val profileId: String? = null
+            override val displayName: String? = null
             override fun start(onStateChanged: (AccountState) -> Unit) = onStateChanged(state)
             override fun refresh() = Unit
             override fun retry() = Unit

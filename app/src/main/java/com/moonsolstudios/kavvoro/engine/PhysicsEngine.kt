@@ -32,6 +32,10 @@ class PhysicsEngine {
     private var impactStrengthThisStep = 0f
     private var portalTriggeredThisStep = false
     private var portalCooldown = 0f
+    private val scratchForce = Vec2()
+    private val scratchImpulse = Vec2()
+    private val scratchTransform = Vec2()
+    private val scratchVelocity = Vec2()
 
     fun reset(spec: LevelSpec, power: BallPower = BallPower.NONE) {
         level = spec
@@ -222,14 +226,15 @@ class PhysicsEngine {
             val pulseBoost = if (storm) 2.15f else 1.72f
             val radial = zone.radialForce * falloff * wave * fever * pulseBoost
             val swirl = zone.swirlForce * falloff * wave * fever * pulseBoost
-            val force = Vec2(
+            scratchForce.set(
                 nx * radial + -ny * swirl,
                 ny * radial + nx * swirl
             )
-            body.applyForceToCenter(force)
+            body.applyForceToCenter(scratchForce)
             if (falloff > 0.48f) {
                 val kick = 0.09f * falloff * wave * if (storm) 1.35f else 1f
-                body.applyLinearImpulse(Vec2(force.x * kick, force.y * kick), body.worldCenter)
+                scratchImpulse.set(scratchForce.x * kick, scratchForce.y * kick)
+                body.applyLinearImpulse(scratchImpulse, body.worldCenter)
             }
             strongest = max(strongest, min(1f, falloff * wave * 1.18f))
         }
@@ -238,9 +243,13 @@ class PhysicsEngine {
 
     private fun resolvePortal(spec: LevelSpec, body: Body): Float {
         if (portalCooldown > 0f || spec.portals.isEmpty()) return 0f
-        val position = Point2(body.position.x, body.position.y)
+        val posX = body.position.x
+        val posY = body.position.y
         for (portal in spec.portals) {
-            if (position.distanceTo(portal.entry) > portal.radius + BALL_RADIUS * 0.72f) continue
+            val entryDx = posX - portal.entry.x
+            val entryDy = posY - portal.entry.y
+            val maxDist = portal.radius + BALL_RADIUS * 0.72f
+            if (entryDx * entryDx + entryDy * entryDy > maxDist * maxDist) continue
             val velocity = body.linearVelocity
             val currentSpeed = sqrt(velocity.x * velocity.x + velocity.y * velocity.y)
             val goalDx = spec.goal.x - portal.exit.x
@@ -249,8 +258,10 @@ class PhysicsEngine {
             val speed = max(currentSpeed * 1.08f, 4.2f)
             val vx = velocity.x * 0.42f + goalDx / goalDistance * speed * 0.84f
             val vy = velocity.y * 0.42f + goalDy / goalDistance * speed * 0.84f
-            body.setTransform(Vec2(portal.exit.x, portal.exit.y), body.angle)
-            body.linearVelocity = Vec2(vx, vy)
+            scratchTransform.set(portal.exit.x, portal.exit.y)
+            body.setTransform(scratchTransform, body.angle)
+            scratchVelocity.set(vx, vy)
+            body.linearVelocity = scratchVelocity
             portalCooldown = 0.58f
             portalTriggeredThisStep = true
             return 1f
@@ -284,7 +295,8 @@ class PhysicsEngine {
             else -> 1f
         }
         val force = (4.8f + min(distance, 4.6f) * 3.7f) * riftStrength * curseMultiplier * powerMultiplier
-        body.applyForceToCenter(Vec2(nx * force, ny * force))
+        scratchForce.set(nx * force, ny * force)
+        body.applyForceToCenter(scratchForce)
         body.linearDamping = when {
             spec.hasCurse(CurseType.FOCUS_FIELD) -> 0.96f
             spec.hasCurse(CurseType.MOON_GLIDE) -> 0.2f
@@ -302,7 +314,8 @@ class PhysicsEngine {
         val holdGuard = if (riftAnchor != null) (0.18f + windScale * 0.16f).coerceIn(0.2f, 0.38f) else 1f
         val forceX = ((directionWave * 5.8f) + (gustWave * 2.8f)) * holdGuard
         val lift = -0.42f * abs(directionWave) * holdGuard
-        body.applyForceToCenter(Vec2(forceX * windScale, lift * windScale))
+        scratchForce.set(forceX * windScale, lift * windScale)
+        body.applyForceToCenter(scratchForce)
         return (abs(directionWave) * holdGuard * windScale).coerceIn(0f, 1f)
     }
 
@@ -337,7 +350,8 @@ class PhysicsEngine {
         val speedSq = velocity.x * velocity.x + velocity.y * velocity.y
         if (speedSq <= limit * limit) return
         val scale = limit / sqrt(speedSq)
-        body.linearVelocity = Vec2(velocity.x * scale, velocity.y * scale)
+        scratchVelocity.set(velocity.x * scale, velocity.y * scale)
+        body.linearVelocity = scratchVelocity
     }
 
     private fun resolveOutcome(spec: LevelSpec, body: Body, ball: Point2, elapsed: Float): PhysicsOutcome {
@@ -345,16 +359,22 @@ class PhysicsEngine {
             return PhysicsOutcome.WON
         }
 
-        for (hazard in spec.hazards) {
-            val hazardPosition = hazard.positionAt(elapsed)
-            val ballHitRadius = when (ballPower) {
-                BallPower.VOID_PHASE -> BALL_RADIUS * 0.24f
-                BallPower.MINOR_PHASE -> BALL_RADIUS * 0.54f
-                else -> BALL_RADIUS * 0.82f
-            }
-            if (ball.distanceTo(hazardPosition) <= hazard.radius + ballHitRadius) {
+        val ballHitRadius = when (ballPower) {
+            BallPower.VOID_PHASE -> BALL_RADIUS * 0.24f
+            BallPower.MINOR_PHASE -> BALL_RADIUS * 0.54f
+            else -> BALL_RADIUS * 0.82f
+        }
+        val hazards = spec.hazards
+        for (i in 0 until hazards.size) {
+            val hazard = hazards[i]
+            val hx = hazard.positionXAt(elapsed)
+            val hy = hazard.positionYAt(elapsed)
+            val dx = ball.x - hx
+            val dy = ball.y - hy
+            val hitLimit = hazard.radius + ballHitRadius
+            if (dx * dx + dy * dy <= hitLimit * hitLimit) {
                 if (prismShieldAvailable) {
-                    repelFromHazard(body, hazardPosition, hazard.radius)
+                    repelFromHazard(body, hx, hy, hazard.radius)
                     prismShieldAvailable = false
                     powerTriggeredThisStep = true
                     return PhysicsOutcome.RUNNING
@@ -374,9 +394,9 @@ class PhysicsEngine {
         return PhysicsOutcome.RUNNING
     }
 
-    private fun repelFromHazard(body: Body, hazard: Point2, hazardRadius: Float) {
-        var dx = body.position.x - hazard.x
-        var dy = body.position.y - hazard.y
+    private fun repelFromHazard(body: Body, hazardX: Float, hazardY: Float, hazardRadius: Float) {
+        var dx = body.position.x - hazardX
+        var dy = body.position.y - hazardY
         var distance = sqrt(dx * dx + dy * dy)
         if (distance < 0.001f) {
             dx = 0f
@@ -386,12 +406,10 @@ class PhysicsEngine {
         val nx = dx / distance
         val ny = dy / distance
         val safeDistance = hazardRadius + BALL_RADIUS + 0.12f
-        body.setTransform(Vec2(hazard.x + nx * safeDistance, hazard.y + ny * safeDistance), body.angle)
-        body.linearVelocity = Vec2(nx * 5.2f, ny * 5.2f - 0.6f)
-    }
-
-    private fun LevelSpec.hasCurse(type: CurseType): Boolean {
-        return curses.any { it.type == type }
+        scratchTransform.set(hazardX + nx * safeDistance, hazardY + ny * safeDistance)
+        body.setTransform(scratchTransform, body.angle)
+        scratchVelocity.set(nx * 5.2f, ny * 5.2f - 0.6f)
+        body.linearVelocity = scratchVelocity
     }
 
     companion object {

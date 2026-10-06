@@ -53,13 +53,19 @@ class GameProgressRepository(
         const val SHARE_COUNT_KEY = "share_count"
         const val HYPE_BANK_KEY = "hype_bank"
         const val PREMIUM_PRICE_KEY = "premium_price_label"
+        const val DAILY_STREAK_KEY = "daily_rift_login_streak"
+        const val LAST_CLAIMED_SEED_KEY = "daily_rift_last_claimed_seed"
         const val MINUTE_MILLIS = 60_000L
         const val HOUR_MILLIS = 60L * MINUTE_MILLIS
         const val DAY_MILLIS = 24L * HOUR_MILLIS
 
-        fun earnedSkinKey(id: String): String = "skin_unlocked_$id"
-        fun premiumPriceKey(id: String): String = "premium_price_$id"
-        fun purchasedSkinKey(id: String): String = "skin_purchased_$id"
+        private val EARNED_KEYS = BallSkinCatalog.ALL_SKINS.associate { it.id to "skin_unlocked_${it.id}" }
+        private val PREMIUM_PRICE_KEYS = BallSkinCatalog.ALL_SKINS.associate { it.id to "premium_price_${it.id}" }
+        private val PURCHASED_KEYS = BallSkinCatalog.ALL_SKINS.associate { it.id to "skin_purchased_${it.id}" }
+
+        fun earnedSkinKey(id: String): String = EARNED_KEYS[id] ?: "skin_unlocked_$id"
+        fun premiumPriceKey(id: String): String = PREMIUM_PRICE_KEYS[id] ?: "premium_price_$id"
+        fun purchasedSkinKey(id: String): String = PURCHASED_KEYS[id] ?: "skin_purchased_$id"
         fun failContinueCountKey(mode: GameMode, levelNumber: Int): String =
             "fail_continue_${mode.name.lowercase()}_$levelNumber"
         fun bestKey(mode: GameMode, levelNumber: Int): String =
@@ -68,8 +74,14 @@ class GameProgressRepository(
             GameMode.CLASSIC -> "classic_level"
             GameMode.CHAOS -> "chaos_level"
         }
-        fun streakKey(mode: GameMode): String = "streak_${mode.name.lowercase()}"
+        fun streakKey(mode: GameMode): String = when (mode) {
+            GameMode.CLASSIC -> "streak_classic"
+            GameMode.CHAOS -> "streak_chaos"
+        }
     }
+
+    private val skinById: Map<String, BallSkin> = ballSkins.associateBy { it.id }
+    private val defaultSkin: BallSkin = skinById[DEFAULT_SKIN_ID] ?: ballSkins.first()
 
     fun isSkinUnlocked(skin: BallSkin): Boolean {
         if (BuildConfig.FORCE_UNLOCK_ALL_BRAINBALLS) return true
@@ -102,17 +114,73 @@ class GameProgressRepository(
     fun unlockedSkinCount(): Int = ballSkins.count(::isSkinUnlocked)
 
     fun selectedBallSkin(selectedSkinId: String): BallSkin {
-        return ballSkins.firstOrNull { it.id == selectedSkinId && isSkinUnlocked(it) }
-            ?: ballSkins.first { it.id == DEFAULT_SKIN_ID }
+        val candidate = skinById[selectedSkinId]
+        return if (candidate != null && isSkinUnlocked(candidate)) {
+            candidate
+        } else {
+            defaultSkin
+        }
     }
 
     fun bestStreak(): Int = prefs.getInt(BEST_STREAK_KEY, prefs.getInt("clear_streak", 0)).coerceAtLeast(0)
 
     fun hypeBalance(): Int = prefs.getInt(HYPE_BANK_KEY, prefs.getInt("last_hype", 0)).coerceAtLeast(0)
 
+    fun addHype(amount: Int) {
+        val next = (hypeBalance() + amount.coerceAtLeast(0)).coerceAtLeast(0)
+        prefs.edit { putInt(HYPE_BANK_KEY, next) }
+    }
+
     fun spendHype(amount: Int) {
         val next = (hypeBalance() - amount.coerceAtLeast(0)).coerceAtLeast(0)
         prefs.edit { putInt(HYPE_BANK_KEY, next) }
+    }
+
+    fun skinHypePrice(skin: BallSkin): Int? {
+        if (skin.unlock.type == UnlockType.DEFAULT) return null
+        if (skin.unlock.type == UnlockType.PREMIUM) return null
+        if (skin.unlock.type == UnlockType.HYPE_COST) return skin.unlock.value
+
+        return when (skin.unlock.type) {
+            UnlockType.TUTORIAL_CLEAR -> 5_000
+            UnlockType.CLASSIC_LEVEL,
+            UnlockType.CHAOS_LEVEL -> {
+                val lvl = skin.unlock.value
+                when {
+                    lvl <= 25 -> 6_000
+                    lvl <= 50 -> 12_000
+                    lvl <= 75 -> 20_000
+                    lvl <= 100 -> 32_000
+                    lvl <= 150 -> 48_000
+                    lvl <= 200 -> 68_000
+                    lvl <= 250 -> 92_000
+                    lvl <= 300 -> 120_000
+                    else -> 160_000
+                }
+            }
+            UnlockType.BEST_STREAK -> {
+                val strk = skin.unlock.value
+                when {
+                    strk <= 15 -> 6_000
+                    strk <= 25 -> 12_000
+                    strk <= 35 -> 20_000
+                    strk <= 50 -> 35_000
+                    strk <= 150 -> 75_000
+                    else -> 120_000
+                }
+            }
+            UnlockType.SHARE_COUNT -> {
+                val shares = skin.unlock.value
+                when {
+                    shares <= 5 -> 5_000
+                    shares <= 10 -> 10_000
+                    shares <= 20 -> 22_000
+                    shares <= 30 -> 38_000
+                    else -> 60_000
+                }
+            }
+            else -> null
+        }
     }
 
     fun formatHypeAmount(value: Int): String {
@@ -130,10 +198,61 @@ class GameProgressRepository(
 
     fun clearedLevel(mode: GameMode): Int = (modeHighestLevel(mode) - 1).coerceAtLeast(0)
 
+    data class DailyClaimResult(
+        val amount: Int,
+        val streakDay: Int,
+        val isJackpot: Boolean,
+        val alreadyClaimed: Boolean
+    )
+
+    fun dailyRiftStreak(): Int = prefs.getInt(DAILY_STREAK_KEY, 1).coerceIn(1, 7)
+
+    fun dailyRiftRewardForDay(day: Int): Int {
+        return when (day.coerceIn(1, 7)) {
+            1 -> 1_000
+            2 -> 1_250
+            3 -> 1_500
+            4 -> 1_750
+            5 -> 2_000
+            6 -> 2_500
+            7 -> 5_000
+            else -> 1_000
+        }
+    }
+
+    fun claimDailyRiftHome(): DailyClaimResult {
+        val currentSeed = LevelDirector.dailySeed()
+        val key = dailyRiftBonusKey()
+        if (prefs.getBoolean(key, false)) {
+            return DailyClaimResult(0, dailyRiftStreak(), isJackpot = false, alreadyClaimed = true)
+        }
+        val lastSeed = prefs.getLong(LAST_CLAIMED_SEED_KEY, 0L)
+        val currentStreak = if (lastSeed == currentSeed - 1L) {
+            (prefs.getInt(DAILY_STREAK_KEY, 0) % 7) + 1
+        } else if (lastSeed == currentSeed) {
+            prefs.getInt(DAILY_STREAK_KEY, 1)
+        } else {
+            1
+        }
+
+        val reward = dailyRiftRewardForDay(currentStreak)
+        addHype(reward)
+        prefs.edit {
+            putBoolean(key, true)
+            putInt(dailyRiftBonusAmountKey(), reward)
+            putString(dailyRiftBonusModeKey(), "HOME")
+            putLong(dailyRiftBonusClaimedAtKey(), System.currentTimeMillis())
+            putLong(LAST_CLAIMED_SEED_KEY, currentSeed)
+            putInt(DAILY_STREAK_KEY, currentStreak)
+        }
+        return DailyClaimResult(reward, currentStreak, isJackpot = currentStreak == 7, alreadyClaimed = false)
+    }
+
     fun claimDailyRiftBonus(gameMode: GameMode): Int {
         val key = dailyRiftBonusKey()
         if (prefs.getBoolean(key, false)) return 0
         val bonus = dailyRiftBonusForMode(gameMode)
+        addHype(bonus)
         prefs.edit {
             putBoolean(key, true)
             putInt(dailyRiftBonusAmountKey(), bonus)
@@ -155,24 +274,11 @@ class GameProgressRepository(
 
     fun dailyRiftBonusForMode(mode: GameMode): Int = if (mode == GameMode.CHAOS) 420 else 320
 
-    fun dailyRiftClaimedAmount(): Int = prefs.getInt(dailyRiftBonusAmountKey(), 0)
-
-    fun dailyRiftClaimedMode(): GameMode? {
-        return prefs.getString(dailyRiftBonusModeKey(), null)?.let { saved ->
-            runCatching { GameMode.valueOf(saved) }.getOrNull()
-        }
-    }
-
     fun dailyRiftResetText(): String {
         val remaining = dailyRiftRemainingMillis()
         val hours = remaining / HOUR_MILLIS
         val minutes = ((remaining % HOUR_MILLIS) / MINUTE_MILLIS).coerceAtLeast(1L)
         return "${t("RESET").uppercase()} ${hours}H ${minutes}M"
-    }
-
-    fun dailyRiftDayProgress(): Float {
-        val remaining = dailyRiftRemainingMillis().coerceIn(0L, DAY_MILLIS)
-        return (1f - remaining.toFloat() / DAY_MILLIS.toFloat()).coerceIn(0.05f, 0.95f)
     }
 
     fun dailyRiftRemainingMillis(): Long {
@@ -204,23 +310,6 @@ class GameProgressRepository(
                 }
             }
             .minWithOrNull(compareBy<NextReward> { it.distance }.thenBy { it.label })
-    }
-
-    fun nextStreakRewardInfo(): NextReward? {
-        return ballSkins
-            .filter { it.unlock.type == UnlockType.BEST_STREAK && !isSkinUnlocked(it) }
-            .minByOrNull { it.unlock.value }
-            ?.let { skin ->
-                val target = skin.unlock.value.coerceAtLeast(1)
-                NextReward(
-                    name = skin.name,
-                    label = unlockShortLabel(skin),
-                    target = target,
-                    distance = (target - bestStreak()).coerceAtLeast(0),
-                    progress = (bestStreak().toFloat() / target.toFloat()).coerceIn(0f, 1f),
-                    accent = skin.lineColor
-                )
-            }
     }
 
     fun rewardDistance(rule: UnlockRule): Int? {
@@ -280,16 +369,6 @@ class GameProgressRepository(
             ?: "0.99 LOCAL"
     }
 
-    fun modeMeta(mode: GameMode, streak: Int): String {
-        val progress = modeProgress(mode)
-        val modeStreak = modeStreak(mode, streak)
-        return if (progress <= 1) {
-            t("START LEVEL 01").uppercase()
-        } else {
-            "${t("LEVEL").uppercase()} ${progress.toString().padStart(2, '0')}   ${t("STREAK").uppercase()} $modeStreak"
-        }
-    }
-
     fun modeProgress(mode: GameMode): Int {
         return when (mode) {
             GameMode.CLASSIC -> prefs.getInt(progressKey(mode), prefs.getInt("unlocked_level", 1)).coerceAtLeast(1)
@@ -323,19 +402,40 @@ class GameProgressRepository(
         }
     }
 
-    fun highestLevelKey(mode: GameMode): String = "highest_level_${mode.name.lowercase()}"
+    fun highestLevelKey(mode: GameMode): String = when (mode) {
+        GameMode.CLASSIC -> "highest_level_classic"
+        GameMode.CHAOS -> "highest_level_chaos"
+    }
 
-    fun fairHighestLevelKey(mode: GameMode): String = "fair_highest_level_${mode.name.lowercase()}"
+    fun fairHighestLevelKey(mode: GameMode): String = when (mode) {
+        GameMode.CLASSIC -> "fair_highest_level_classic"
+        GameMode.CHAOS -> "fair_highest_level_chaos"
+    }
 
-    fun bestModeStreakKey(mode: GameMode): String = "best_streak_${mode.name.lowercase()}"
+    fun bestModeStreakKey(mode: GameMode): String = when (mode) {
+        GameMode.CLASSIC -> "best_streak_classic"
+        GameMode.CHAOS -> "best_streak_chaos"
+    }
 
-    fun fairBestStreakKey(mode: GameMode): String = "fair_best_streak_${mode.name.lowercase()}"
+    fun fairBestStreakKey(mode: GameMode): String = when (mode) {
+        GameMode.CLASSIC -> "fair_best_streak_classic"
+        GameMode.CHAOS -> "fair_best_streak_chaos"
+    }
 
-    fun freeFailContinueKey(mode: GameMode): String = "free_fail_continue_${mode.name.lowercase()}"
+    fun freeFailContinueKey(mode: GameMode): String = when (mode) {
+        GameMode.CLASSIC -> "free_fail_continue_classic"
+        GameMode.CHAOS -> "free_fail_continue_chaos"
+    }
 
-    fun continueAdStreakKey(mode: GameMode): String = "continue_ad_streak_${mode.name.lowercase()}"
+    fun continueAdStreakKey(mode: GameMode): String = when (mode) {
+        GameMode.CLASSIC -> "continue_ad_streak_classic"
+        GameMode.CHAOS -> "continue_ad_streak_chaos"
+    }
 
-    fun levelAdKey(mode: GameMode): String = "level_ad_checkpoint_${mode.name.lowercase()}"
+    fun levelAdKey(mode: GameMode): String = when (mode) {
+        GameMode.CLASSIC -> "level_ad_checkpoint_classic"
+        GameMode.CHAOS -> "level_ad_checkpoint_chaos"
+    }
 
     fun breakStreak(mode: GameMode) {
         prefs.edit {

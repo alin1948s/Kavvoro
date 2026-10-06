@@ -4,7 +4,7 @@ import time
 
 from PIL import Image
 
-from capture_support import ADB, APK, PACKAGE, PROJECT_ROOT, TARGETS
+from capture_support import ADB, APK, PACKAGE, PROJECT_ROOT, TARGETS, restore_emulator_display
 
 OUTPUT = PROJECT_ROOT / "screenshots" / "age-check"
 
@@ -103,14 +103,10 @@ def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     run("install", "-r", str(APK), timeout=90.0)
     try:
-        # Keep the emulator's normal 320dpi profile while changing the viewport.
-        # The app uses real dp/sp, so a 680dp tablet column is rendered at the same
-        # physical scale as the live tablet. Forcing 160dpi here would make a
-        # correct 680dp max-width look artificially tiny in 1600px captures.
-        run("shell", "wm", "density", "320")
         run("shell", "settings", "put", "system", "accelerometer_rotation", "0")
         run("shell", "settings", "put", "system", "user_rotation", "1")
-        for name, width, height in TARGETS:
+        for name, width, height, density in TARGETS:
+            run("shell", "wm", "density", str(density))
             print(f"Capturing {name}", flush=True)
             # wm size is expressed in the emulator's natural orientation. The
             # display is locked portrait for this app, so swap the dimensions to
@@ -122,10 +118,7 @@ def main() -> None:
             run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
             (OUTPUT / name).write_bytes(wait_for_age_check(width, height))
     finally:
-        run("shell", "wm", "size", "reset")
-        run("shell", "wm", "density", "reset")
-        run("shell", "am", "force-stop", PACKAGE)
-        run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
+        restore_emulator_display(lambda *args: run(*args))
 
 
 if __name__ == "__main__":
