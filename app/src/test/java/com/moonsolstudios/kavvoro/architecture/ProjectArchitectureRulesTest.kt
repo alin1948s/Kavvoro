@@ -132,6 +132,20 @@ class ProjectArchitectureRulesTest {
     }
 
     @Test
+    fun `screen-specific tests are nested under their screen packages`() {
+        val root = locateProjectRoot()
+        val screensTestRoot = File(root, "app/src/test/java/com/moonsolstudios/kavvoro/ui/screens")
+        val filesAtScreensRoot = screensTestRoot.listFiles()
+            .orEmpty()
+            .filter { it.isFile && it.extension == "kt" }
+
+        assertTrue(
+            "Screen tests belong in ui/screens/<screen>/; cross-screen architecture tests belong in architecture/: $filesAtScreensRoot",
+            filesAtScreensRoot.isEmpty()
+        )
+    }
+
+    @Test
     fun `engine and model packages have zero imports from ui package`() {
         val root = locateProjectRoot()
         val basePkgDir = File(root, "app/src/main/java/com/moonsolstudios/kavvoro")

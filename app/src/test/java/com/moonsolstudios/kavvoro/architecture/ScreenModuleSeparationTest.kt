@@ -1,4 +1,4 @@
-package com.moonsolstudios.kavvoro.ui.screens
+package com.moonsolstudios.kavvoro.architecture
 
 import android.graphics.RectF
 import com.moonsolstudios.kavvoro.engine.CurseSpec
