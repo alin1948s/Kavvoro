@@ -1774,7 +1774,7 @@ class ChaosGameView(
                     paint = paint,
                     textPaint = textPaint,
                     dp = uiDensity,
-                    typeface = AssetResourceManager.oxaniumTypeface,
+                    typeface = AssetResourceManager.oxaniumTypeface, drawWorldAsset = ::drawWorldAsset,
                     t = ::t,
                     formatHypeAmount = ::formatHypeAmount,
                     cardBoundsOut = dailyRiftCardBounds

@@ -154,7 +154,8 @@ object AssetResourceManager {
         "home_card_art_skins" to R.drawable.home_card_art_skins,
         "home_card_art_missions" to R.drawable.home_card_art_missions,
         "home_card_art_leaderboard" to R.drawable.home_card_art_leaderboard,
-        "home_banner_art" to R.drawable.home_banner_art
+        "home_banner_art" to R.drawable.home_banner_art,
+        "daily_rift_vault_hero" to R.drawable.daily_rift_vault_hero
     )
     private val brainballBitmaps = mutableMapOf<String, Bitmap>()
     private val worldBitmaps = mutableMapOf<String, Bitmap>()
@@ -176,6 +177,7 @@ object AssetResourceManager {
             "home_card_art_missions",
             "home_card_art_leaderboard",
             "home_banner_art",
+            "daily_rift_vault_hero",
             "ic_stat_flame_3d",
             "ic_stat_star_3d",
             "ic_stat_coin_3d",
