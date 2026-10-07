@@ -19,7 +19,7 @@ import kotlin.math.sin
 /**
  * Modern Monolithic AAA Renderer for the Mode Selection screen.
  * Engineered for maximum readability, sleek high-contrast aesthetics, and authentic game character representation:
- * 1. Monolithic Dark Polycarbonate Slabs (96% opacity) with zero heavy frames or visual clutter.
+ * 1. Monolithic Dark Polycarbonate Slabs with fully opaque surfaces for reliable legibility.
  * 2. Ultra-Legible Typographic Hierarchy (crisp, large text visible against any background).
  * 3. Authentic Hero Mascots: Real game Brainballs (Nodlo & Gigi Glitch) rendered large on holographic auras.
  * 4. Satisfying 3D Tactile Action Buttons with glass specular reflections.
@@ -65,8 +65,6 @@ object ModePickerRenderer {
         menuButtonAt: (Float, Float) -> MenuButton,
         mascotBitmapClassic: Bitmap? = null,
         mascotBitmapChaos: Bitmap? = null,
-        cardFrameClassic: Bitmap? = null,
-        cardFrameChaos: Bitmap? = null,
         stateElapsed: Float = 0f
     ) {
         val headingBottom = menuClassicCard.top - (if (compact) 14f else 20f) * dp
@@ -158,7 +156,6 @@ object ModePickerRenderer {
             rect = menuClassicCard,
             title = t("CLASSIC").uppercase(),
             description = classicDetail,
-            modeBadge = "[ ✦ ${t("STANDARD RULES").uppercase()} ✦ ]",
             accent = 0xFF00E5FF.toInt(),
             active = activeMenuButton == MenuButton.CLASSIC,
             activeRun = classicProgress > 1,
@@ -166,7 +163,6 @@ object ModePickerRenderer {
             streakText = classicStreak.toString(),
             activeRunLabel = t("ACTIVE RUN").uppercase(),
             noActiveRunLabel = t("NO ACTIVE RUN").uppercase(),
-            bestStreakLabel = t("BEST STREAK").uppercase(),
             startFreshLabel = t("START FRESH WHEN READY").uppercase(),
             continueLabel = t("CONTINUE").uppercase(),
             newGameLabel = t("NEW GAME").uppercase(),
@@ -189,7 +185,6 @@ object ModePickerRenderer {
             fitText = fitText,
             drawIcon = { c, r -> drawWorldAsset(c, "portal_goal", r, 235) },
             progressInt = classicProgress,
-            cardFrameBitmap = cardFrameClassic,
             t = t
         )
 
@@ -200,7 +195,6 @@ object ModePickerRenderer {
             rect = menuChaosCard,
             title = t("CHAOS").uppercase(),
             description = chaosDetail,
-            modeBadge = "[ 💀 ${t("WILD MODIFIERS").uppercase()} 💀 ]",
             accent = 0xFFFF007F.toInt(),
             active = activeMenuButton == MenuButton.CHAOS,
             activeRun = chaosProgress > 1,
@@ -208,7 +202,6 @@ object ModePickerRenderer {
             streakText = chaosStreak.toString(),
             activeRunLabel = t("ACTIVE RUN").uppercase(),
             noActiveRunLabel = t("NO ACTIVE RUN").uppercase(),
-            bestStreakLabel = t("BEST STREAK").uppercase(),
             startFreshLabel = t("START FRESH WHEN READY").uppercase(),
             continueLabel = t("CONTINUE").uppercase(),
             newGameLabel = t("NEW GAME").uppercase(),
@@ -231,7 +224,6 @@ object ModePickerRenderer {
             fitText = fitText,
             drawIcon = { c, r -> drawWorldAsset(c, "hazard_glitch", r, 235) },
             progressInt = chaosProgress,
-            cardFrameBitmap = cardFrameChaos,
             t = t
         )
 
@@ -252,7 +244,6 @@ object ModePickerRenderer {
         rect: RectF,
         title: String,
         description: String,
-        modeBadge: String,
         accent: Int,
         active: Boolean,
         activeRun: Boolean,
@@ -260,7 +251,6 @@ object ModePickerRenderer {
         streakText: String,
         activeRunLabel: String,
         noActiveRunLabel: String,
-        bestStreakLabel: String,
         startFreshLabel: String,
         continueLabel: String,
         newGameLabel: String,
@@ -283,7 +273,6 @@ object ModePickerRenderer {
         fitText: (String, Float) -> String,
         drawIcon: (Canvas, RectF) -> Unit,
         progressInt: Int = 1,
-        cardFrameBitmap: Bitmap? = null,
         t: (String) -> String = { it }
     ) {
         if (isChaos) {
@@ -292,7 +281,6 @@ object ModePickerRenderer {
                 rect = rect,
                 title = title,
                 description = description,
-                modeBadge = modeBadge,
                 accent = accent,
                 active = active,
                 activeRun = activeRun,
@@ -300,7 +288,6 @@ object ModePickerRenderer {
                 streakText = streakText,
                 activeRunLabel = activeRunLabel,
                 noActiveRunLabel = noActiveRunLabel,
-                bestStreakLabel = bestStreakLabel,
                 startFreshLabel = startFreshLabel,
                 continueLabel = continueLabel,
                 newGameLabel = newGameLabel,
@@ -330,7 +317,6 @@ object ModePickerRenderer {
                 rect = rect,
                 title = title,
                 description = description,
-                modeBadge = modeBadge,
                 accent = accent,
                 active = active,
                 activeRun = activeRun,
@@ -338,7 +324,6 @@ object ModePickerRenderer {
                 streakText = streakText,
                 activeRunLabel = activeRunLabel,
                 noActiveRunLabel = noActiveRunLabel,
-                bestStreakLabel = bestStreakLabel,
                 startFreshLabel = startFreshLabel,
                 continueLabel = continueLabel,
                 newGameLabel = newGameLabel,
@@ -373,7 +358,6 @@ object ModePickerRenderer {
         rect: RectF,
         title: String,
         description: String,
-        modeBadge: String,
         accent: Int,
         active: Boolean,
         activeRun: Boolean,
@@ -381,7 +365,6 @@ object ModePickerRenderer {
         streakText: String,
         activeRunLabel: String,
         noActiveRunLabel: String,
-        bestStreakLabel: String,
         startFreshLabel: String,
         continueLabel: String,
         newGameLabel: String,
@@ -414,11 +397,12 @@ object ModePickerRenderer {
         paint.color = withAlpha(0xFF00E5FF.toInt(), if (active) 55 else 25)
         canvas.drawRoundRect(rect, cornerRad, cornerRad, paint)
 
-        // 2. Monolithic Dark Tinted Polycarbonate Slab (96% solid dark sapphire)
+        // 2. Opaque sapphire slab: the space art stays outside the content surface for contrast.
         paint.style = Paint.Style.FILL
+        paint.alpha = 255
         paint.shader = LinearGradient(
             rect.left, rect.top, rect.right, rect.bottom,
-            0xF6091424.toInt(), 0xFC030710.toInt(),
+            0xFF10253A.toInt(), 0xFF080F1C.toInt(),
             Shader.TileMode.CLAMP
         )
         canvas.drawRoundRect(rect, cornerRad, cornerRad, paint)
@@ -553,7 +537,7 @@ object ModePickerRenderer {
             capsuleRect.set(leftMargin, telemY, leftMargin + statusW, telemY + chipH)
 
             paint.style = Paint.Style.FILL
-            paint.color = 0x3300E5FF.toInt()
+            paint.color = 0xE80F263A.toInt()
             canvas.drawRoundRect(capsuleRect, 5f * dp, 5f * dp, paint)
 
             paint.style = Paint.Style.STROKE
@@ -581,7 +565,7 @@ object ModePickerRenderer {
             scratchRect.set(chip1X, telemY, chip1X + chip1W, telemY + chipH)
 
             paint.style = Paint.Style.FILL
-            paint.color = 0x55091C30.toInt()
+            paint.color = 0xE1091A2B.toInt()
             canvas.drawRoundRect(scratchRect, 5f * dp, 5f * dp, paint)
 
             paint.style = Paint.Style.STROKE
@@ -602,7 +586,7 @@ object ModePickerRenderer {
             scratchRect.set(chip2X, telemY, chip2X + chip2W, telemY + chipH)
 
             paint.style = Paint.Style.FILL
-            paint.color = 0x55091C30.toInt()
+            paint.color = 0xE1091A2B.toInt()
             canvas.drawRoundRect(scratchRect, 5f * dp, 5f * dp, paint)
 
             paint.style = Paint.Style.STROKE
@@ -663,7 +647,7 @@ object ModePickerRenderer {
             capsuleRect.set(leftMargin, telemY, leftMargin + statusW, telemY + chipH)
 
             paint.style = Paint.Style.FILL
-            paint.color = 0x22FFFFFF
+            paint.color = 0xEC101C2B.toInt()
             canvas.drawRoundRect(capsuleRect, 5f * dp, 5f * dp, paint)
 
             paint.style = Paint.Style.STROKE
@@ -682,7 +666,7 @@ object ModePickerRenderer {
             if (calloutW > 50f * dp) {
                 scratchRect.set(calloutX, telemY, calloutX + calloutW, telemY + chipH)
                 paint.style = Paint.Style.FILL
-                paint.color = withAlpha(0xFF00E5FF.toInt(), 30)
+                paint.color = 0xE6112A3D.toInt()
                 canvas.drawRoundRect(scratchRect, 5f * dp, 5f * dp, paint)
 
                 paint.style = Paint.Style.STROKE
@@ -726,7 +710,6 @@ object ModePickerRenderer {
         rect: RectF,
         title: String,
         description: String,
-        modeBadge: String,
         accent: Int,
         active: Boolean,
         activeRun: Boolean,
@@ -734,7 +717,6 @@ object ModePickerRenderer {
         streakText: String,
         activeRunLabel: String,
         noActiveRunLabel: String,
-        bestStreakLabel: String,
         startFreshLabel: String,
         continueLabel: String,
         newGameLabel: String,
@@ -767,11 +749,12 @@ object ModePickerRenderer {
         paint.color = withAlpha(0xFFFF007F.toInt(), if (active) 55 else 25)
         canvas.drawRoundRect(rect, cornerRad, cornerRad, paint)
 
-        // 2. Monolithic Dark Tinted Polycarbonate Slab (96% solid toxic plum/obsidian)
+        // 2. Opaque plum-obsidian slab: the space art stays outside the content surface for contrast.
         paint.style = Paint.Style.FILL
+        paint.alpha = 255
         paint.shader = LinearGradient(
             rect.left, rect.top, rect.right, rect.bottom,
-            0xF618051E.toInt(), 0xFC07000B.toInt(),
+            0xFF281326.toInt(), 0xFF0D0B16.toInt(),
             Shader.TileMode.CLAMP
         )
         canvas.drawRoundRect(rect, cornerRad, cornerRad, paint)
@@ -917,7 +900,7 @@ object ModePickerRenderer {
             capsuleRect.set(leftMargin, telemY, leftMargin + statusW, telemY + chipH)
 
             paint.style = Paint.Style.FILL
-            paint.color = 0x33FF007F.toInt()
+            paint.color = 0xEA291323.toInt()
             canvas.drawRoundRect(capsuleRect, 5f * dp, 5f * dp, paint)
 
             paint.style = Paint.Style.STROKE
@@ -945,7 +928,7 @@ object ModePickerRenderer {
             scratchRect.set(chip1X, telemY, chip1X + chip1W, telemY + chipH)
 
             paint.style = Paint.Style.FILL
-            paint.color = 0x552A082E.toInt()
+            paint.color = 0xE91A0D20.toInt()
             canvas.drawRoundRect(scratchRect, 5f * dp, 5f * dp, paint)
 
             paint.style = Paint.Style.STROKE
@@ -966,7 +949,7 @@ object ModePickerRenderer {
             scratchRect.set(chip2X, telemY, chip2X + chip2W, telemY + chipH)
 
             paint.style = Paint.Style.FILL
-            paint.color = 0x552A082E.toInt()
+            paint.color = 0xE91A0D20.toInt()
             canvas.drawRoundRect(scratchRect, 5f * dp, 5f * dp, paint)
 
             paint.style = Paint.Style.STROKE
@@ -984,7 +967,7 @@ object ModePickerRenderer {
             capsuleRect.set(leftMargin, telemY, leftMargin + statusW, telemY + chipH)
 
             paint.style = Paint.Style.FILL
-            paint.color = 0x22FFFFFF
+            paint.color = 0xEC1A121F.toInt()
             canvas.drawRoundRect(capsuleRect, 5f * dp, 5f * dp, paint)
 
             paint.style = Paint.Style.STROKE
@@ -1005,7 +988,7 @@ object ModePickerRenderer {
             if (calloutW > 50f * dp) {
                 scratchRect.set(calloutX, telemY, calloutX + calloutW, telemY + chipH)
                 paint.style = Paint.Style.FILL
-                paint.color = withAlpha(0xFFFF007F.toInt(), 35)
+                paint.color = 0xE924101B.toInt()
                 canvas.drawRoundRect(scratchRect, 5f * dp, 5f * dp, paint)
 
                 paint.style = Paint.Style.STROKE

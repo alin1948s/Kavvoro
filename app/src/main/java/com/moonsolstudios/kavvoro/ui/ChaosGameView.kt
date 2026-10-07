@@ -2088,8 +2088,6 @@ class ChaosGameView(
             menuButtonAt = { x, y -> menuButtonAt(x, y) },
             mascotBitmapClassic = brainballBitmap(classicSkin),
             mascotBitmapChaos = brainballBitmap(chaosSkin),
-            cardFrameClassic = worldBitmap("card_frame_classic"),
-            cardFrameChaos = worldBitmap("card_frame_chaos"),
             stateElapsed = stateElapsed
         )
     }

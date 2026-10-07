@@ -98,9 +98,7 @@ object AssetResourceManager {
 
     val WORLD_ART_RESOURCES = mapOf(
         "bg_menu" to R.drawable.world_bg_menu,
-        "bg_mode_select" to R.drawable.bg_mode_select,
-        "card_frame_classic" to R.drawable.card_frame_classic,
-        "card_frame_chaos" to R.drawable.card_frame_chaos,
+        "bg_mode_select" to R.drawable.bg_mode_select_rift,
         "bg_language" to R.drawable.bg_language,
         "bg_tutorial_classic" to R.drawable.world_bg_tutorial_classic,
         "bg_tutorial_chaos" to R.drawable.world_bg_tutorial_chaos,
