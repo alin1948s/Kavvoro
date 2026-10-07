@@ -527,5 +527,11 @@ internal object ThTranslations {
         "EARN 500 COINS" to "เก็บเหรียญ 500 เหรียญ",
         "PLAY 3 ROUNDS" to "เล่น 3 รอบ",
         "WIN 1 ROUND" to "ชนะ 1 รอบ",
+        "DAILY PROGRESS" to "ความคืบหน้ารายวัน",
+        "TOTAL REWARDS" to "รางวัลทั้งหมด",
+        "IN PROGRESS" to "กำลังดำเนินการ",
+        "MISSIONS COMPLETE" to "ทำภารกิจสำเร็จแล้ว",
+        "REWARDS READY TO CLAIM" to "รางวัลพร้อมรับ",
+        "TAP TO CONTINUE" to "แตะเพื่อดำเนินการต่อ",
     )
 }

@@ -527,5 +527,11 @@ internal object CsTranslations {
         "EARN 500 COINS" to "ZÍSKEJ 500 MINCÍ",
         "PLAY 3 ROUNDS" to "ODEHRAJ 3 KOLA",
         "WIN 1 ROUND" to "VYHRAJ 1 KOLO",
+        "DAILY PROGRESS" to "Denní pokrok",
+        "TOTAL REWARDS" to "CELKOVÉ ODMĚNY",
+        "IN PROGRESS" to "PROBÍHÁ",
+        "MISSIONS COMPLETE" to "MISE DOKONČENY",
+        "REWARDS READY TO CLAIM" to "ODMĚNY PŘIPRAVENÉ K VYZVEDNUTÍ",
+        "TAP TO CONTINUE" to "KLEPNUTÍM POKRAČUJ",
     )
 }

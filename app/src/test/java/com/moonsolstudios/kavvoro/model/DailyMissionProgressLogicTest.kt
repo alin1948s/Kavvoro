@@ -30,4 +30,18 @@ class DailyMissionProgressLogicTest {
         assertEquals(120, afterRound.progress)
         assertFalse(afterRound.canClaim)
     }
+
+    @Test
+    fun newlyCompletedReportsOnlyTheMissionsThatCrossedTheirTargets() {
+        val previous = DailyMissionId.entries.map { id ->
+            DailyMissionProgress(id, if (id == DailyMissionId.PLAY_ROUNDS) 2 else 0, claimed = false)
+        }
+        val updated = DailyMissionProgressLogic.recordRound(previous, won = true, coinsEarned = 500)
+
+        assertEquals(
+            setOf(DailyMissionId.PLAY_ROUNDS, DailyMissionId.WIN_ROUND, DailyMissionId.EARN_COINS),
+            DailyMissionProgressLogic.newlyCompleted(previous, updated).map { it.id }.toSet()
+        )
+        assertTrue(DailyMissionProgressLogic.newlyCompleted(updated, updated).isEmpty())
+    }
 }

@@ -9,13 +9,21 @@ class MissionsLayoutCalculator {
     val backButtonRect = LayoutRect()
     val titleRect = LayoutRect()
     val subtitleRect = LayoutRect()
+    val summaryRect = LayoutRect()
+    val summaryProgressTextRect = LayoutRect()
+    val summaryRewardLabelRect = LayoutRect()
+    val summaryRewardTextRect = LayoutRect()
+    val summaryTrackRect = LayoutRect()
     val cardRects = Array(DailyMissionId.entries.size) { LayoutRect() }
     val titleTextRects = Array(DailyMissionId.entries.size) { LayoutRect() }
     val progressTextRects = Array(DailyMissionId.entries.size) { LayoutRect() }
+    val statusTextRects = Array(DailyMissionId.entries.size) { LayoutRect() }
     val rewardTextRects = Array(DailyMissionId.entries.size) { LayoutRect() }
     val progressTrackRects = Array(DailyMissionId.entries.size) { LayoutRect() }
     val claimButtonRects = Array(DailyMissionId.entries.size) { LayoutRect() }
     var gridLayout: Boolean = false
+        private set
+    var showSummary: Boolean = false
         private set
 
     fun calculate(width: Float, height: Float, density: Float) {
@@ -32,15 +40,32 @@ class MissionsLayoutCalculator {
         titleRect.set(contentLeft + 60f * dp, top + 1f * dp, contentRight, top + 30f * dp)
         subtitleRect.set(contentLeft + 60f * dp, top + 30f * dp, contentRight, top + 50f * dp)
 
-        val listTop = top + 78f * dp
+        gridLayout = safeWidth / dp >= 760f && safeHeight / dp >= 520f && safeWidth > safeHeight
+        showSummary = safeHeight / dp >= 640f && safeWidth / dp >= 360f
+        val summaryTop = top + 62f * dp
+        val summaryHeight = if (gridLayout) 88f * dp else 96f * dp
+        if (showSummary) {
+            summaryRect.set(contentLeft, summaryTop, contentRight, summaryTop + summaryHeight)
+            summaryProgressTextRect.set(contentLeft + 20f * dp, summaryTop + 42f * dp, contentLeft + contentWidth * 0.47f, summaryTop + 72f * dp)
+            summaryRewardLabelRect.set(contentLeft + contentWidth * 0.49f, summaryTop + 21f * dp, contentRight - 20f * dp, summaryTop + 39f * dp)
+            summaryRewardTextRect.set(contentLeft + contentWidth * 0.49f, summaryTop + 39f * dp, contentRight - 20f * dp, summaryTop + 66f * dp)
+            summaryTrackRect.set(contentLeft + 20f * dp, summaryTop + summaryHeight - 13f * dp, contentRight - 20f * dp, summaryTop + summaryHeight - 8f * dp)
+        } else {
+            summaryRect.setEmpty()
+            summaryProgressTextRect.setEmpty()
+            summaryRewardLabelRect.setEmpty()
+            summaryRewardTextRect.setEmpty()
+            summaryTrackRect.setEmpty()
+        }
+
+        val listTop = if (showSummary) summaryRect.bottom + 13f * dp else top + 78f * dp
         val listBottom = safeHeight - 22f * dp
         val gap = 12f * dp
-        gridLayout = safeWidth / dp >= 760f && safeHeight / dp >= 520f && safeWidth > safeHeight
 
         if (gridLayout) {
             val cardGap = 16f * dp
             val cardWidth = (contentWidth - cardGap * 2f) / cardRects.size
-            val cardHeight = (listBottom - listTop).coerceAtLeast(112f * dp).coerceAtMost(320f * dp)
+            val cardHeight = (listBottom - listTop).coerceAtLeast(128f * dp).coerceAtMost(304f * dp)
             val rowTop = listTop + ((listBottom - listTop - cardHeight).coerceAtLeast(0f)) * 0.5f
             cardRects.indices.forEach { index ->
                 val left = contentLeft + index * (cardWidth + cardGap)
@@ -49,42 +74,55 @@ class MissionsLayoutCalculator {
             }
         } else {
             val availableHeight = (listBottom - listTop).coerceAtLeast(1f)
-            val compactGap = min(gap, availableHeight / (cardRects.size * 6f))
-            val cardHeight = ((availableHeight - compactGap * 2f) / cardRects.size).coerceIn(68f * dp, 224f * dp)
+            val compact = !showSummary
+            val compactGap = if (compact) min(gap, availableHeight / (cardRects.size * 6f)) else gap
+            val maxCardHeight = if (compact) 224f * dp else 168f * dp
+            val minCardHeight = if (compact) 68f * dp else 120f * dp
+            val cardHeight = ((availableHeight - compactGap * 2f) / cardRects.size).coerceIn(minCardHeight, maxCardHeight)
             val totalHeight = cardHeight * cardRects.size + compactGap * 2f
-            val stackTop = listTop + ((availableHeight - totalHeight).coerceAtLeast(0f)) * 0.5f
+            val stackTop = if (compact) {
+                listTop + ((availableHeight - totalHeight).coerceAtLeast(0f)) * 0.5f
+            } else {
+                listTop + ((availableHeight - totalHeight).coerceAtLeast(0f)) * 0.12f
+            }
             cardRects.indices.forEach { index ->
                 val cardTop = stackTop + index * (cardHeight + compactGap)
                 cardRects[index].set(contentLeft, cardTop, contentRight, cardTop + cardHeight)
-                layoutStackedCard(index, cardRects[index], dp)
+                layoutStackedCard(index, cardRects[index], dp, compact)
             }
         }
     }
 
-    private fun layoutStackedCard(index: Int, card: LayoutRect, dp: Float) {
-        val buttonWidth = min(128f * dp, card.width() * 0.42f)
-        val buttonHeight = min(42f * dp, card.height() * 0.32f)
+    private fun layoutStackedCard(index: Int, card: LayoutRect, dp: Float, compact: Boolean) {
+        val buttonWidth = min(card.width() - 32f * dp, 196f * dp).coerceAtLeast(92f * dp)
+        val buttonHeight = if (compact) min(36f * dp, card.height() * 0.38f) else 40f * dp
+        val buttonTop = if (compact) card.bottom - 11f * dp - buttonHeight else {
+            card.top + min(99f * dp, card.height() - 11f * dp - buttonHeight)
+        }
         claimButtonRects[index].set(
-            card.right - 16f * dp - buttonWidth,
-            card.centerY() - buttonHeight * 0.5f + 7f * dp,
-            card.right - 16f * dp,
-            card.centerY() + buttonHeight * 0.5f + 7f * dp
+            card.centerX() - buttonWidth * 0.5f,
+            buttonTop,
+            card.centerX() + buttonWidth * 0.5f,
+            buttonTop + buttonHeight
         )
-        if (card.height() < 92f * dp) {
-            titleTextRects[index].set(card.left + 56f * dp, card.top + 5f * dp, claimButtonRects[index].left - 10f * dp, card.top + 27f * dp)
-            progressTextRects[index].set(card.left + 56f * dp, card.top + 28f * dp, claimButtonRects[index].left - 10f * dp, card.top + 45f * dp)
-            rewardTextRects[index].set(claimButtonRects[index].left - 6f * dp, card.top + 4f * dp, card.right - 12f * dp, card.top + 23f * dp)
-            progressTrackRects[index].set(card.left + 20f * dp, card.bottom - 17f * dp, claimButtonRects[index].left - 10f * dp, card.bottom - 10f * dp)
+        if (compact) {
+            titleTextRects[index].set(card.left + 50f * dp, card.top + 5f * dp, claimButtonRects[index].right, card.top + 27f * dp)
+            progressTextRects[index].set(card.left + 18f * dp, card.top + 30f * dp, card.right - 18f * dp, card.top + 46f * dp)
+            statusTextRects[index].setEmpty()
+            rewardTextRects[index].setEmpty()
+            progressTrackRects[index].set(card.left + 18f * dp, card.bottom - buttonHeight - 22f * dp, card.right - 18f * dp, card.bottom - buttonHeight - 16f * dp)
         } else {
-            titleTextRects[index].set(card.left + 56f * dp, card.top + 15f * dp, claimButtonRects[index].left - 10f * dp, card.top + 48f * dp)
-            progressTextRects[index].set(card.left + 56f * dp, card.top + 54f * dp, claimButtonRects[index].left - 10f * dp, card.top + 76f * dp)
-            rewardTextRects[index].set(claimButtonRects[index].left - 6f * dp, card.top + 12f * dp, card.right - 12f * dp, card.top + 36f * dp)
-            progressTrackRects[index].set(card.left + 20f * dp, card.bottom - 22f * dp, claimButtonRects[index].left - 10f * dp, card.bottom - 14f * dp)
+            val rewardWidth = min(108f * dp, card.width() * 0.32f)
+            titleTextRects[index].set(card.left + 54f * dp, card.top + 13f * dp, card.right - rewardWidth - 18f * dp, card.top + 40f * dp)
+            rewardTextRects[index].set(card.right - rewardWidth - 14f * dp, card.top + 12f * dp, card.right - 14f * dp, card.top + 37f * dp)
+            progressTextRects[index].set(card.left + 20f * dp, card.top + 49f * dp, card.centerX(), card.top + 68f * dp)
+            statusTextRects[index].set(card.centerX(), card.top + 49f * dp, card.right - 20f * dp, card.top + 68f * dp)
+            progressTrackRects[index].set(card.left + 20f * dp, card.top + 76f * dp, card.right - 20f * dp, card.top + 83f * dp)
         }
     }
 
     private fun layoutGridCard(index: Int, card: LayoutRect, dp: Float) {
-        val buttonWidth = min(card.width() - 32f * dp, 196f * dp).coerceAtLeast(92f * dp)
+        val buttonWidth = min(card.width() - 36f * dp, 208f * dp).coerceAtLeast(92f * dp)
         val buttonHeight = 44f * dp
         claimButtonRects[index].set(
             card.centerX() - buttonWidth * 0.5f,
@@ -92,9 +130,10 @@ class MissionsLayoutCalculator {
             card.centerX() + buttonWidth * 0.5f,
             card.bottom - 20f * dp
         )
-        titleTextRects[index].set(card.left + 20f * dp, card.top + 64f * dp, card.right - 20f * dp, card.top + 102f * dp)
-        rewardTextRects[index].set(card.left + 20f * dp, card.top + 108f * dp, card.right - 20f * dp, card.top + 136f * dp)
-        progressTextRects[index].set(card.left + 20f * dp, claimButtonRects[index].top - 52f * dp, card.right - 20f * dp, claimButtonRects[index].top - 30f * dp)
-        progressTrackRects[index].set(card.left + 20f * dp, claimButtonRects[index].top - 22f * dp, card.right - 20f * dp, claimButtonRects[index].top - 14f * dp)
+        titleTextRects[index].set(card.left + 18f * dp, card.top + 70f * dp, card.right - 18f * dp, card.top + 104f * dp)
+        rewardTextRects[index].set(card.left + 22f * dp, card.top + 111f * dp, card.right - 22f * dp, card.top + 137f * dp)
+        progressTextRects[index].set(card.left + 20f * dp, claimButtonRects[index].top - 56f * dp, card.right - 20f * dp, claimButtonRects[index].top - 34f * dp)
+        statusTextRects[index].set(card.left + 20f * dp, claimButtonRects[index].top - 32f * dp, card.right - 20f * dp, claimButtonRects[index].top - 18f * dp)
+        progressTrackRects[index].set(card.left + 20f * dp, claimButtonRects[index].top - 12f * dp, card.right - 20f * dp, claimButtonRects[index].top - 5f * dp)
     }
 }

@@ -527,5 +527,11 @@ internal object UkTranslations {
         "EARN 500 COINS" to "ЗІБРАТИ 500 МОНЕТ",
         "PLAY 3 ROUNDS" to "ЗІГРАТИ 3 РАУНДИ",
         "WIN 1 ROUND" to "ВИГРАТИ 1 РАУНД",
+        "DAILY PROGRESS" to "ЩОДЕННИЙ ПРОГРЕС",
+        "TOTAL REWARDS" to "УСІ НАГОРОДИ",
+        "IN PROGRESS" to "У ПРОЦЕСІ",
+        "MISSIONS COMPLETE" to "МІСІЇ ВИКОНАНО",
+        "REWARDS READY TO CLAIM" to "НАГОРОДИ ГОТОВІ ДО ОТРИМАННЯ",
+        "TAP TO CONTINUE" to "НАТИСНІТЬ, ЩОБ ПРОДОВЖИТИ",
     )
 }

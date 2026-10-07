@@ -34,4 +34,11 @@ object DailyMissionProgressLogic {
         }
         mission.copy(progress = (mission.progress.toLong() + delta).coerceAtMost(mission.target.toLong()).toInt())
     }
+
+    fun newlyCompleted(
+        previous: List<DailyMissionProgress>,
+        updated: List<DailyMissionProgress>
+    ): List<DailyMissionProgress> = updated.filter { mission ->
+        mission.isComplete && previous.none { old -> old.id == mission.id && old.isComplete }
+    }
 }

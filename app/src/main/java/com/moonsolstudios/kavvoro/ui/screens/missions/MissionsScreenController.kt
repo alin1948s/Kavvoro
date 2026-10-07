@@ -1,8 +1,10 @@
 package com.moonsolstudios.kavvoro.ui.screens.missions
 
 import android.graphics.Canvas
+import android.os.SystemClock
 import android.view.MotionEvent
 import com.moonsolstudios.kavvoro.repository.DailyMissionsRepository
+import com.moonsolstudios.kavvoro.model.DailyMissionProgress
 
 /** Owns the Missions screen layout, rendering, input, and daily mission state. */
 class MissionsScreenController(
@@ -13,15 +15,62 @@ class MissionsScreenController(
     private val onRejectedClaim: () -> Unit
 ) {
     private val touchController = MissionsTouchController()
+    private var completionPopup: CompletionPopup? = null
 
     fun replaceRepository(repository: DailyMissionsRepository) {
         this.repository = repository
         touchController.reset()
+        dismissGamePopup()
     }
 
-    fun reset() = touchController.reset()
+    fun reset() {
+        touchController.reset()
+        dismissGamePopup()
+    }
 
-    fun recordRound(won: Boolean, coinsEarned: Int) = repository.recordRound(won, coinsEarned)
+    fun recordRound(won: Boolean, coinsEarned: Int) {
+        val completed = repository.recordRound(won, coinsEarned)
+        if (completed.isNotEmpty()) {
+            completionPopup = CompletionPopup(completed, SystemClock.uptimeMillis())
+        }
+    }
+
+    fun dismissGamePopup() {
+        completionPopup = null
+    }
+
+    fun handleGamePopupTouch(event: MotionEvent): Boolean {
+        val popup = completionPopup ?: return false
+        if (SystemClock.uptimeMillis() - popup.createdAtMs >= COMPLETION_POPUP_DURATION_MS) {
+            dismissGamePopup()
+            return false
+        }
+        if (event.actionMasked == MotionEvent.ACTION_UP) {
+            dismissGamePopup()
+            onTouch()
+        }
+        return true
+    }
+
+    fun drawGamePopup(canvas: Canvas, width: Int, height: Int, dp: Float, t: (String) -> String) {
+        val popup = completionPopup ?: return
+        val elapsed = SystemClock.uptimeMillis() - popup.createdAtMs
+        if (elapsed >= COMPLETION_POPUP_DURATION_MS) {
+            dismissGamePopup()
+            return
+        }
+        val fadeIn = (elapsed / POPUP_FADE_IN_MS.toFloat()).coerceIn(0f, 1f)
+        val fadeOut = ((COMPLETION_POPUP_DURATION_MS - elapsed) / POPUP_FADE_OUT_MS.toFloat()).coerceIn(0f, 1f)
+        MissionsCompletionPopupRenderer.draw(
+            canvas = canvas,
+            viewWidth = width.toFloat(),
+            viewHeight = height.toFloat(),
+            missions = popup.missions,
+            dp = dp,
+            alpha = minOf(fadeIn, fadeOut),
+            t = t
+        )
+    }
 
     fun draw(canvas: Canvas, width: Int, height: Int, dp: Float, t: (String) -> String) {
         val layout = touchController.layoutCalculator
@@ -52,5 +101,13 @@ class MissionsScreenController(
                 }
             }
         }
+    }
+
+    private data class CompletionPopup(val missions: List<DailyMissionProgress>, val createdAtMs: Long)
+
+    private companion object {
+        const val COMPLETION_POPUP_DURATION_MS = 7_000L
+        const val POPUP_FADE_IN_MS = 220L
+        const val POPUP_FADE_OUT_MS = 650L
     }
 }

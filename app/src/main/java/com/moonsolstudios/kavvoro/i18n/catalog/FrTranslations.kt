@@ -527,5 +527,11 @@ internal object FrTranslations {
         "EARN 500 COINS" to "GAGNEZ 500 PIÈCES",
         "PLAY 3 ROUNDS" to "JOUEZ 3 MANCHES",
         "WIN 1 ROUND" to "GAGNEZ 1 MANCHE",
+        "DAILY PROGRESS" to "PROGRESSION DU JOUR",
+        "TOTAL REWARDS" to "RÉCOMPENSES TOTALES",
+        "IN PROGRESS" to "EN COURS",
+        "MISSIONS COMPLETE" to "MISSIONS TERMINÉES",
+        "REWARDS READY TO CLAIM" to "RÉCOMPENSES À RÉCUPÉRER",
+        "TAP TO CONTINUE" to "TOUCHE POUR CONTINUER",
     )
 }

@@ -527,5 +527,11 @@ internal object TrTranslations {
         "EARN 500 COINS" to "500 JETON KAZAN",
         "PLAY 3 ROUNDS" to "3 TUR OYNA",
         "WIN 1 ROUND" to "1 TUR KAZAN",
+        "DAILY PROGRESS" to "GÜNLÜK İLERLEME",
+        "TOTAL REWARDS" to "TOPLAM ÖDÜLLER",
+        "IN PROGRESS" to "DEVAM EDİYOR",
+        "MISSIONS COMPLETE" to "GÖREVLER TAMAMLANDI",
+        "REWARDS READY TO CLAIM" to "ÖDÜLLER ALINMAYA HAZIR",
+        "TAP TO CONTINUE" to "DEVAM ETMEK İÇİN DOKUN",
     )
 }

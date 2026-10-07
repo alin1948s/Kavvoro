@@ -527,5 +527,11 @@ internal object ViTranslations {
         "EARN 500 COINS" to "KIẾM 500 XU",
         "PLAY 3 ROUNDS" to "CHƠI 3 VÁN",
         "WIN 1 ROUND" to "THẮNG 1 VÁN",
+        "DAILY PROGRESS" to "TIẾN ĐỘ HẰNG NGÀY",
+        "TOTAL REWARDS" to "TỔNG PHẦN THƯỞNG",
+        "IN PROGRESS" to "ĐANG THỰC HIỆN",
+        "MISSIONS COMPLETE" to "NHIỆM VỤ ĐÃ HOÀN THÀNH",
+        "REWARDS READY TO CLAIM" to "PHẦN THƯỞNG SẴN SÀNG ĐỂ NHẬN",
+        "TAP TO CONTINUE" to "CHẠM ĐỂ TIẾP TỤC",
     )
 }

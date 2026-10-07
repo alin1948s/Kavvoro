@@ -527,5 +527,11 @@ internal object ZhTwTranslations {
         "EARN 500 COINS" to "賺取500枚硬幣",
         "PLAY 3 ROUNDS" to "進行3回合遊戲",
         "WIN 1 ROUND" to "贏得1回合",
+        "DAILY PROGRESS" to "每日進度",
+        "TOTAL REWARDS" to "獎勵總計",
+        "IN PROGRESS" to "進行中",
+        "MISSIONS COMPLETE" to "任務已完成",
+        "REWARDS READY TO CLAIM" to "獎勵可領取",
+        "TAP TO CONTINUE" to "點擊繼續",
     )
 }

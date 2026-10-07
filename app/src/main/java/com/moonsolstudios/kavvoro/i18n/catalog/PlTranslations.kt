@@ -527,5 +527,11 @@ internal object PlTranslations {
         "EARN 500 COINS" to "ZDOBĄDŹ 500 MONET",
         "PLAY 3 ROUNDS" to "ROZEGRAJ 3 RUNDY",
         "WIN 1 ROUND" to "WYGRAJ 1 RUNDĘ",
+        "DAILY PROGRESS" to "POSTĘP DZIENNY",
+        "TOTAL REWARDS" to "ŁĄCZNE NAGRODY",
+        "IN PROGRESS" to "W TOKU",
+        "MISSIONS COMPLETE" to "MISJE UKOŃCZONE",
+        "REWARDS READY TO CLAIM" to "NAGRODY GOTOWE DO ODBIORU",
+        "TAP TO CONTINUE" to "DOTKNIJ, ABY KONTYNUOWAĆ",
     )
 }

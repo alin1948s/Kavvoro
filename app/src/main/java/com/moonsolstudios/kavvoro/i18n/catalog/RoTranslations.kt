@@ -527,5 +527,11 @@ internal object RoTranslations {
         "EARN 500 COINS" to "CÂȘTIGĂ 500 DE MONEDE",
         "PLAY 3 ROUNDS" to "JOACĂ 3 RUNDE",
         "WIN 1 ROUND" to "CÂȘTIGĂ 1 RUNDĂ",
+        "DAILY PROGRESS" to "PROGRESUL ZILNIC",
+        "TOTAL REWARDS" to "RECOMPENSE TOTALE",
+        "IN PROGRESS" to "ÎN DESFĂȘURARE",
+        "MISSIONS COMPLETE" to "MISIUNI COMPLETATE",
+        "REWARDS READY TO CLAIM" to "RECOMPENSE GATA DE REVENDICAT",
+        "TAP TO CONTINUE" to "ATINGE PENTRU A CONTINUA",
     )
 }

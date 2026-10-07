@@ -527,5 +527,11 @@ internal object KoTranslations {
         "EARN 500 COINS" to "코인 500개 획득",
         "PLAY 3 ROUNDS" to "라운드 3회 플레이",
         "WIN 1 ROUND" to "라운드 1회 승리",
+        "DAILY PROGRESS" to "일일 진행도",
+        "TOTAL REWARDS" to "총 보상",
+        "IN PROGRESS" to "진행 중",
+        "MISSIONS COMPLETE" to "미션 완료",
+        "REWARDS READY TO CLAIM" to "보상을 받을 수 있어요",
+        "TAP TO CONTINUE" to "탭하여 계속",
     )
 }

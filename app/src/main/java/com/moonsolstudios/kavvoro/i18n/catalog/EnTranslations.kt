@@ -527,5 +527,11 @@ internal object EnTranslations {
         "EARN 500 COINS" to "EARN 500 COINS",
         "PLAY 3 ROUNDS" to "PLAY 3 ROUNDS",
         "WIN 1 ROUND" to "WIN 1 ROUND",
+        "DAILY PROGRESS" to "DAILY PROGRESS",
+        "TOTAL REWARDS" to "TOTAL REWARDS",
+        "IN PROGRESS" to "IN PROGRESS",
+        "MISSIONS COMPLETE" to "MISSIONS COMPLETE",
+        "REWARDS READY TO CLAIM" to "REWARDS READY TO CLAIM",
+        "TAP TO CONTINUE" to "TAP TO CONTINUE",
     )
 }

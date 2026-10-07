@@ -616,7 +616,7 @@ class ChaosGameView(
                     setActiveButton = { activeButton = it },
                     onAction = ::handleButton
                 )
-                Screen.GAME -> pendingAction = GameplayTouchController.handleTouch(
+                Screen.GAME -> pendingAction = if (missionsScreenController.handleGamePopupTouch(event)) null else GameplayTouchController.handleTouch(
                     event = event,
                     activeButton = activeButton,
                     setActiveButton = { activeButton = it },
@@ -1275,6 +1275,7 @@ class ChaosGameView(
     }
 
     private fun startRun(mode: GameMode, continueProgress: Boolean) {
+        missionsScreenController.dismissGamePopup()
         gameMode = mode
         if (continueProgress) {
             levelIndex = modeProgress(mode)
@@ -1921,6 +1922,7 @@ class ChaosGameView(
                 paint = paint
             )
         }
+        missionsScreenController.drawGamePopup(canvas, viewWidth, viewHeight, uiDensity, ::t)
         if (exportingShare) drawExportingOverlay(canvas)
         drawScreenTransition(canvas)
     }

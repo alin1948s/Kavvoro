@@ -527,5 +527,11 @@ internal object RuTranslations {
         "EARN 500 COINS" to "ЗАРАБОТАТЬ 500 МОНЕТ",
         "PLAY 3 ROUNDS" to "СЫГРАТЬ 3 РАУНДА",
         "WIN 1 ROUND" to "ВЫИГРАТЬ 1 РАУНД",
+        "DAILY PROGRESS" to "ДНЕВНОЙ ПРОГРЕСС",
+        "TOTAL REWARDS" to "ВСЕ НАГРАДЫ",
+        "IN PROGRESS" to "В ПРОЦЕССЕ",
+        "MISSIONS COMPLETE" to "МИССИИ ВЫПОЛНЕНЫ",
+        "REWARDS READY TO CLAIM" to "НАГРАДЫ ГОТОВЫ К ПОЛУЧЕНИЮ",
+        "TAP TO CONTINUE" to "НАЖМИТЕ, ЧТОБЫ ПРОДОЛЖИТЬ",
     )
 }

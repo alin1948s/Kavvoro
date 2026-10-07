@@ -527,5 +527,11 @@ internal object JaTranslations {
         "EARN 500 COINS" to "コインを500枚獲得",
         "PLAY 3 ROUNDS" to "3ラウンドプレイ",
         "WIN 1 ROUND" to "1ラウンド勝利",
+        "DAILY PROGRESS" to "デイリー進捗",
+        "TOTAL REWARDS" to "報酬合計",
+        "IN PROGRESS" to "進行中",
+        "MISSIONS COMPLETE" to "ミッション達成",
+        "REWARDS READY TO CLAIM" to "報酬を受け取れます",
+        "TAP TO CONTINUE" to "タップして続行",
     )
 }

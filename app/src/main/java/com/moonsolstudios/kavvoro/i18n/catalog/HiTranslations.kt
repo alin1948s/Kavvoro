@@ -527,5 +527,11 @@ internal object HiTranslations {
         "EARN 500 COINS" to "500 सिक्के कमाएँ",
         "PLAY 3 ROUNDS" to "3 राउंड खेलें",
         "WIN 1 ROUND" to "1 राउंड जीतें",
+        "DAILY PROGRESS" to "दैनिक प्रगति",
+        "TOTAL REWARDS" to "कुल पुरस्कार",
+        "IN PROGRESS" to "जारी है",
+        "MISSIONS COMPLETE" to "मिशन पूरे हुए",
+        "REWARDS READY TO CLAIM" to "पुरस्कार लेने के लिए तैयार हैं",
+        "TAP TO CONTINUE" to "जारी रखने के लिए टैप करें",
     )
 }

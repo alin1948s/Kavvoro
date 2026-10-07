@@ -527,5 +527,11 @@ internal object SvTranslations {
         "EARN 500 COINS" to "TJÄNA 500 MYNT",
         "PLAY 3 ROUNDS" to "SPELA 3 RUNDOR",
         "WIN 1 ROUND" to "VINN 1 RUNDA",
+        "DAILY PROGRESS" to "DAGLIG FRAMSTEG",
+        "TOTAL REWARDS" to "TOTALA BELÖNINGAR",
+        "IN PROGRESS" to "PÅGÅR",
+        "MISSIONS COMPLETE" to "UPPDRAG SLUTFÖRDA",
+        "REWARDS READY TO CLAIM" to "BELÖNINGAR REDO ATT HÄMTAS",
+        "TAP TO CONTINUE" to "TRYCK FÖR ATT FORTSÄTTA",
     )
 }

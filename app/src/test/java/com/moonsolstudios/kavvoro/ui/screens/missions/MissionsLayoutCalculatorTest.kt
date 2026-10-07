@@ -12,6 +12,9 @@ class MissionsLayoutCalculatorTest {
         layout.calculate(width = 1080f, height = 2400f, density = 2.625f)
 
         assertFalse(layout.gridLayout)
+        assertTrue(layout.showSummary)
+        assertTrue(layout.summaryRect.left >= 0f && layout.summaryRect.right <= 1080f)
+        assertTrue(layout.summaryRect.bottom < layout.cardRects.first().top)
         layout.cardRects.forEachIndexed { index, card ->
             assertTrue(card.width() > 0f && card.height() > 0f)
             assertTrue(card.left >= 0f && card.right <= 1080f)
@@ -46,6 +49,7 @@ class MissionsLayoutCalculatorTest {
         layout.calculate(width = 720f, height = 360f, density = 1f)
 
         assertFalse(layout.gridLayout)
+        assertFalse(layout.showSummary)
         layout.cardRects.forEachIndexed { index, card ->
             assertTrue(card.height() < 92f)
             assertTrue(card.top >= 0f && card.bottom <= 360f)

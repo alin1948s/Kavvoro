@@ -527,5 +527,11 @@ internal object ArTranslations {
         "EARN 500 COINS" to "اجمع 500 قطعة نقدية",
         "PLAY 3 ROUNDS" to "العب 3 جولات",
         "WIN 1 ROUND" to "اربح جولة واحدة",
+        "DAILY PROGRESS" to "التقدم اليومي",
+        "TOTAL REWARDS" to "إجمالي المكافآت",
+        "IN PROGRESS" to "جارٍ",
+        "MISSIONS COMPLETE" to "اكتملت المهام",
+        "REWARDS READY TO CLAIM" to "المكافآت جاهزة للاستلام",
+        "TAP TO CONTINUE" to "اضغط للمتابعة",
     )
 }

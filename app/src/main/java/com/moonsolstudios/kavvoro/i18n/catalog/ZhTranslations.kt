@@ -527,5 +527,11 @@ internal object ZhTranslations {
         "EARN 500 COINS" to "赚取500枚金币",
         "PLAY 3 ROUNDS" to "进行3轮游戏",
         "WIN 1 ROUND" to "赢得1轮",
+        "DAILY PROGRESS" to "每日进度",
+        "TOTAL REWARDS" to "奖励总计",
+        "IN PROGRESS" to "进行中",
+        "MISSIONS COMPLETE" to "任务已完成",
+        "REWARDS READY TO CLAIM" to "奖励可领取",
+        "TAP TO CONTINUE" to "点击继续",
     )
 }

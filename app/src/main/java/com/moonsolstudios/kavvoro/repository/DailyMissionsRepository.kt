@@ -17,12 +17,14 @@ class DailyMissionsRepository(
         readMissions()
     }
 
-    fun recordRound(won: Boolean, coinsEarned: Int) = synchronized(prefs) {
+    fun recordRound(won: Boolean, coinsEarned: Int): List<DailyMissionProgress> = synchronized(prefs) {
         ensureCurrentDay()
-        val updated = DailyMissionProgressLogic.recordRound(readMissions(), won, coinsEarned)
+        val previous = readMissions()
+        val updated = DailyMissionProgressLogic.recordRound(previous, won, coinsEarned)
         prefs.edit {
             updated.forEach { mission -> putInt(progressKey(mission.id), mission.progress) }
         }
+        DailyMissionProgressLogic.newlyCompleted(previous, updated)
     }
 
     /** Returns zero when the mission is incomplete or was already claimed. */
