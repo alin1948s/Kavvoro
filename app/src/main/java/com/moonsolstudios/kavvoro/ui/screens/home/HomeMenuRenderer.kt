@@ -36,6 +36,11 @@ object HomeMenuRenderer {
     private val scratchFit = RectF()
     private val scratchRect = RectF()
     private val scratchRect2 = RectF()
+    private val statsDockRect = RectF()
+    private val statsDockShaderRect = RectF()
+    private var statsDockShaderDensity = Float.NaN
+    private var statsDockFillShader: LinearGradient? = null
+    private var statsDockBorderShader: LinearGradient? = null
     private val gearPath = Path()
     private val cardClipPath = Path()
     private val mountainPath = Path()
@@ -80,6 +85,60 @@ object HomeMenuRenderer {
     private fun withAlpha(color: Int, alpha: Int): Int =
         (color and 0x00FFFFFF) or ((alpha.coerceIn(0, 255)) shl 24)
 
+    private fun drawStatsDock(
+        canvas: Canvas,
+        rect: RectF,
+        firstDividerX: Float,
+        secondDividerX: Float,
+        paint: Paint,
+        dp: Float
+    ) {
+        if (rect.isEmpty) return
+        val radius = rect.height() * 0.24f
+        if (statsDockShaderRect.left != rect.left || statsDockShaderRect.top != rect.top ||
+            statsDockShaderRect.right != rect.right || statsDockShaderRect.bottom != rect.bottom ||
+            statsDockShaderDensity != dp
+        ) {
+            statsDockShaderRect.set(rect)
+            statsDockShaderDensity = dp
+            statsDockFillShader = LinearGradient(
+                rect.left, rect.top, rect.right, rect.bottom,
+                intArrayOf(0xEF0A1530.toInt(), 0xF20B1027.toInt(), 0xF21A102C.toInt()),
+                floatArrayOf(0f, 0.55f, 1f),
+                Shader.TileMode.CLAMP
+            )
+            statsDockBorderShader = LinearGradient(
+                rect.left, rect.top, rect.right, rect.bottom,
+                withAlpha(KavvoroPalette.cyan, 190),
+                withAlpha(KavvoroPalette.purple, 190),
+                Shader.TileMode.CLAMP
+            )
+        }
+        paint.reset()
+        paint.isAntiAlias = true
+        paint.style = Paint.Style.FILL
+        paint.shader = statsDockFillShader
+        canvas.drawRoundRect(rect, radius, radius, paint)
+
+        paint.shader = null
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 1.15f * dp
+        paint.shader = statsDockBorderShader
+        canvas.drawRoundRect(rect, radius, radius, paint)
+        paint.shader = null
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 1f * dp
+        paint.color = 0x24FFFFFF
+        canvas.drawLine(rect.left + radius, rect.top + 1f * dp, rect.right - radius, rect.top + 1f * dp, paint)
+
+        // Dividers sit in the existing layout gaps, keeping the three metrics distinct inside one dock.
+        paint.strokeWidth = 1f * dp
+        paint.color = 0x477DA8D7
+        val verticalInset = (rect.height() * 0.23f).coerceAtLeast(4f * dp)
+        canvas.drawLine(firstDividerX, rect.top + verticalInset, firstDividerX, rect.bottom - verticalInset, paint)
+        canvas.drawLine(secondDividerX, rect.top + verticalInset, secondDividerX, rect.bottom - verticalInset, paint)
+    }
+
     private fun drawStatChip3D(
         canvas: Canvas,
         rect: RectF,
@@ -89,40 +148,16 @@ object HomeMenuRenderer {
         paint: Paint,
         dp: Float
     ) {
-        val radius = rect.height() * 0.28f
-        // 1. Dark glass background
-        paint.reset()
-        paint.isAntiAlias = true
-        paint.style = Paint.Style.FILL
-        paint.color = 0xEE080E28.toInt()
-        canvas.drawRoundRect(rect, radius, radius, paint)
-
-        // 2. Neon cyan to magenta gradient border
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 1.4f * dp
-        paint.shader = LinearGradient(
-            rect.left, rect.top, rect.right, rect.bottom,
-            KavvoroPalette.cyan, KavvoroPalette.magenta,
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, radius, radius, paint)
-        paint.shader = null
-
-        // 3. Top highlight line
-        paint.color = 0x2EFFFFFF
-        paint.strokeWidth = 1f * dp
-        canvas.drawLine(rect.left + radius, rect.top + 1f * dp, rect.right - radius, rect.top + 1f * dp, paint)
-
         val compact = rect.width() < 72f * dp
 
-        // 4. Draw 3D icon on left
+        // The compact header presents a metric row inside the shared dock instead of three tiny cards.
         val iconSize = if (compact) {
-            (rect.height() * 0.38f).coerceIn(13f * dp, 18f * dp)
+            (rect.height() * 0.30f).coerceIn(9f * dp, 13f * dp)
         } else {
             (rect.height() * 0.72f).coerceIn(20f * dp, 36f * dp)
         }
-        val iconLeft = rect.left + if (compact) 3f * dp else 7f * dp
-        val iconTop = rect.centerY() - iconSize * 0.5f
+        val iconLeft = rect.left + if (compact) 4f * dp else 7f * dp
+        val iconTop = if (compact) rect.top + 3f * dp else rect.centerY() - iconSize * 0.5f
         if (iconBmp != null) {
             paint.alpha = 255
             paint.isFilterBitmap = true
@@ -145,28 +180,31 @@ object HomeMenuRenderer {
         }
 
         if (compact) {
-            val textLeft = iconLeft + iconSize + 2f * dp
+            val textLeft = iconLeft + iconSize + 3f * dp
             val maxTextWidth = (rect.right - 3f * dp - textLeft).coerceAtLeast(1f * dp)
             val labelText = label.uppercase()
             textPaint.textAlign = Paint.Align.LEFT
             textPaint.letterSpacing = 0f
-            var labelSize = 6.5f * dp
+            var labelSize = 6f * dp
             textPaint.textSize = labelSize
-            while (labelSize > 4.5f * dp && textPaint.measureText(labelText) > maxTextWidth) {
-                labelSize -= 0.25f * dp
+            while (labelSize > 5f * dp && textPaint.measureText(labelText) > maxTextWidth) {
+                labelSize -= 0.2f * dp
                 textPaint.textSize = labelSize
             }
-            textPaint.color = Color.WHITE
-            canvas.drawText(labelText, textLeft, rect.centerY() - 2f * dp, textPaint)
+            textPaint.color = 0xFFB9CBE7.toInt()
+            canvas.drawText(labelText, textLeft, rect.top + 11f * dp, textPaint)
 
-            var valueSize = (rect.height() * 0.34f).coerceIn(10f * dp, 15f * dp)
+            var valueSize = (rect.height() * 0.34f).coerceIn(10f * dp, 14f * dp)
             textPaint.textSize = valueSize
-            while (valueSize > 7f * dp && textPaint.measureText(value) > maxTextWidth) {
-                valueSize -= 0.5f * dp
+            textPaint.textAlign = Paint.Align.CENTER
+            while (valueSize > 8f * dp && textPaint.measureText(value) > rect.width() - 7f * dp) {
+                valueSize -= 0.4f * dp
                 textPaint.textSize = valueSize
             }
             textPaint.color = Color.WHITE
-            canvas.drawText(value, textLeft, rect.centerY() + 12f * dp, textPaint)
+            textPaint.setShadowLayer(3f * dp, 0f, 0f, 0x6600DFFF)
+            canvas.drawText(value, rect.centerX(), rect.bottom - 4f * dp, textPaint)
+            textPaint.clearShadowLayer()
             textPaint.letterSpacing = 0f
             return
         }
@@ -627,6 +665,16 @@ object HomeMenuRenderer {
         textPaint.letterSpacing = 0f
 
         // 3. Three Stat Chips (Streak, Level, Coins)
+        statsDockRect.set(
+            calculator.streakChipRect.left,
+            calculator.streakChipRect.top,
+            calculator.coinsChipRect.right,
+            calculator.streakChipRect.bottom
+        )
+        val firstDividerX = (calculator.streakChipRect.right + calculator.levelChipRect.left) * 0.5f
+        val secondDividerX = (calculator.levelChipRect.right + calculator.coinsChipRect.left) * 0.5f
+        drawStatsDock(canvas, statsDockRect, firstDividerX, secondDividerX, paint, dp)
+
         calculator.streakChipRect.toRectF(scratch)
         drawStatChip3D(
             canvas = canvas,

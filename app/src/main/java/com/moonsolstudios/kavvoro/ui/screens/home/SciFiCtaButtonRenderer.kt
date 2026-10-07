@@ -5,6 +5,8 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Path
+import android.graphics.RadialGradient
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
@@ -30,8 +32,86 @@ object SciFiCtaButtonRenderer {
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val buttonPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val innerRect = RectF()
+    private val chassisPath = Path()
+    private val insetPath = Path()
+    private val arrowPath = Path()
+    private var shaderLeft = Float.NaN
+    private var shaderTop = Float.NaN
+    private var shaderRight = Float.NaN
+    private var shaderBottom = Float.NaN
+    private var shaderDensity = Float.NaN
+    private var cachedOuterGlowIdle: LinearGradient? = null
+    private var cachedOuterGlowActive: LinearGradient? = null
+    private var cachedChassisFill: LinearGradient? = null
+    private var cachedFaceFill: LinearGradient? = null
+    private var cachedFaceSheen: LinearGradient? = null
+    private var cachedPortalGlow: RadialGradient? = null
+    private var cachedPortalRim: LinearGradient? = null
     private var cachedPlayDrawable: android.graphics.drawable.Drawable? = null
-    private var cachedChevronDrawable: android.graphics.drawable.Drawable? = null
+
+    private fun ensureShaders(rect: RectF, dp: Float, portalCx: Float, portalCy: Float, portalRadius: Float) {
+        if (shaderLeft == rect.left && shaderTop == rect.top && shaderRight == rect.right &&
+            shaderBottom == rect.bottom && shaderDensity == dp
+        ) return
+
+        shaderLeft = rect.left
+        shaderTop = rect.top
+        shaderRight = rect.right
+        shaderBottom = rect.bottom
+        shaderDensity = dp
+
+        fun glow(alpha: Int) = LinearGradient(
+            rect.left, rect.centerY(), rect.right, rect.centerY(),
+            intArrayOf(
+                Color.argb(alpha, Color.red(KavvoroPalette.cyan), Color.green(KavvoroPalette.cyan), Color.blue(KavvoroPalette.cyan)),
+                Color.argb(alpha, Color.red(KavvoroPalette.purple), Color.green(KavvoroPalette.purple), Color.blue(KavvoroPalette.purple)),
+                Color.argb(alpha, Color.red(KavvoroPalette.pink), Color.green(KavvoroPalette.pink), Color.blue(KavvoroPalette.pink))
+            ),
+            floatArrayOf(0f, 0.5f, 1f), Shader.TileMode.CLAMP
+        )
+        cachedOuterGlowIdle = glow(118)
+        cachedOuterGlowActive = glow(94)
+        cachedChassisFill = LinearGradient(
+            rect.left, rect.top, rect.right, rect.bottom,
+            intArrayOf(KavvoroPalette.cyan, KavvoroPalette.blue, KavvoroPalette.purple, KavvoroPalette.pink),
+            floatArrayOf(0f, 0.32f, 0.68f, 1f), Shader.TileMode.CLAMP
+        )
+        cachedFaceFill = LinearGradient(
+            rect.left + 2.5f * dp, rect.top + 2.5f * dp,
+            rect.right - 2.5f * dp, rect.bottom - 2.5f * dp,
+            intArrayOf(0xF0162948.toInt(), 0xF41A1740.toInt(), 0xF427153F.toInt()),
+            floatArrayOf(0f, 0.54f, 1f), Shader.TileMode.CLAMP
+        )
+        cachedFaceSheen = LinearGradient(
+            rect.centerX(), rect.top + 2.5f * dp,
+            rect.centerX(), rect.bottom - 2.5f * dp,
+            intArrayOf(0x22FFFFFF, 0x0A8FEAFF, 0x00000000, 0x30000000),
+            floatArrayOf(0f, 0.24f, 0.68f, 1f), Shader.TileMode.CLAMP
+        )
+        cachedPortalGlow = RadialGradient(
+            portalCx, portalCy, portalRadius * 1.5f,
+            intArrayOf(0x553DF7FF, 0x243B6FFF, 0x003B6FFF), null, Shader.TileMode.CLAMP
+        )
+        cachedPortalRim = LinearGradient(
+            portalCx - portalRadius, portalCy - portalRadius,
+            portalCx + portalRadius, portalCy + portalRadius,
+            KavvoroPalette.cyan, KavvoroPalette.pink, Shader.TileMode.CLAMP
+        )
+    }
+
+    private fun setChamferedPath(path: Path, rect: RectF, cut: Float) {
+        val bevel = cut.coerceIn(0f, min(rect.width(), rect.height()) * 0.35f)
+        path.reset()
+        path.moveTo(rect.left + bevel, rect.top)
+        path.lineTo(rect.right - bevel, rect.top)
+        path.lineTo(rect.right, rect.top + bevel)
+        path.lineTo(rect.right, rect.bottom - bevel)
+        path.lineTo(rect.right - bevel, rect.bottom)
+        path.lineTo(rect.left + bevel, rect.bottom)
+        path.lineTo(rect.left, rect.bottom - bevel)
+        path.lineTo(rect.left, rect.top + bevel)
+        path.close()
+    }
 
     fun draw(
         canvas: Canvas,
@@ -51,74 +131,86 @@ object SciFiCtaButtonRenderer {
         val dp = density.coerceAtLeast(0.1f)
         val pressScale = if (active) 0.975f else 1.0f
 
-        // Procedural gradient button with an inset white highlight and edge glow.
-        val radius = min(32f * dp, h * 0.48f)
+        // The Play action uses a beveled portal-gate chassis, distinct from the rounded menu cards.
+        val bevel = min(h * 0.28f, 24f * dp)
+        val inset = 2.5f * dp
+        val medallionCx = rect.left + h * 0.61f
+        val medallionCy = rect.centerY()
+        val medallionRadius = (h * 0.285f).coerceAtLeast(13f * dp)
+        ensureShaders(rect, dp, medallionCx, medallionCy, medallionRadius)
 
         canvas.save()
         canvas.scale(pressScale, pressScale, rect.centerX(), rect.centerY())
 
-        // 1. Outer Neon Glow (Cyan on left, Magenta on right, -18% on press)
-        val glowAlpha = if (active) 94 else 115
+        // A low offset gives the control weight without obscuring the portal composition.
+        innerRect.set(rect.left, rect.top + 3f * dp, rect.right, rect.bottom + 3f * dp)
+        setChamferedPath(chassisPath, innerRect, bevel)
+        buttonPaint.reset()
+        buttonPaint.isAntiAlias = true
+        buttonPaint.style = Paint.Style.FILL
+        buttonPaint.color = 0xE5080D25.toInt()
+        canvas.drawPath(chassisPath, buttonPaint)
+
+        // Luminous outer edge: restrained cyan through violet into pink.
+        setChamferedPath(chassisPath, rect, bevel)
         buttonPaint.reset()
         buttonPaint.isAntiAlias = true
         buttonPaint.style = Paint.Style.STROKE
-        buttonPaint.strokeWidth = 6f * dp
-        buttonPaint.shader = LinearGradient(
-            rect.left, rect.centerY(),
-            rect.right, rect.centerY(),
-            intArrayOf(
-                Color.argb(glowAlpha, Color.red(KavvoroPalette.cyan), Color.green(KavvoroPalette.cyan), Color.blue(KavvoroPalette.cyan)),
-                Color.argb(glowAlpha, Color.red(KavvoroPalette.purple), Color.green(KavvoroPalette.purple), Color.blue(KavvoroPalette.purple)),
-                Color.argb(glowAlpha, Color.red(KavvoroPalette.pink), Color.green(KavvoroPalette.pink), Color.blue(KavvoroPalette.pink))
-            ),
-            floatArrayOf(0f, 0.5f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, radius, radius, buttonPaint)
+        buttonPaint.strokeWidth = 5f * dp
+        buttonPaint.strokeJoin = Paint.Join.ROUND
+        buttonPaint.shader = if (active) cachedOuterGlowActive else cachedOuterGlowIdle
+        canvas.drawPath(chassisPath, buttonPaint)
 
-        // 2. Base Gradient Fill
+        // Bright chassis rim under the dark glass face.
         buttonPaint.style = Paint.Style.FILL
-        buttonPaint.shader = LinearGradient(
-            rect.left, rect.top,
-            rect.right, rect.bottom,
-            intArrayOf(
-                KavvoroPalette.cyan,
-                KavvoroPalette.blue,
-                KavvoroPalette.purple,
-                KavvoroPalette.pink
-            ),
-            floatArrayOf(0f, 0.32f, 0.68f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, radius, radius, buttonPaint)
+        buttonPaint.shader = cachedChassisFill
+        canvas.drawPath(chassisPath, buttonPaint)
 
-        // 3. Subtle Inner Specular Sheen (top-down white sheen)
-        buttonPaint.shader = LinearGradient(
-            rect.centerX(), rect.top,
-            rect.centerX(), rect.bottom,
-            intArrayOf(
-                0x66FFFFFF,
-                0x1AFFFFFF,
-                0x00FFFFFF,
-                0x26000000
-            ),
-            floatArrayOf(0f, 0.28f, 0.70f, 1f),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawRoundRect(rect, radius, radius, buttonPaint)
+        // Deep glass face keeps the CTA legible against the colorful Home artwork.
+        innerRect.set(rect.left + inset, rect.top + inset, rect.right - inset, rect.bottom - inset)
+        setChamferedPath(insetPath, innerRect, (bevel - inset).coerceAtLeast(2f * dp))
+        buttonPaint.shader = cachedFaceFill
+        canvas.drawPath(insetPath, buttonPaint)
 
-        // 4. Crisp Inner Highlight Border
+        // A soft top sheen is clipped to the custom silhouette.
+        val clipSave = canvas.save()
+        canvas.clipPath(insetPath)
+        buttonPaint.shader = cachedFaceSheen
+        canvas.drawRect(innerRect, buttonPaint)
+        canvas.restoreToCount(clipSave)
+
+        // Crisp glass edge, with a quiet cyan upper rail.
         buttonPaint.shader = null
         buttonPaint.style = Paint.Style.STROKE
-        buttonPaint.strokeWidth = 1.8f * dp
-        buttonPaint.color = 0xAAFFFFFF.toInt()
-        innerRect.set(rect.left + 1f * dp, rect.top + 1f * dp, rect.right - 1f * dp, rect.bottom - 1f * dp)
-        canvas.drawRoundRect(innerRect, radius - 1f * dp, radius - 1f * dp, buttonPaint)
+        buttonPaint.strokeWidth = 1f * dp
+        buttonPaint.color = 0x667BDFFF
+        canvas.drawPath(insetPath, buttonPaint)
+        buttonPaint.style = Paint.Style.STROKE
+        buttonPaint.strokeWidth = 1.15f * dp
+        buttonPaint.color = 0x997DF7FF.toInt()
+        canvas.drawLine(rect.left + bevel + 8f * dp, rect.top + 1.5f * dp, rect.right - bevel - 8f * dp, rect.top + 1.5f * dp, buttonPaint)
 
-        // 5. Left Play Icon & Right Chevron Icon
-        val iconSize = (if (showSubtitle) 30f else 26f) * dp
-        val playIconLeft = rect.left + 22f * dp
-        val playIconTop = rect.centerY() - iconSize * 0.5f
+        // Portal medallion: a compact, luminous focus for the play glyph.
+        buttonPaint.reset()
+        buttonPaint.isAntiAlias = true
+        buttonPaint.style = Paint.Style.FILL
+        buttonPaint.shader = cachedPortalGlow
+        canvas.drawCircle(medallionCx, medallionCy, medallionRadius * 1.5f, buttonPaint)
+        buttonPaint.shader = null
+        buttonPaint.color = 0xB5112845.toInt()
+        canvas.drawCircle(medallionCx, medallionCy, medallionRadius * 0.86f, buttonPaint)
+        buttonPaint.style = Paint.Style.STROKE
+        buttonPaint.strokeWidth = 1.5f * dp
+        buttonPaint.shader = cachedPortalRim
+        canvas.drawCircle(medallionCx, medallionCy, medallionRadius * 0.88f, buttonPaint)
+        buttonPaint.shader = null
+        buttonPaint.strokeWidth = 1f * dp
+        buttonPaint.color = 0x55FFFFFF
+        canvas.drawCircle(medallionCx, medallionCy, medallionRadius * 0.68f, buttonPaint)
+
+        val iconSize = (if (showSubtitle) 27f else 24f) * dp
+        val playIconLeft = medallionCx - iconSize * 0.5f
+        val playIconTop = medallionCy - iconSize * 0.5f
 
         val playDrawable = cachedPlayDrawable ?: ContextCompat.getDrawable(context, R.drawable.ic_play)?.mutate()?.also {
             cachedPlayDrawable = it
@@ -134,22 +226,25 @@ object SciFiCtaButtonRenderer {
             playDrawable.draw(canvas)
         }
 
-        val chevronSize = 24f * dp
-        val chevronRight = rect.right - 22f * dp
-        val chevronTop = rect.centerY() - chevronSize * 0.5f
-        val chevronDrawable = cachedChevronDrawable ?: ContextCompat.getDrawable(context, R.drawable.ic_chevron_right)?.mutate()?.also {
-            cachedChevronDrawable = it
-        }
-        if (chevronDrawable != null) {
-            chevronDrawable.setBounds(
-                (chevronRight - chevronSize).toInt(),
-                chevronTop.toInt(),
-                chevronRight.toInt(),
-                (chevronTop + chevronSize).toInt()
-            )
-            chevronDrawable.setTint(Color.WHITE)
-            chevronDrawable.draw(canvas)
-        }
+        // Custom forward marker mirrors the chassis bevel and avoids a generic toolbar glyph.
+        val arrowCx = rect.right - h * 0.48f
+        val arrowCy = rect.centerY()
+        val arrowHalf = min(h * 0.13f, 13f * dp)
+        arrowPath.reset()
+        arrowPath.moveTo(arrowCx - arrowHalf * 0.42f, arrowCy - arrowHalf)
+        arrowPath.lineTo(arrowCx + arrowHalf * 0.62f, arrowCy)
+        arrowPath.lineTo(arrowCx - arrowHalf * 0.42f, arrowCy + arrowHalf)
+        buttonPaint.reset()
+        buttonPaint.isAntiAlias = true
+        buttonPaint.style = Paint.Style.STROKE
+        buttonPaint.strokeWidth = 2.2f * dp
+        buttonPaint.strokeCap = Paint.Cap.ROUND
+        buttonPaint.strokeJoin = Paint.Join.ROUND
+        buttonPaint.color = 0xDDF4FFFF.toInt()
+        canvas.drawPath(arrowPath, buttonPaint)
+        buttonPaint.color = 0x6689F5FF
+        buttonPaint.strokeWidth = 5f * dp
+        canvas.drawPath(arrowPath, buttonPaint)
 
         // 6. Typography (Auto-Fitting 34sp standard, 28sp compact, 26sp minimum)
         textPaint.reset()
@@ -166,8 +261,10 @@ object SciFiCtaButtonRenderer {
         textPaint.isFakeBoldText = true
         textPaint.color = Color.WHITE
 
-        val textCenterX = rect.centerX()
-        val textMaxW = rect.width() - (playIconLeft + iconSize - rect.left) * 2f - 16f * dp
+        val textLeft = medallionCx + medallionRadius + 8f * dp
+        val textRight = arrowCx - arrowHalf - 9f * dp
+        val textCenterX = (textLeft + textRight) * 0.5f
+        val textMaxW = (textRight - textLeft).coerceAtLeast(1f * dp)
 
         val minSize = 26f * dp
         val baseTitleSize = min(44f * dp, h * 0.34f)
