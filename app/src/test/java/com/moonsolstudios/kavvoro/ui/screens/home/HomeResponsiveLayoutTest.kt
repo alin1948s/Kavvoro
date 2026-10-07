@@ -118,15 +118,10 @@ class HomeResponsiveLayoutTest {
             assertEquals("All 3 cards should align vertically on ${spec.name}", skins.top, missions.top, 0.1f)
             assertEquals("All 3 cards should align vertically on ${spec.name}", missions.top, leaderboards.top, 0.1f)
 
-            // 9. Verify Portrait Banner Card & Footer (MUST NOT BE EMPTY IN PORTRAIT)
-            assertFalse("Banner card must not be empty in portrait on ${spec.name}", calculator.bannerCardRect.isEmpty())
-            assertTrue("Banner card must have positive width on ${spec.name}", calculator.bannerCardRect.width() > 0f)
-            assertTrue("Banner card must have positive height on ${spec.name}", calculator.bannerCardRect.height() > 0f)
-            assertTrue("Banner must be below 3 navigation cards on ${spec.name}", calculator.bannerCardRect.top >= skins.bottom - 0.1f)
-            assertTrue("Banner must fit within contentRect on ${spec.name}", calculator.bannerCardRect.left >= contentRect.left - 0.1f && calculator.bannerCardRect.right <= contentRect.right + 0.1f)
-
+            // 9. Verify Footer and the single row of navigation cards.
             assertFalse("Footer rect must not be empty in portrait on ${spec.name}", calculator.footerRect.isEmpty())
             assertTrue("Footer must have positive width on ${spec.name}", calculator.footerRect.width() > 0f)
+            assertTrue("Navigation cards must finish above the footer on ${spec.name}", leaderboards.bottom < calculator.footerRect.top)
         }
     }
 
@@ -223,7 +218,6 @@ class HomeResponsiveLayoutTest {
             assertEquals("Leaderboard right should align with deck right", calculator.navigationDeckRect.right, calculator.leaderboardCardRect.right, 0.1f)
 
             // G. Omitted Elements in Landscape (Zero clutter)
-            assertTrue("Banner card must be empty in landscape", calculator.bannerCardRect.isEmpty())
             assertTrue("Footer rect must be empty in landscape", calculator.footerRect.isEmpty())
             assertTrue("Rift status rect must be empty in landscape", calculator.riftStatusRect.isEmpty())
         }
@@ -288,12 +282,10 @@ class HomeResponsiveLayoutTest {
         assertEquals(LandscapeClass.STANDARD, calculator.landscapeClass)
         val landscapeHeroWidth = calculator.heroStageRect.width()
         val landscapePlayHeight = calculator.playCtaRect.height()
-        assertTrue("Banner card must be empty in landscape", calculator.bannerCardRect.isEmpty())
 
         // 2. Rotate to Portrait (1200x1920 at 1.5 density)
         calculator.calculate(1200f, 1920f, 1.5f)
         assertNull("landscapeClass must be null in portrait", calculator.landscapeClass)
-        assertFalse("Banner card must be active in portrait", calculator.bannerCardRect.isEmpty())
         assertTrue("Footer rect must be active in portrait", calculator.footerRect.width() > 0f)
 
         // 3. Rotate back to Landscape (1920x1200 at 1.5 density)
@@ -301,7 +293,6 @@ class HomeResponsiveLayoutTest {
         assertEquals(LandscapeClass.STANDARD, calculator.landscapeClass)
         assertEquals("Hero width must be perfectly restored", landscapeHeroWidth, calculator.heroStageRect.width(), 0.1f)
         assertEquals("Play CTA height must be perfectly restored", landscapePlayHeight, calculator.playCtaRect.height(), 0.1f)
-        assertTrue("Banner card must be empty in landscape again", calculator.bannerCardRect.isEmpty())
     }
 
     @Test
@@ -468,21 +459,4 @@ class HomeResponsiveLayoutTest {
         }
     }
 
-    @Test
-    fun testBannerCardLocalizationContract() {
-        val languages = listOf(
-            KavvoroLanguage.EN,
-            KavvoroLanguage.RO,
-            KavvoroLanguage.ES,
-            KavvoroLanguage.FR,
-            KavvoroLanguage.DE,
-            KavvoroLanguage.IT,
-            KavvoroLanguage.PT,
-            KavvoroLanguage.RU
-        )
-        for (lang in languages) {
-            assertTrue("Banner title must not be empty for $lang", HomeCopy.bannerTitle(lang).isNotBlank())
-            assertTrue("Banner subtitle must not be empty for $lang", HomeCopy.bannerSubtitle(lang).isNotBlank())
-        }
-    }
 }

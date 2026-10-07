@@ -234,9 +234,9 @@ object DailyRiftRewardRenderer {
         paint.color = 0xFF53607E.toInt()
         canvas.drawRoundRect(bounds, 23f * unit, 23f * unit, paint)
 
-        val centerX = bounds.left + 76f * unit
+        val centerX = bounds.left + 72f * unit
         val centerY = bounds.centerY()
-        val glowRadius = 73f * unit + sin(pulseTime * 2.4f) * 3f * unit
+        val glowRadius = 57f * unit + sin(pulseTime * 2.4f) * 1.5f * unit
         paint.style = Paint.Style.FILL
         paint.shader = RadialGradient(
             centerX,
@@ -248,8 +248,8 @@ object DailyRiftRewardRenderer {
         )
         canvas.drawCircle(centerX, centerY, glowRadius, paint)
         paint.shader = null
-        scratch.set(bounds.left + 4f * unit, bounds.top + 1f * unit, bounds.left + 151f * unit, bounds.bottom - 1f * unit)
-        drawWorldAsset(canvas, "daily_rift_vault_hero", scratch, 255)
+        scratch.set(centerX - 51f * unit, centerY - 51f * unit, centerX + 51f * unit, centerY + 51f * unit)
+        drawWorldAsset(canvas, "ic_stat_coin_3d", scratch, 255)
 
         val amountX = bounds.left + 158f * unit
         val amountMaxWidth = bounds.right - amountX - 14f * unit
@@ -267,13 +267,6 @@ object DailyRiftRewardRenderer {
         textPaint.color = 0xFFB6D8E7.toInt()
         canvas.drawText(t("HYPE").uppercase(), amountX + 2f * unit, centerY + 26f * unit, textPaint)
 
-        val flareX = bounds.right - 22f * unit
-        val flareY = bounds.top + 22f * unit
-        paint.style = Paint.Style.FILL
-        paint.color = 0xAAFFD978.toInt()
-        canvas.drawCircle(flareX, flareY, 2.4f * unit, paint)
-        canvas.drawCircle(flareX - 10f * unit, flareY + 12f * unit, 1.2f * unit, paint)
-        canvas.drawCircle(bounds.left + 23f * unit, bounds.bottom - 19f * unit, 1.5f * unit, paint)
     }
 
     private fun drawStreakTrack(

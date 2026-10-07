@@ -272,7 +272,7 @@ class ScreenModuleSeparationTest {
                 menuState = MenuState.MODES,
                 menuPrivacyButton = empty, menuSfxButton = empty, menuStartButton = playRect,
                 menuLeaderboardButton = empty, menuVaultButton = empty, menuCollectionButton = empty,
-                menuBannerButton = empty, menuClassicContinueButton = empty, menuClassicNewButton = empty,
+                menuClassicContinueButton = empty, menuClassicNewButton = empty,
                 menuChaosContinueButton = empty, menuChaosNewButton = empty, menuChaosStartButton = empty,
                 menuContinueButton = empty, menuBackButton = empty, menuClassicCard = empty, menuChaosCard = empty
             )

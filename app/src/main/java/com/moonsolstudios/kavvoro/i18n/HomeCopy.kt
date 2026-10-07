@@ -13,8 +13,6 @@ object HomeCopy {
         "COMPLETE TASKS EARN REWARDS",
         "LEADERBOARD",
         "SEE TOP PLAYERS AROUND THE WORLD",
-        "MISSIONS & REWARDS",
-        "COMPLETE DAILY MISSIONS & WIN",
         "STREAK",
         "LEVEL",
         "COINS",
@@ -54,12 +52,6 @@ object HomeCopy {
 
     fun leaderboardSubtitle(context: Context): String = KavvoroI18n.t(context, "SEE TOP PLAYERS AROUND THE WORLD")
     fun leaderboardSubtitle(language: KavvoroLanguage): String = KavvoroI18n.t(language, "SEE TOP PLAYERS AROUND THE WORLD")
-
-    fun bannerTitle(context: Context): String = KavvoroI18n.t(context, "MISSIONS & REWARDS")
-    fun bannerTitle(language: KavvoroLanguage): String = KavvoroI18n.t(language, "MISSIONS & REWARDS")
-
-    fun bannerSubtitle(context: Context): String = KavvoroI18n.t(context, "COMPLETE DAILY MISSIONS & WIN")
-    fun bannerSubtitle(language: KavvoroLanguage): String = KavvoroI18n.t(language, "COMPLETE DAILY MISSIONS & WIN")
 
     fun streak(context: Context): String = KavvoroI18n.t(context, "STREAK")
     fun streak(language: KavvoroLanguage): String = KavvoroI18n.t(language, "STREAK")

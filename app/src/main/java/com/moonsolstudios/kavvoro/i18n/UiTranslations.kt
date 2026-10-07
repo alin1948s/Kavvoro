@@ -22,6 +22,8 @@ object UiTranslations {
         "CLAIM REWARD",
         "DAILY MISSIONS",
         "DAILY PROGRESS",
+        "MISSIONS & REWARDS",
+        "COMPLETE DAILY MISSIONS & WIN",
         "RIFT CHALLENGES",
         "MASTER THE RIFT, EARN REWARDS",
         "CLEAR 5 LEVELS",

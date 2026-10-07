@@ -50,7 +50,6 @@ class HomeLayoutCalculator {
     val levelChipTouchRect = LayoutRect()
     val coinsChipTouchRect = LayoutRect()
     val coinsReadyBadgeRect = LayoutRect()
-    val bannerTouchRect = LayoutRect()
 
     val heroRect = LayoutRect()
     val portalRect = LayoutRect()
@@ -76,7 +75,6 @@ class HomeLayoutCalculator {
     val missionsCardRect get() = vaultCardRect
     val leaderboardCardRect get() = leaderboardsCardRect
 
-    val bannerCardRect = LayoutRect()
     val footerRect = LayoutRect()
 
     var showPlaySubtitle: Boolean = true
@@ -137,7 +135,6 @@ class HomeLayoutCalculator {
         growToTouchTarget(levelChipTouchRect, statCardRects[1], chipGrowthLimit)
         growToTouchTarget(coinsChipTouchRect, statCardRects[2], chipGrowthLimit)
         coinsChipTouchRect.bottom = max(coinsChipTouchRect.bottom, coinsReadyBadgeRect.bottom)
-        growToTouchTarget(bannerTouchRect, bannerCardRect)
     }
 
     private fun layoutCoinsReadyBadge(scaleFactor: Float) {
@@ -287,12 +284,12 @@ class HomeLayoutCalculator {
         }
         layoutCoinsReadyBadge(scaleFactor)
 
-        // 2. Lower Navigation & Play CTA (Bottom-Up layout with Banner)
+        // 2. Lower Navigation & Play CTA (Bottom-Up layout)
         val footerHeight = dp(14f * scaleFactor)
         val footerBottom = screenHeight - dp(10f * scaleFactor)
         footerRect.set(contentRect.left, footerBottom - footerHeight, contentRect.right, footerBottom)
 
-        // 3 Cards Row & 4th Banner Card: Expanded and prominent matching reference
+        // Three navigation cards: Missions is the single entry point for mission content.
         val maxNavWidth = if (layoutMode == LayoutMode.TABLET) {
             min(contentRect.width() * 0.94f, dp(640f))
         } else {
@@ -308,14 +305,7 @@ class HomeLayoutCalculator {
         val maxCardH = maxOf(screenHeight * 0.24f, minCardH)
         val navCardHeight = (singleCardWidth * 1.07f).coerceIn(minCardH, maxCardH)
 
-        // Banner card: intrinsic ratio 870w x 100h => ~8.7:1
-        val minBannerH = dp(32f * scaleFactor)
-        val maxBannerH = maxOf(dp(68f * scaleFactor), minBannerH)
-        val bannerHeight = (maxNavWidth / 8.7f).coerceIn(minBannerH, maxBannerH)
-        val bannerBottom = footerRect.top - dp(8f * scaleFactor)
-        bannerCardRect.set(navRowLeft, bannerBottom - bannerHeight, navRowRight, bannerBottom)
-
-        val navRowBottom = bannerCardRect.top - dp(10f * scaleFactor)
+        val navRowBottom = footerRect.top - dp(8f * scaleFactor)
         val navRowTop = navRowBottom - navCardHeight
 
         skinsCardRect.set(navRowLeft, navRowTop, navRowLeft + singleCardWidth, navRowBottom)
@@ -432,7 +422,7 @@ class HomeLayoutCalculator {
 
         bodyRect.set(contentRect.left, headerRect.bottom, contentRect.right, footerRect.top)
         heroStageRect.set(heroRect)
-        navigationDeckRect.set(contentRect.left, skinsCardRect.top, contentRect.right, bannerCardRect.bottom)
+        navigationDeckRect.set(contentRect.left, skinsCardRect.top, contentRect.right, skinsCardRect.bottom)
     }
 
     private fun calculateLandscape(
@@ -644,7 +634,6 @@ class HomeLayoutCalculator {
         leaderboardsCardRect.set(leaderboardCardRect)
 
         // Omitted elements in landscape
-        bannerCardRect.setEmpty()
         footerRect.setEmpty()
         riftStatusRect.setEmpty()
 

@@ -9,9 +9,8 @@ import org.junit.Test
  * Guards audit item UI-3.
  *
  * The portrait header scaled its gear and stat chips with `heightDp / 800f`, so a 38dp design
- * size became ~27dp on short phones, and the banner card is only ~42dp tall by design. Those
- * rects were also published as the TalkBack bounds, so the shortfall hit touch and
- * explore-by-touch alike.
+ * size became ~27dp on short phones. Those rects were also published as the TalkBack bounds, so
+ * the shortfall hit touch and explore-by-touch alike.
  *
  * The fix keeps the visual geometry (growing it flipped the reference 411dp phone from one chip
  * row to two) and grows separate touch rects instead. These tests pin both halves.
@@ -71,16 +70,17 @@ class HomeTouchTargetTest {
     }
 
     @Test
-    fun bannerCardMeetsTheMinimumTouchTargetOnEveryDevice() {
+    fun navigationCardsMeetTheMinimumTouchTargetOnEveryDevice() {
         val calculator = HomeLayoutCalculator()
         for (device in devices) {
             calculator.calculate(device.width, device.height, device.density)
-            assertSizeAtLeast(
-                "bannerTouchRect",
-                device,
-                calculator.bannerTouchRect.width(),
-                calculator.bannerTouchRect.height()
-            )
+            for ((label, card) in listOf(
+                "skinsCardRect" to calculator.skinsCardRect,
+                "missionsCardRect" to calculator.missionsCardRect,
+                "leaderboardCardRect" to calculator.leaderboardCardRect
+            )) {
+                assertSizeAtLeast(label, device, card.width(), card.height())
+            }
         }
     }
 
@@ -140,8 +140,7 @@ class HomeTouchTargetTest {
                 "settings" to (calculator.settingsButtonRect to calculator.settingsTouchRect),
                 "streak chip" to (calculator.streakChipRect to calculator.streakChipTouchRect),
                 "level chip" to (calculator.levelChipRect to calculator.levelChipTouchRect),
-                "coins chip" to (calculator.coinsChipRect to calculator.coinsChipTouchRect),
-                "banner" to (calculator.bannerCardRect to calculator.bannerTouchRect)
+                "coins chip" to (calculator.coinsChipRect to calculator.coinsChipTouchRect)
             )
             for ((label, rects) in pairs) {
                 val (visual, touch) = rects

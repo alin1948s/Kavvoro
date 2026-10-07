@@ -55,7 +55,6 @@ class HomeMenuTouchController(
     val menuCollectionButton = RectF()
     val menuLeaderboardButton = RectF()
     val menuVaultButton = RectF()
-    val menuBannerButton = RectF()
     val menuCoinsButton = RectF()
     val menuPrivacyButton = RectF()
     val menuSfxButton = RectF()
@@ -76,7 +75,6 @@ class HomeMenuTouchController(
         homeLayoutCalculator.leaderboardsCardRect.toRectF(menuLeaderboardButton)
         homeLayoutCalculator.vaultCardRect.toRectF(menuVaultButton)
         homeLayoutCalculator.collectionCardRect.toRectF(menuCollectionButton)
-        homeLayoutCalculator.bannerCardRect.toRectF(menuBannerButton)
         homeLayoutCalculator.characterRect.toRectF(characterRect)
     }
 
@@ -301,7 +299,6 @@ class HomeMenuTouchController(
             if (calculator.leaderboardsCardRect.contains(x, y)) return MenuButton.LEADERBOARDS
             if (calculator.vaultCardRect.contains(x, y)) return MenuButton.MISSIONS
             if (calculator.collectionCardRect.contains(x, y)) return MenuButton.COLLECTION
-            if (calculator.bannerCardRect.contains(x, y)) return MenuButton.MISSIONS
         } else {
             for ((button, rect) in modePickerButtons) {
                 if (rect.contains(x, y)) return button
@@ -369,7 +366,6 @@ class HomeMenuTouchController(
         menuVaultButton: RectF = this.menuVaultButton,
         menuCoinsButton: RectF = this.menuCoinsButton,
         menuCollectionButton: RectF = this.menuCollectionButton,
-        menuBannerButton: RectF = this.menuBannerButton,
         menuClassicContinueButton: RectF = this.menuClassicContinueButton,
         menuClassicNewButton: RectF = this.menuClassicNewButton,
         menuChaosContinueButton: RectF = this.menuChaosContinueButton,
@@ -388,7 +384,6 @@ class HomeMenuTouchController(
             if (menuLeaderboardButton.hits(x, y)) return MenuButton.LEADERBOARDS
             if (menuVaultButton.hits(x, y)) return MenuButton.MISSIONS
             if (menuCollectionButton.hits(x, y)) return MenuButton.COLLECTION
-            if (menuBannerButton.hits(x, y)) return MenuButton.MISSIONS
             if (menuClassicContinueButton.hits(x, y)) return MenuButton.CLASSIC_CONTINUE
             if (menuClassicNewButton.hits(x, y)) return MenuButton.CLASSIC_START
             if (menuChaosContinueButton.hits(x, y)) return MenuButton.CHAOS_CONTINUE

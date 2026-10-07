@@ -14,7 +14,7 @@ import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
  * TalkBack virtual accessibility node provider for Kavvoro's SurfaceView/Canvas Home menu.
  *
  * Exposes the PLAY NOW button, Settings gear, the lower navigation cards (Skins, Missions,
- * Leaderboard), the banner card, and the 3 header stat chips (Streak, Level, Coins).
+ * Leaderboard), and the 3 header stat chips (Streak, Level, Coins).
  *
  * Two rules keep this honest:
  *  - nodes are published only while the Home menu surface is the one on screen
@@ -49,7 +49,6 @@ class HomeAccessibilityTouchHelper(
         const val ID_STREAK_CHIP = 6
         const val ID_LEVEL_CHIP = 7
         const val ID_COINS_CHIP = 8
-        const val ID_BANNER_CARD = 9
 
         /** Focus and explore-by-touch order: header, primary action, then the navigation deck. */
         private val NODE_IDS = intArrayOf(
@@ -60,8 +59,7 @@ class HomeAccessibilityTouchHelper(
             ID_PLAY_CTA,
             ID_SKINS_CARD,
             ID_MISSIONS_CARD,
-            ID_LEADERBOARD_CARD,
-            ID_BANNER_CARD
+            ID_LEADERBOARD_CARD
         )
     }
 
@@ -72,7 +70,6 @@ class HomeAccessibilityTouchHelper(
         ID_STREAK_CHIP -> calculator.streakChipTouchRect
         ID_LEVEL_CHIP -> calculator.levelChipTouchRect
         ID_COINS_CHIP -> calculator.coinsChipTouchRect
-        ID_BANNER_CARD -> calculator.bannerTouchRect
         ID_PLAY_CTA -> calculator.playCtaRect
         ID_SKINS_CARD -> calculator.skinsCardRect
         ID_MISSIONS_CARD -> calculator.missionsCardRect
@@ -137,12 +134,6 @@ class HomeAccessibilityTouchHelper(
                 node.isClickable = true
                 node.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK)
             }
-            ID_BANNER_CARD -> {
-                node.contentDescription = "${HomeCopy.bannerTitle(context)}, ${HomeCopy.bannerSubtitle(context)}"
-                node.className = Button::class.java.name
-                node.isClickable = true
-                node.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK)
-            }
             ID_STREAK_CHIP -> {
                 node.contentDescription = "${HomeCopy.streak(context)}: ${getStreak()}"
                 node.className = TextView::class.java.name
@@ -195,10 +186,6 @@ class HomeAccessibilityTouchHelper(
                 }
                 ID_COINS_CHIP -> {
                     onCoinsClicked()
-                    return true
-                }
-                ID_BANNER_CARD -> {
-                    onMissionsClicked()
                     return true
                 }
             }
