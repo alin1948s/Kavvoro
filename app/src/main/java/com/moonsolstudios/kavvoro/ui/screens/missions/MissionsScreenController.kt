@@ -1,6 +1,7 @@
 package com.moonsolstudios.kavvoro.ui.screens.missions
 
 import android.graphics.Canvas
+import android.graphics.Bitmap
 import android.os.SystemClock
 import android.view.MotionEvent
 import com.moonsolstudios.kavvoro.repository.DailyMissionsRepository
@@ -12,7 +13,8 @@ class MissionsScreenController(
     private val onTouch: () -> Unit,
     private val onBack: () -> Unit,
     private val onReward: (Int) -> Unit,
-    private val onRejectedClaim: () -> Unit
+    private val onRejectedClaim: () -> Unit,
+    private val worldBitmap: (String) -> Bitmap? = { null }
 ) {
     private val touchController = MissionsTouchController()
     private var completionPopup: CompletionPopup? = null
@@ -81,6 +83,8 @@ class MissionsScreenController(
             missions = repository.missions(),
             activeClaimIndex = touchController.activeClaimIndex,
             dp = dp,
+            missionArt = worldBitmap("brainball_main"),
+            coinArt = worldBitmap("ic_stat_coin_3d"),
             t = t
         )
     }

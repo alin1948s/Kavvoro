@@ -251,7 +251,8 @@ class ChaosGameView(
                 triggerScreenTransition(KavvoroPalette.gold)
             }
         },
-        onRejectedClaim = { synchronized(lock) { performHapticFeedback(HapticFeedbackCompat.reject) } }
+        onRejectedClaim = { synchronized(lock) { performHapticFeedback(HapticFeedbackCompat.reject) } },
+        worldBitmap = ::worldBitmap
     )
 
     private val homeMenuController = HomeMenuTouchController(

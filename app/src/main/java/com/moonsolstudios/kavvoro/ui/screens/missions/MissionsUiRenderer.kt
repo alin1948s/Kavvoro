@@ -1,5 +1,6 @@
 package com.moonsolstudios.kavvoro.ui.screens.missions
 
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.LinearGradient
 import android.graphics.Paint
@@ -7,6 +8,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import com.moonsolstudios.kavvoro.model.DailyMissionId
 import com.moonsolstudios.kavvoro.model.DailyMissionProgress
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
@@ -19,6 +21,7 @@ object MissionsUiRenderer {
     private val shapePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val arrowPath = Path()
     private val checkPath = Path()
+    private val glyphPath = Path()
     private val scratchBackRect = RectF()
     private val scratchTextRect = RectF()
     private val scratchCardRect = RectF()
@@ -28,6 +31,7 @@ object MissionsUiRenderer {
     private val scratchButtonRect = RectF()
     private val scratchShadowRect = RectF()
     private val scratchFaceRect = RectF()
+    private val scratchIconRect = RectF()
 
     fun drawScreen(
         canvas: Canvas,
@@ -35,13 +39,15 @@ object MissionsUiRenderer {
         missions: List<DailyMissionProgress>,
         activeClaimIndex: Int,
         dp: Float,
+        missionArt: Bitmap?,
+        coinArt: Bitmap?,
         t: (String) -> String
     ) {
         drawHeader(canvas, layout, dp, t)
-        if (layout.showSummary) drawSummary(canvas, layout, missions, dp, t)
+        if (layout.showSummary) drawSummary(canvas, layout, missions, missionArt, coinArt, dp, t)
         missions.forEachIndexed { index, mission ->
             if (layout.cardRects.getOrNull(index)?.isEmpty() != false) return@forEachIndexed
-            drawMissionCard(canvas, layout, mission, index, activeClaimIndex == index, dp, t)
+            drawMissionCard(canvas, layout, mission, index, activeClaimIndex == index, coinArt, dp, t)
         }
     }
 
@@ -50,18 +56,21 @@ object MissionsUiRenderer {
         shapePaint.reset()
         shapePaint.isAntiAlias = true
         shapePaint.style = Paint.Style.FILL
-        shapePaint.color = 0xCC0A1530.toInt()
-        canvas.drawRoundRect(back, 14f * dp, 14f * dp, shapePaint)
+        shapePaint.shader = LinearGradient(back.left, back.top, back.right, back.bottom,
+            0xE9152947.toInt(), 0xE9071127.toInt(), Shader.TileMode.CLAMP)
+        canvas.drawRoundRect(back, 17f * dp, 17f * dp, shapePaint)
+        shapePaint.shader = LinearGradient(back.left, back.top, back.right, back.bottom,
+            KavvoroPalette.cyan, KavvoroPalette.blue, Shader.TileMode.CLAMP)
         shapePaint.style = Paint.Style.STROKE
-        shapePaint.strokeWidth = 1.4f * dp
-        shapePaint.color = withAlpha(KavvoroPalette.cyan, 185)
-        canvas.drawRoundRect(back, 14f * dp, 14f * dp, shapePaint)
+        shapePaint.strokeWidth = 1.6f * dp
+        canvas.drawRoundRect(back, 17f * dp, 17f * dp, shapePaint)
 
         arrowPath.reset()
         arrowPath.moveTo(back.centerX() + 6f * dp, back.centerY() - 9f * dp)
         arrowPath.lineTo(back.centerX() - 4f * dp, back.centerY())
         arrowPath.lineTo(back.centerX() + 6f * dp, back.centerY() + 9f * dp)
-        shapePaint.strokeWidth = 2.8f * dp
+        shapePaint.shader = null
+        shapePaint.strokeWidth = 3.1f * dp
         shapePaint.strokeCap = Paint.Cap.ROUND
         shapePaint.strokeJoin = Paint.Join.ROUND
         shapePaint.color = KavvoroPalette.cyan
@@ -69,17 +78,17 @@ object MissionsUiRenderer {
 
         textPaint.reset()
         textPaint.isAntiAlias = true
-        textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
+        textPaint.typeface = AssetResourceManager.spaceGroteskBold()
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.color = 0xFFFFFFFF.toInt()
-        textPaint.textSize = 19f * dp
-        drawFitted(canvas, t("MISSIONS & REWARDS").uppercase(), layout.titleRect.toRectF(scratchTextRect), textPaint, 12f * dp)
+        textPaint.textSize = 18f * dp
+        drawFitted(canvas, t("MISSIONS & REWARDS").uppercase(), layout.titleRect.toRectF(scratchTextRect), textPaint, 11f * dp)
 
         textPaint.typeface = AssetResourceManager.oxaniumNormal()
-        textPaint.color = KavvoroPalette.mutedText
-        textPaint.textSize = 10.5f * dp
-        textPaint.letterSpacing = 0.02f
-        drawFitted(canvas, t("COMPLETE DAILY MISSIONS & WIN").uppercase(), layout.subtitleRect.toRectF(scratchTextRect), textPaint, 8f * dp)
+        textPaint.color = 0xFFD1D9F2.toInt()
+        textPaint.textSize = 10f * dp
+        textPaint.letterSpacing = 0.035f
+        drawFitted(canvas, t("COMPLETE DAILY MISSIONS & WIN").uppercase(), layout.subtitleRect.toRectF(scratchTextRect), textPaint, 7f * dp)
         textPaint.letterSpacing = 0f
     }
 
@@ -87,65 +96,108 @@ object MissionsUiRenderer {
         canvas: Canvas,
         layout: MissionsLayoutCalculator,
         missions: List<DailyMissionProgress>,
+        missionArt: Bitmap?,
+        coinArt: Bitmap?,
         dp: Float,
         t: (String) -> String
     ) {
         val summary = layout.summaryRect.toRectF(scratchCardRect)
+        val radius = 22f * dp
         shapePaint.reset()
         shapePaint.isAntiAlias = true
         shapePaint.style = Paint.Style.FILL
         shapePaint.shader = LinearGradient(summary.left, summary.top, summary.right, summary.bottom,
-            0xEA14213E.toInt(), 0xE9091124.toInt(), Shader.TileMode.CLAMP)
-        canvas.drawRoundRect(summary, 18f * dp, 18f * dp, shapePaint)
+            0xF0203D70.toInt(), 0xF00B142F.toInt(), Shader.TileMode.CLAMP)
+        canvas.drawRoundRect(summary, radius, radius, shapePaint)
         shapePaint.shader = null
-        shapePaint.style = Paint.Style.STROKE
-        shapePaint.strokeWidth = 1f * dp
-        shapePaint.color = 0x7753BDE5
-        canvas.drawRoundRect(summary, 18f * dp, 18f * dp, shapePaint)
-        shapePaint.style = Paint.Style.FILL
-        shapePaint.color = KavvoroPalette.cyan
-        canvas.drawRoundRect(summary.left + 1f * dp, summary.top + 16f * dp, summary.left + 3f * dp, summary.bottom - 16f * dp, 1f * dp, 1f * dp, shapePaint)
 
-        val splitX = summary.left + summary.width() * 0.49f
-        shapePaint.color = 0x557F93BA
-        canvas.drawRect(splitX, summary.top + 19f * dp, splitX + 1f * dp, summary.bottom - 20f * dp, shapePaint)
+        scratchShadowRect.set(summary.left, summary.top, summary.right, summary.top + summary.height() * 0.54f)
+        shapePaint.shader = LinearGradient(scratchShadowRect.left, scratchShadowRect.top,
+            scratchShadowRect.right, scratchShadowRect.bottom,
+            0x222CB7F3, 0x000D1834, Shader.TileMode.CLAMP)
+        canvas.drawRoundRect(scratchShadowRect, radius, radius, shapePaint)
+        shapePaint.shader = LinearGradient(summary.left, summary.top, summary.right, summary.bottom,
+            KavvoroPalette.cyan, KavvoroPalette.blue, Shader.TileMode.CLAMP)
+        shapePaint.style = Paint.Style.STROKE
+        shapePaint.strokeWidth = 1.25f * dp
+        canvas.drawRoundRect(summary, radius, radius, shapePaint)
+        shapePaint.shader = null
+
+        shapePaint.style = Paint.Style.FILL
+        shapePaint.shader = LinearGradient(summary.left, summary.top, summary.left + 4f * dp, summary.bottom,
+            KavvoroPalette.cyan, KavvoroPalette.pink, Shader.TileMode.CLAMP)
+        canvas.drawRoundRect(summary.left + 1f * dp, summary.top + 23f * dp,
+            summary.left + 4f * dp, summary.bottom - 23f * dp, 2f * dp, 2f * dp, shapePaint)
+        shapePaint.shader = null
+
+        val art = layout.summaryArtRect.toRectF(scratchIconRect)
+        if (!art.isEmpty) {
+            shapePaint.color = withAlpha(KavvoroPalette.cyan, 24)
+            canvas.drawCircle(art.centerX(), art.centerY(), art.width() * 0.49f, shapePaint)
+            shapePaint.style = Paint.Style.STROKE
+            shapePaint.strokeWidth = 1.2f * dp
+            shapePaint.color = withAlpha(KavvoroPalette.cyan, 115)
+            canvas.drawCircle(art.centerX(), art.centerY(), art.width() * 0.42f, shapePaint)
+            shapePaint.color = withAlpha(KavvoroPalette.pink, 150)
+            canvas.drawArc(art.left + 7f * dp, art.top + 7f * dp, art.right - 7f * dp, art.bottom - 7f * dp,
+                -42f, 93f, false, shapePaint)
+            shapePaint.style = Paint.Style.FILL
+            missionArt?.let {
+                shapePaint.isFilterBitmap = true
+                canvas.drawBitmap(it, null, art, shapePaint)
+            }
+        }
 
         textPaint.reset()
         textPaint.isAntiAlias = true
-        textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
+        textPaint.typeface = AssetResourceManager.oxaniumMedium()
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.textSize = 9f * dp
-        textPaint.letterSpacing = 0.05f
-        textPaint.color = KavvoroPalette.mutedText
+        textPaint.letterSpacing = 0.08f
+        textPaint.color = 0xFFD6E3FF.toInt()
         val progressRect = layout.summaryProgressTextRect.toRectF(scratchTextRect)
-        canvas.drawText(t("DAILY PROGRESS").uppercase(), progressRect.left, summary.top + 29f * dp, textPaint)
+        canvas.drawText(t("DAILY PROGRESS").uppercase(), progressRect.left, summary.top + 31f * dp, textPaint)
         textPaint.letterSpacing = 0f
-        textPaint.textSize = 20f * dp
-        textPaint.color = 0xFFF5F8FF.toInt()
+        textPaint.typeface = AssetResourceManager.spaceGroteskExtraBold()
+        textPaint.textSize = 30f * dp
+        textPaint.color = 0xFFFFFFFF.toInt()
         val completeCount = missions.count { it.isComplete }
-        canvas.drawText("$completeCount/${missions.size}", progressRect.left, progressRect.bottom - 2f * dp, textPaint)
+        drawFitted(canvas, "$completeCount/${missions.size}", progressRect, textPaint, 20f * dp)
 
         val rewardLabel = layout.summaryRewardLabelRect.toRectF(scratchTextRect)
-        textPaint.textSize = 9f * dp
-        textPaint.letterSpacing = 0.04f
-        textPaint.color = KavvoroPalette.mutedText
-        canvas.drawText(t("TOTAL REWARDS").uppercase(), rewardLabel.left, rewardLabel.centerY() + 3f * dp, textPaint)
+        textPaint.typeface = AssetResourceManager.oxaniumMedium()
+        textPaint.textSize = 8f * dp
+        textPaint.letterSpacing = 0.07f
+        textPaint.color = 0xFFBFC9E5.toInt()
+        canvas.drawText(t("TOTAL REWARDS").uppercase(), rewardLabel.left, baselineFor(rewardLabel, textPaint), textPaint)
         textPaint.letterSpacing = 0f
+
         val rewardRect = layout.summaryRewardTextRect.toRectF(scratchTextRect)
-        textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
-        textPaint.textSize = 13f * dp
+        coinArt?.let { bitmap ->
+            scratchChipRect.set(rewardRect.left, rewardRect.centerY() - 11f * dp,
+                rewardRect.left + 22f * dp, rewardRect.centerY() + 11f * dp)
+            shapePaint.reset()
+            shapePaint.isAntiAlias = true
+            shapePaint.isFilterBitmap = true
+            canvas.drawBitmap(bitmap, null, scratchChipRect, shapePaint)
+        }
+        textPaint.typeface = AssetResourceManager.spaceGroteskBold()
+        textPaint.textSize = 12f * dp
         textPaint.color = KavvoroPalette.gold
-        drawFitted(canvas, "+${missions.sumOf { it.rewardCoins }.formatGrouped()} ${t("COINS").uppercase()}", rewardRect, textPaint, 8f * dp)
+        scratchFaceRect.set(rewardRect.left + 25f * dp, rewardRect.top,
+            rewardRect.right, rewardRect.bottom)
+        drawFitted(canvas, "+${missions.sumOf { it.rewardCoins }.formatGrouped()} ${t("COINS").uppercase()}",
+            scratchFaceRect, textPaint, 7f * dp)
 
         val track = layout.summaryTrackRect.toRectF(scratchTrackRect)
-        shapePaint.color = 0xAA020817.toInt()
+        shapePaint.color = 0x99030A1C.toInt()
         canvas.drawRoundRect(track, track.height() * 0.5f, track.height() * 0.5f, shapePaint)
         val fraction = (completeCount.toFloat() / missions.size.coerceAtLeast(1)).coerceIn(0f, 1f)
         if (fraction > 0f) {
             scratchFillRect.set(track.left, track.top, track.left + track.width() * fraction, track.bottom)
             shapePaint.shader = LinearGradient(scratchFillRect.left, scratchFillRect.top,
                 scratchFillRect.right.coerceAtLeast(scratchFillRect.left + 1f), scratchFillRect.bottom,
-                KavvoroPalette.cyan, KavvoroPalette.blue, Shader.TileMode.CLAMP)
+                KavvoroPalette.cyan, KavvoroPalette.pink, Shader.TileMode.CLAMP)
             canvas.drawRoundRect(scratchFillRect, track.height() * 0.5f, track.height() * 0.5f, shapePaint)
             shapePaint.shader = null
         }
@@ -157,93 +209,88 @@ object MissionsUiRenderer {
         mission: DailyMissionProgress,
         index: Int,
         active: Boolean,
+        coinArt: Bitmap?,
         dp: Float,
         t: (String) -> String
     ) {
         val card = layout.cardRects[index].toRectF(scratchCardRect)
-        val accent = when (index % 3) {
-            0 -> KavvoroPalette.cyan
-            1 -> KavvoroPalette.pink
-            else -> KavvoroPalette.gold
+        val accent = when (mission.id) {
+            DailyMissionId.PLAY_ROUNDS -> KavvoroPalette.cyan
+            DailyMissionId.WIN_ROUND -> KavvoroPalette.pink
+            DailyMissionId.EARN_COINS -> KavvoroPalette.gold
         }
-        val radius = 18f * dp
+        val edge = if (mission.isComplete) KavvoroPalette.gold else accent
+        val radius = 20f * dp
         shapePaint.reset()
         shapePaint.isAntiAlias = true
         shapePaint.style = Paint.Style.FILL
+        scratchShadowRect.set(card.left, card.top + 4f * dp, card.right, card.bottom + 4f * dp)
+        shapePaint.color = 0xA8020715.toInt()
+        canvas.drawRoundRect(scratchShadowRect, radius, radius, shapePaint)
         shapePaint.shader = LinearGradient(card.left, card.top, card.right, card.bottom,
-            0xF3101B33.toInt(), 0xF3081023.toInt(), Shader.TileMode.CLAMP)
+            0xF4162543.toInt(), 0xF509132C.toInt(), Shader.TileMode.CLAMP)
         canvas.drawRoundRect(card, radius, radius, shapePaint)
         shapePaint.shader = null
         shapePaint.style = Paint.Style.STROKE
-        shapePaint.strokeWidth = if (mission.canClaim) 1.7f * dp else 0.9f * dp
-        shapePaint.color = withAlpha(if (mission.isComplete) KavvoroPalette.gold else accent, if (mission.canClaim) 220 else 100)
+        shapePaint.strokeWidth = if (mission.canClaim) 1.7f * dp else 1f * dp
+        shapePaint.color = withAlpha(edge, if (mission.canClaim) 225 else 145)
         canvas.drawRoundRect(card, radius, radius, shapePaint)
-        shapePaint.style = Paint.Style.FILL
-        shapePaint.color = withAlpha(accent, 190)
-        canvas.drawRoundRect(card.left + 1f * dp, card.top + 17f * dp, card.left + 3f * dp, card.top + 48f * dp, 1f * dp, 1f * dp, shapePaint)
 
-        val iconX = if (layout.gridLayout) card.centerX() else card.left + 31f * dp
-        val iconY = if (layout.gridLayout) card.top + 37f * dp else card.top + 27f * dp
-        shapePaint.color = withAlpha(if (mission.isComplete) KavvoroPalette.gold else accent, if (mission.isComplete) 52 else 35)
-        canvas.drawCircle(iconX, iconY, 19f * dp, shapePaint)
+        shapePaint.style = Paint.Style.FILL
+        shapePaint.shader = LinearGradient(card.left, card.top, card.left, card.top + 50f * dp,
+            withAlpha(edge, 195), withAlpha(edge, 0), Shader.TileMode.CLAMP)
+        canvas.drawRoundRect(card.left + 1f * dp, card.top + 17f * dp,
+            card.left + 4f * dp, card.top + 66f * dp, 2f * dp, 2f * dp, shapePaint)
+        shapePaint.shader = null
+        shapePaint.color = withAlpha(0xFFFFFFFF.toInt(), 15)
+        canvas.drawRoundRect(card.left + 17f * dp, card.top + 1.5f * dp,
+            card.right - 17f * dp, card.top + 2.5f * dp, 1f * dp, 1f * dp, shapePaint)
+
+        val icon = layout.missionIconRects[index].toRectF(scratchIconRect)
+        val iconColor = if (mission.isComplete) KavvoroPalette.gold else accent
+        shapePaint.color = withAlpha(iconColor, 34)
+        canvas.drawCircle(icon.centerX(), icon.centerY(), icon.width() * 0.52f, shapePaint)
         shapePaint.style = Paint.Style.STROKE
-        shapePaint.strokeWidth = 1.3f * dp
-        shapePaint.color = withAlpha(if (mission.isComplete) KavvoroPalette.gold else accent, 220)
-        canvas.drawCircle(iconX, iconY, 15f * dp, shapePaint)
+        shapePaint.strokeWidth = 1.25f * dp
+        shapePaint.color = withAlpha(iconColor, 190)
+        canvas.drawCircle(icon.centerX(), icon.centerY(), icon.width() * 0.43f, shapePaint)
+        drawMissionGlyph(canvas, mission.id, icon.centerX(), icon.centerY(), icon.width() * 0.22f, iconColor, dp)
         if (mission.isComplete) {
+            shapePaint.style = Paint.Style.FILL
+            shapePaint.color = KavvoroPalette.gold
+            canvas.drawCircle(icon.right - 2f * dp, icon.top + 2f * dp, 7f * dp, shapePaint)
             checkPath.reset()
-            checkPath.moveTo(iconX - 6f * dp, iconY)
-            checkPath.lineTo(iconX - 1f * dp, iconY + 5f * dp)
-            checkPath.lineTo(iconX + 7f * dp, iconY - 5f * dp)
+            checkPath.moveTo(icon.right - 5f * dp, icon.top + 2f * dp)
+            checkPath.lineTo(icon.right - 2.5f * dp, icon.top + 4.5f * dp)
+            checkPath.lineTo(icon.right + 1.5f * dp, icon.top - 0.5f * dp)
+            shapePaint.style = Paint.Style.STROKE
+            shapePaint.strokeWidth = 1.4f * dp
             shapePaint.strokeCap = Paint.Cap.ROUND
             shapePaint.strokeJoin = Paint.Join.ROUND
+            shapePaint.color = 0xFF182039.toInt()
             canvas.drawPath(checkPath, shapePaint)
-        } else {
-            textPaint.reset()
-            textPaint.isAntiAlias = true
-            textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
-            textPaint.textAlign = Paint.Align.CENTER
-            textPaint.textSize = 9f * dp
-            textPaint.color = accent
-            canvas.drawText((index + 1).toString().padStart(2, '0'), iconX, iconY + 3.2f * dp, textPaint)
         }
 
         textPaint.reset()
         textPaint.isAntiAlias = true
-        textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
-        textPaint.color = 0xFFF5F7FF.toInt()
-        textPaint.textSize = if (layout.gridLayout) 14f * dp else 14.5f * dp
+        textPaint.typeface = AssetResourceManager.spaceGroteskBold()
+        textPaint.color = 0xFFFFFFFF.toInt()
+        textPaint.textSize = if (layout.gridLayout) 14f * dp else 14f * dp
         textPaint.textAlign = if (layout.gridLayout) Paint.Align.CENTER else Paint.Align.LEFT
         drawFitted(canvas, t(mission.id.titleKey).uppercase(), layout.titleTextRects[index].toRectF(scratchTextRect), textPaint, 8f * dp)
 
-        val rewardRect = layout.rewardTextRects[index].toRectF(scratchChipRect)
-        if (!rewardRect.isEmpty) {
-            shapePaint.reset()
-            shapePaint.isAntiAlias = true
-            shapePaint.style = Paint.Style.FILL
-            shapePaint.color = withAlpha(KavvoroPalette.gold, 28)
-            canvas.drawRoundRect(rewardRect, rewardRect.height() * 0.5f, rewardRect.height() * 0.5f, shapePaint)
-            shapePaint.style = Paint.Style.STROKE
-            shapePaint.strokeWidth = 0.8f * dp
-            shapePaint.color = withAlpha(KavvoroPalette.gold, 130)
-            canvas.drawRoundRect(rewardRect, rewardRect.height() * 0.5f, rewardRect.height() * 0.5f, shapePaint)
-            textPaint.reset()
-            textPaint.isAntiAlias = true
-            textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
-            textPaint.textAlign = Paint.Align.CENTER
-            textPaint.textSize = 9f * dp
-            textPaint.color = KavvoroPalette.gold
-            drawFitted(canvas, "+${mission.rewardCoins} ${t("COINS").uppercase()}", rewardRect, textPaint, 6f * dp)
-        }
+        drawRewardChip(canvas, layout.rewardTextRects[index].toRectF(scratchChipRect), mission.rewardCoins, coinArt, dp, t)
 
         val progressRect = layout.progressTextRects[index].toRectF(scratchTextRect)
         textPaint.reset()
         textPaint.isAntiAlias = true
-        textPaint.typeface = AssetResourceManager.oxaniumNormal()
-        textPaint.textSize = 10f * dp
+        textPaint.typeface = AssetResourceManager.spaceGroteskBold()
+        textPaint.textSize = 11f * dp
         textPaint.textAlign = if (layout.gridLayout) Paint.Align.CENTER else Paint.Align.LEFT
-        textPaint.color = if (mission.isComplete) KavvoroPalette.gold else KavvoroPalette.mutedText
-        canvas.drawText("${mission.progress} / ${mission.target}", if (layout.gridLayout) progressRect.centerX() else progressRect.left, baselineFor(progressRect, textPaint), textPaint)
+        textPaint.color = if (mission.isComplete) KavvoroPalette.gold else 0xFFE2E9FA.toInt()
+        if (!progressRect.isEmpty) {
+            drawFitted(canvas, "${mission.progress} / ${mission.target}", progressRect, textPaint, 8f * dp)
+        }
 
         val status = when {
             mission.claimed -> t("CLAIMED")
@@ -251,22 +298,34 @@ object MissionsUiRenderer {
             else -> t("IN PROGRESS")
         }
         val statusRect = layout.statusTextRects[index].toRectF(scratchTextRect)
-        textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
-        textPaint.textSize = 8.5f * dp
-        textPaint.textAlign = if (layout.gridLayout) Paint.Align.CENTER else Paint.Align.RIGHT
-        textPaint.color = when {
-            mission.claimed -> KavvoroPalette.mutedText
-            mission.canClaim -> KavvoroPalette.cyan
-            else -> 0xFF8E9AB7.toInt()
+        if (!statusRect.isEmpty) {
+            val statusAccent = when {
+                mission.claimed -> KavvoroPalette.mutedText
+                mission.canClaim -> KavvoroPalette.cyan
+                else -> 0xFF9CA9C7.toInt()
+            }
+            shapePaint.reset()
+            shapePaint.isAntiAlias = true
+            shapePaint.style = Paint.Style.FILL
+            shapePaint.color = withAlpha(statusAccent, 21)
+            canvas.drawRoundRect(statusRect, statusRect.height() * 0.5f, statusRect.height() * 0.5f, shapePaint)
+            shapePaint.style = Paint.Style.STROKE
+            shapePaint.strokeWidth = 0.8f * dp
+            shapePaint.color = withAlpha(statusAccent, 110)
+            canvas.drawRoundRect(statusRect, statusRect.height() * 0.5f, statusRect.height() * 0.5f, shapePaint)
+            textPaint.typeface = AssetResourceManager.oxaniumMedium()
+            textPaint.textSize = 8f * dp
+            textPaint.textAlign = Paint.Align.CENTER
+            textPaint.color = statusAccent
+            drawFitted(canvas, status.uppercase(), statusRect, textPaint, 6f * dp)
         }
-        if (!statusRect.isEmpty) drawFitted(canvas, status.uppercase(), statusRect, textPaint, 6.5f * dp)
 
         val track = layout.progressTrackRects[index].toRectF(scratchTrackRect)
         if (!track.isEmpty) {
             shapePaint.reset()
             shapePaint.isAntiAlias = true
             shapePaint.style = Paint.Style.FILL
-            shapePaint.color = 0xAA020817.toInt()
+            shapePaint.color = 0xBB020918.toInt()
             canvas.drawRoundRect(track, track.height() * 0.5f, track.height() * 0.5f, shapePaint)
             val fraction = (mission.progress.toFloat() / mission.target.coerceAtLeast(1)).coerceIn(0f, 1f)
             if (fraction > 0f) {
@@ -282,41 +341,138 @@ object MissionsUiRenderer {
         drawClaimButton(canvas, layout.claimButtonRects[index].toRectF(scratchButtonRect), mission, active, dp, t)
     }
 
+    private fun drawRewardChip(canvas: Canvas, rect: RectF, reward: Int, coinArt: Bitmap?, dp: Float, t: (String) -> String) {
+        if (rect.isEmpty) return
+        shapePaint.reset()
+        shapePaint.isAntiAlias = true
+        shapePaint.style = Paint.Style.FILL
+        shapePaint.color = withAlpha(KavvoroPalette.gold, 25)
+        canvas.drawRoundRect(rect, rect.height() * 0.5f, rect.height() * 0.5f, shapePaint)
+        shapePaint.style = Paint.Style.STROKE
+        shapePaint.strokeWidth = 0.9f * dp
+        shapePaint.color = withAlpha(KavvoroPalette.gold, 150)
+        canvas.drawRoundRect(rect, rect.height() * 0.5f, rect.height() * 0.5f, shapePaint)
+        coinArt?.let { bitmap ->
+            scratchFaceRect.set(rect.left + 4f * dp, rect.centerY() - 10f * dp,
+                rect.left + 22f * dp, rect.centerY() + 8f * dp)
+            shapePaint.reset()
+            shapePaint.isAntiAlias = true
+            shapePaint.isFilterBitmap = true
+            canvas.drawBitmap(bitmap, null, scratchFaceRect, shapePaint)
+        } ?: drawCoinGlyph(canvas, rect.left + 13f * dp, rect.centerY(), 5.7f * dp, KavvoroPalette.gold, dp)
+        textPaint.reset()
+        textPaint.isAntiAlias = true
+        textPaint.typeface = AssetResourceManager.spaceGroteskBold()
+        textPaint.textAlign = Paint.Align.CENTER
+        textPaint.textSize = 8.7f * dp
+        textPaint.color = KavvoroPalette.gold
+        scratchFaceRect.set(rect.left + 24f * dp, rect.top, rect.right - 5f * dp, rect.bottom)
+        drawFitted(canvas, "+$reward ${t("COINS").uppercase()}", scratchFaceRect, textPaint, 6f * dp)
+    }
+
+    private fun drawMissionGlyph(canvas: Canvas, mission: DailyMissionId, x: Float, y: Float, size: Float, color: Int, dp: Float) {
+        shapePaint.style = Paint.Style.FILL
+        shapePaint.color = color
+        when (mission) {
+            DailyMissionId.PLAY_ROUNDS -> {
+                glyphPath.reset()
+                glyphPath.moveTo(x - size * 0.55f, y - size * 0.78f)
+                glyphPath.lineTo(x + size * 0.8f, y)
+                glyphPath.lineTo(x - size * 0.55f, y + size * 0.78f)
+                glyphPath.close()
+                canvas.drawPath(glyphPath, shapePaint)
+            }
+            DailyMissionId.WIN_ROUND -> {
+                glyphPath.reset()
+                for (point in 0 until 10) {
+                    val angle = Math.PI * point / 5.0 - Math.PI / 2.0
+                    val radius = if (point % 2 == 0) size * 0.84f else size * 0.38f
+                    val px = x + kotlin.math.cos(angle).toFloat() * radius
+                    val py = y + kotlin.math.sin(angle).toFloat() * radius
+                    if (point == 0) glyphPath.moveTo(px, py) else glyphPath.lineTo(px, py)
+                }
+                glyphPath.close()
+                canvas.drawPath(glyphPath, shapePaint)
+            }
+            DailyMissionId.EARN_COINS -> drawCoinStack(canvas, x, y, size * 0.78f, color, dp)
+        }
+    }
+
+    private fun drawCoinGlyph(canvas: Canvas, x: Float, y: Float, radius: Float, color: Int, dp: Float) {
+        shapePaint.style = Paint.Style.FILL
+        shapePaint.color = withAlpha(color, 58)
+        canvas.drawCircle(x, y, radius, shapePaint)
+        shapePaint.style = Paint.Style.STROKE
+        shapePaint.strokeWidth = maxOf(1.5f * dp, radius * 0.2f)
+        shapePaint.color = color
+        canvas.drawCircle(x, y, radius, shapePaint)
+        shapePaint.style = Paint.Style.FILL
+        shapePaint.color = color
+        canvas.drawCircle(x, y, radius * 0.18f, shapePaint)
+    }
+
+    private fun drawCoinStack(canvas: Canvas, x: Float, y: Float, radius: Float, color: Int, dp: Float) {
+        val line = maxOf(1.3f * dp, radius * 0.19f)
+        shapePaint.style = Paint.Style.FILL
+        shapePaint.color = withAlpha(color, 48)
+        scratchIconRect.set(x - radius * 0.82f, y - radius * 0.08f, x + radius * 0.82f, y + radius * 0.8f)
+        canvas.drawRoundRect(scratchIconRect, radius * 0.28f, radius * 0.28f, shapePaint)
+        shapePaint.style = Paint.Style.STROKE
+        shapePaint.strokeWidth = line
+        shapePaint.color = color
+        canvas.drawOval(x - radius * 0.82f, y - radius * 0.36f, x + radius * 0.82f, y + radius * 0.36f, shapePaint)
+        canvas.drawArc(x - radius * 0.82f, y - radius * 0.08f, x + radius * 0.82f, y + radius * 0.64f,
+            0f, 180f, false, shapePaint)
+        canvas.drawLine(x - radius * 0.58f, y + radius * 0.3f, x + radius * 0.58f, y + radius * 0.3f, shapePaint)
+    }
+
     private fun drawClaimButton(canvas: Canvas, button: RectF, mission: DailyMissionProgress, active: Boolean, dp: Float, t: (String) -> String) {
-        val radius = 12f * dp
+        if (button.isEmpty) return
+        val radius = button.height() * 0.46f
         val pressedOffset = if (active && mission.canClaim) 2f * dp else 0f
         shapePaint.reset()
         shapePaint.isAntiAlias = true
         shapePaint.style = Paint.Style.FILL
-        shapePaint.color = if (mission.canClaim) 0x99031E2B.toInt() else 0x77020A18
-        scratchShadowRect.set(button.left, button.top + 3f * dp, button.right, button.bottom + 3f * dp)
-        canvas.drawRoundRect(scratchShadowRect, radius, radius, shapePaint)
-        scratchFaceRect.set(button.left, button.top + pressedOffset, button.right, button.bottom - 3f * dp + pressedOffset)
         if (mission.canClaim) {
-            shapePaint.shader = LinearGradient(scratchFaceRect.left, scratchFaceRect.top, scratchFaceRect.right, scratchFaceRect.bottom,
-                intArrayOf(0xFF27DDCA.toInt(), 0xFF147DA8.toInt()), null, Shader.TileMode.CLAMP)
+            scratchShadowRect.set(button.left, button.top + 3f * dp, button.right, button.bottom + 3f * dp)
+            shapePaint.color = 0xB506102A.toInt()
+            canvas.drawRoundRect(scratchShadowRect, radius, radius, shapePaint)
+        }
+        if (mission.canClaim) {
+            scratchFaceRect.set(button.left, button.top + pressedOffset, button.right, button.bottom - 2f * dp + pressedOffset)
         } else {
-            shapePaint.color = if (mission.claimed) 0x4429D7C5 else 0x5535425E
+            val statusWidth = min(button.width() * 0.76f, 126f * dp)
+            val statusHeight = min(button.height() * 0.72f, 32f * dp)
+            scratchFaceRect.set(button.centerX() - statusWidth * 0.5f, button.centerY() - statusHeight * 0.5f,
+                button.centerX() + statusWidth * 0.5f, button.centerY() + statusHeight * 0.5f)
+        }
+        if (mission.canClaim) {
+            shapePaint.shader = LinearGradient(scratchFaceRect.left, scratchFaceRect.top,
+                scratchFaceRect.right, scratchFaceRect.bottom,
+                0xFF25D9F4.toInt(), 0xFF825BFF.toInt(), Shader.TileMode.CLAMP)
+        } else {
+            shapePaint.color = if (mission.claimed) 0x334CCFC1 else 0x33425476
         }
         canvas.drawRoundRect(scratchFaceRect, radius, radius, shapePaint)
         shapePaint.shader = null
         shapePaint.style = Paint.Style.STROKE
-        shapePaint.strokeWidth = 0.9f * dp
-        shapePaint.color = withAlpha(if (mission.canClaim) KavvoroPalette.cyan else KavvoroPalette.mutedText, if (mission.canClaim) 190 else 65)
+        shapePaint.strokeWidth = if (mission.canClaim) 1f * dp else 0.75f * dp
+        shapePaint.color = withAlpha(if (mission.canClaim) 0xFFE9FCFF.toInt() else KavvoroPalette.mutedText,
+            if (mission.canClaim) 190 else 74)
         canvas.drawRoundRect(scratchFaceRect, radius, radius, shapePaint)
 
         textPaint.reset()
         textPaint.isAntiAlias = true
-        textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
+        textPaint.typeface = AssetResourceManager.spaceGroteskBold()
         textPaint.textAlign = Paint.Align.CENTER
-        textPaint.textSize = min(10.5f * dp, button.height() * 0.28f)
-        textPaint.color = if (mission.canClaim) 0xFFFFFFFF.toInt() else KavvoroPalette.mutedText
+        textPaint.textSize = min(9f * dp, button.height() * 0.25f)
+        textPaint.color = if (mission.canClaim) 0xFFFFFFFF.toInt() else 0xFFB3BED9.toInt()
         val label = when {
             mission.claimed -> t("CLAIMED")
             mission.canClaim -> t("CLAIM REWARD")
             else -> t("IN PROGRESS")
         }
-        drawFitted(canvas, label.uppercase(), scratchFaceRect, textPaint, 7f * dp)
+        drawFitted(canvas, label.uppercase(), scratchFaceRect, textPaint, 6f * dp)
     }
 
     private fun baselineFor(rect: RectF, paint: Paint): Float =
