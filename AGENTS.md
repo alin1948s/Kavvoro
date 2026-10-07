@@ -32,6 +32,7 @@ Codul sursă (`app/src/main/java/com/moonsolstudios/kavvoro/`) este împărțit 
   - `screens/` — **Fiecare ecran are propriul sub-pachet izolat:**
     - `screens/home/` — Ecranul Home + Mode Picker (`HomeLayoutCalculator`, `HomeMenuRenderer`, `HomeMenuTouchController`, `HomeAccessibilityTouchHelper`, `ModePickerLayoutCalculator`, `ModePickerRenderer`, `SciFiCtaButtonRenderer`)
     - `screens/agecheck/` — Ecranul de selecție a vârstei la prima pornire (`AgeCheckScreenView`)
+    - `screens/missions/` — Misiuni zilnice (`MissionsLayoutCalculator`, `MissionsUiRenderer`, `MissionsTouchController`, `MissionsScreenController`)
     - `screens/gameplay/` — Arena de joc și HUD-ul (`GameplayArenaRenderer`, `GameplayHudRenderer`, `GameplayTouchController`)
     - `screens/outcome/` — Ecranul de Victorie / Înfrângere (`OutcomeUiRenderer`, `OutcomeTouchController`)
     - `screens/collection/` — Ecranul Skins / Colecție (`CollectionLayoutCalculator`, `CollectionUiRenderer`, `CollectionTouchController`, `BallSkinRenderer`)

@@ -19,7 +19,8 @@ nu surse de design.
 - Butoanele, cardurile, chips și textele se desenează la runtime. Niciun text UI
   nu se bake-uiește într-un PNG/WebP.
 - Home are o acțiune dominantă `PLAY NOW` și trei destinații: Skins, Missions,
-  Leaderboard. Daily Rift apare ca stare/badge în Missions. Callout-ul generic
+  Leaderboard. Daily Check se deschide din soldul Coins, iar indicatorul `READY`
+  stă separat sub sold; Missions rămâne o destinație proprie. Callout-ul generic
   din referința portrait poate rămâne informativ; nu adăugăm promoții temporare.
 - Layout-ul folosește safe insets, dp/sp, hit-target-uri de minimum 48dp și
   păstrează rect-urile interactive în afara overlap-urilor vizuale.
@@ -39,8 +40,8 @@ nu surse de design.
 2. CTA-ul este desenat procedural, iar textul, iconurile și chevron-ul rămân
    elemente runtime.
 3. Layout-ul landscape folosește scena Hero + Navigation Deck, cu CTA lângă
-   portal, leaderboard lat și Daily Rift în Missions; nu adaugă promoție sau
-   prompt de rotire.
+   portal, leaderboard lat și un banner Missions; nu adaugă promoție sau prompt
+   de rotire.
 4. Layout-urile portrait și landscape au capturi QA versionate la
    `1080×2400@420dpi` și `1920×1200@240dpi`; testele de layout acoperă limitele
    CTA-ului și header-ul compact.
@@ -69,24 +70,35 @@ nu surse de design.
 - Urmează revizuirea manuală a dialogurilor, text scaling-ului și accesibilității
   cu TalkBack pe ecrane mici și tablete.
 
-### 4. Language selector
+### 4. Missions — prima implementare finalizată
+
+- Cardul Missions deschide o pagină proprie cu trei obiective zilnice:
+  3 runde jucate, 1 rundă câștigată și 500 coins obținuți din runde câștigate.
+- Progresul și revendicările sunt păstrate în profilul activ și se resetează
+  odată cu seed-ul zilnic al jocului; fiecare misiune acordă coins o singură dată.
+- Daily Check a fost mutat pe tap-ul soldului Coins. Badge-ul `READY` apare sub
+  chip, într-o zonă rezervată de layout, fără să acopere valoarea.
+- Textele noi sunt incluse în toate cele 24 de cataloage; verificarea manuală a
+  TalkBack și a localizărilor RTL/late rămâne deschisă.
+
+### 5. Language selector
 
 - Aplicăm paleta, selecția vizibilă și aceeași familie de carduri; verificăm
   texte lungi, RTL și accesarea cu TalkBack.
 
-### 5. Collection și Leaderboards
+### 6. Collection și Leaderboards
 
 - Uniformizăm cardurile, stările locked/equipped, filtrele și ierarhia scorurilor;
   culorile de stare au și diferențe de formă/icon, nu doar de hue.
 
-### 6. Gameplay, Tutorial și Outcome
+### 7. Gameplay, Tutorial și Outcome
 
 - Facem HUD-ul, telegramele de hazard, reward-urile, tutorialele și ecranele de
   rezultat să folosească aceiași tokens și semnale redundante.
 - Legăm suportul `Reduce Motion` de efectele neesențiale și păstrăm mișcarea
   necesară înțelegerii fizicii jocului.
 
-### 7. Modals, Ad și polish de sistem
+### 8. Modals, Ad și polish de sistem
 
 - Uniformizăm dialogs, ecranul de tranziție Ad și overlay-urile; completăm
   provider-ele de noduri virtuale pentru fiecare ecran, nu doar Home.

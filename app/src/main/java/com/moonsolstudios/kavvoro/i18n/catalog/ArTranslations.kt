@@ -523,5 +523,9 @@ internal object ArTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "اتصل بالإنترنت وحاول مرة أخرى لقراءة مستند MoonSol Studios الحالي.",
         "Retry" to "إعادة المحاولة",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "استلم المكافأة",
+        "EARN 500 COINS" to "اجمع 500 قطعة نقدية",
+        "PLAY 3 ROUNDS" to "العب 3 جولات",
+        "WIN 1 ROUND" to "اربح جولة واحدة",
     )
 }

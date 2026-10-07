@@ -523,5 +523,9 @@ internal object CsTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Připojte se k internetu a zkuste to znovu, abyste si přečetli aktuální dokument MoonSol Studios.",
         "Retry" to "Zkusit znovu",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "VYZVEDNOUT ODMĚNU",
+        "EARN 500 COINS" to "ZÍSKEJ 500 MINCÍ",
+        "PLAY 3 ROUNDS" to "ODEHRAJ 3 KOLA",
+        "WIN 1 ROUND" to "VYHRAJ 1 KOLO",
     )
 }

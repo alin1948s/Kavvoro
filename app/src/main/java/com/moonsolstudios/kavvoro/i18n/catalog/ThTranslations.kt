@@ -523,5 +523,9 @@ internal object ThTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "เชื่อมต่ออินเทอร์เน็ตแล้วลองอีกครั้งเพื่ออ่านเอกสารฉบับปัจจุบันของ MoonSol Studios",
         "Retry" to "ลองอีกครั้ง",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "รับรางวัล",
+        "EARN 500 COINS" to "เก็บเหรียญ 500 เหรียญ",
+        "PLAY 3 ROUNDS" to "เล่น 3 รอบ",
+        "WIN 1 ROUND" to "ชนะ 1 รอบ",
     )
 }

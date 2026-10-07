@@ -523,5 +523,9 @@ internal object UkTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Підключіться до інтернету й спробуйте ще раз, щоб прочитати актуальний документ MoonSol Studios.",
         "Retry" to "Спробувати ще раз",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "ЗАБРАТИ НАГОРОДУ",
+        "EARN 500 COINS" to "ЗІБРАТИ 500 МОНЕТ",
+        "PLAY 3 ROUNDS" to "ЗІГРАТИ 3 РАУНДИ",
+        "WIN 1 ROUND" to "ВИГРАТИ 1 РАУНД",
     )
 }

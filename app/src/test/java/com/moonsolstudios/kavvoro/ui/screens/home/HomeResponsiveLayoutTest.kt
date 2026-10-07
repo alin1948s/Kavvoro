@@ -94,6 +94,12 @@ class HomeResponsiveLayoutTest {
             assertTrue("Platform must be horizontally centered on ${spec.name}", abs(platformRect.centerX() - contentRect.centerX()) < 0.1f)
             assertTrue("Character must have positive dimensions on ${spec.name}", charRect.width() > 0f && charRect.height() > 0f)
 
+            val coins = calculator.coinsChipRect
+            val readyBadge = calculator.coinsReadyBadgeRect
+            assertTrue("Coins READY badge must sit below the balance on ${spec.name}", readyBadge.top >= coins.bottom)
+            assertTrue("Coins READY badge must stay within the viewport on ${spec.name}", readyBadge.left >= 0f && readyBadge.right <= calculator.screenWidth)
+            assertTrue("Coins tap target must include its READY badge on ${spec.name}", calculator.coinsChipTouchRect.bottom >= readyBadge.bottom)
+
             // 7. Verify Play CTA
             val playRect = calculator.playCtaRect
             assertTrue("Play CTA must be positive on ${spec.name}", playRect.width() > 0f && playRect.height() > 0f)

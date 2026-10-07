@@ -523,5 +523,9 @@ internal object TrTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Güncel MoonSol Studios belgesini okumak için internete bağlanıp yeniden deneyin.",
         "Retry" to "Yeniden dene",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "ÖDÜLÜ AL",
+        "EARN 500 COINS" to "500 JETON KAZAN",
+        "PLAY 3 ROUNDS" to "3 TUR OYNA",
+        "WIN 1 ROUND" to "1 TUR KAZAN",
     )
 }

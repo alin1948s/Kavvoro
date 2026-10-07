@@ -523,5 +523,9 @@ internal object ZhTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "请连接互联网并重试，以阅读 MoonSol Studios 的最新文档。",
         "Retry" to "重试",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "领取奖励",
+        "EARN 500 COINS" to "赚取500枚金币",
+        "PLAY 3 ROUNDS" to "进行3轮游戏",
+        "WIN 1 ROUND" to "赢得1轮",
     )
 }

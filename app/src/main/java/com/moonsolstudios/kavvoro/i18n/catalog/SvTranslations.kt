@@ -523,5 +523,9 @@ internal object SvTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Anslut till internet och försök igen för att läsa det aktuella dokumentet från MoonSol Studios.",
         "Retry" to "Försök igen",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "HÄMTA BELÖNING",
+        "EARN 500 COINS" to "TJÄNA 500 MYNT",
+        "PLAY 3 ROUNDS" to "SPELA 3 RUNDOR",
+        "WIN 1 ROUND" to "VINN 1 RUNDA",
     )
 }

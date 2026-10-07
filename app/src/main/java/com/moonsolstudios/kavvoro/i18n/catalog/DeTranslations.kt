@@ -523,5 +523,9 @@ internal object DeTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Verbinde dich mit dem Internet und versuche es erneut, um das aktuelle Dokument von MoonSol Studios zu lesen.",
         "Retry" to "Erneut versuchen",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "BELOHNUNG ABHOLEN",
+        "EARN 500 COINS" to "500 MÜNZEN VERDIENEN",
+        "PLAY 3 ROUNDS" to "3 RUNDEN SPIELEN",
+        "WIN 1 ROUND" to "1 RUNDE GEWINNEN",
     )
 }

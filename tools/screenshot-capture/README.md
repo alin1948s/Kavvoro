@@ -58,6 +58,18 @@ Funcționalități și mecanisme de siguranță:
 4. **Verificare post-captură și retry automat**: Verifică integritatea imaginii, dimensiunile exacte, lipsa ecranelor negre/splash/age-gate și prezența elementelor de UI active (header + footer neon). Dacă verificarea eșuează, relansează automat procesul până la capturarea unui cadru valid.
 5. **Restaurare automată**: Restaurează `wm size` și `wm density` la finalul rulării.
 
+## Captura Missions
+
+```powershell
+python .\tools\screenshot-capture\retake_missions_phone.py
+```
+
+Scriptul capturează pagina Missions la profilul telefon `1080×2400@420dpi`
+în `screenshots/missions/phone-1080x2400-420dpi.png`. Lansează direct ecranul
+Missions pe build-ul debug, folosește profilul de confidențialitate sintetic și
+verifică dimensiunea, conținutul și accentele înainte să salveze imaginea.
+Setările de rezoluție și densitate ale emulatorului sunt restaurate la final.
+
 ## Captura Home landscape
 
 ```powershell

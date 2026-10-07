@@ -124,7 +124,7 @@ object AtmosphereRenderer {
         worldToScreen: (Float) -> Float,
         t: (String) -> String
     ) {
-        if (screen == Screen.COLLECTION || screen == Screen.LEADERBOARDS || screen == Screen.SETTINGS || screen == Screen.LANGUAGE || (screen == Screen.MENU && menuState == MenuState.MODE_ACTION)) {
+        if (screen == Screen.COLLECTION || screen == Screen.LEADERBOARDS || screen == Screen.MISSIONS || screen == Screen.SETTINGS || screen == Screen.LANGUAGE || (screen == Screen.MENU && menuState == MenuState.MODE_ACTION)) {
             val isModeSelect = (screen == Screen.MENU && menuState == MenuState.MODE_ACTION)
             val nebulaBmp = if (isModeSelect) (worldBitmap("bg_mode_select") ?: worldBitmap("bg_space_nebula")) else worldBitmap("bg_space_nebula")
             if (nebulaBmp != null) {

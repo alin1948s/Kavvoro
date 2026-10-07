@@ -188,11 +188,12 @@ object HomeMenuRenderer {
 
     private fun drawDailyReadyBadge(
         canvas: Canvas,
-        cardRect: RectF,
+        badgeRect: RectF,
         dp: Float,
         stateElapsed: Float,
         t: (String) -> String
     ) {
+        if (badgeRect.isEmpty) return
         val readyText = t("READY").uppercase()
         textPaint.reset()
         textPaint.isAntiAlias = true
@@ -201,37 +202,32 @@ object HomeMenuRenderer {
         textPaint.color = 0xFFFFFFFF.toInt()
         textPaint.letterSpacing = 0.12f
         textPaint.textAlign = Paint.Align.LEFT
-        val maxBadgeW = (cardRect.width() - 20f * dp).coerceAtLeast(76f * dp)
-        val badgeW = (textPaint.measureText(readyText) + 24f * dp).coerceIn(76f * dp, maxBadgeW)
-        val maxTextW = badgeW - 22f * dp
+        val maxTextW = badgeRect.width() - 22f * dp
         while (textPaint.textSize > 6.5f * dp && textPaint.measureText(readyText) > maxTextW) {
             textPaint.textSize -= 0.5f * dp
         }
-        val badgeH = 20f * dp
-        val badgeRight = cardRect.right - 10f * dp
-        val badgeTop = cardRect.top + 10f * dp
-        scratchRect2.set(badgeRight - badgeW, badgeTop, badgeRight, badgeTop + badgeH)
+        val badgeH = badgeRect.height()
 
         val pulse = (sin(stateElapsed * 4.0f) * 0.5f + 0.5f)
         badgePaint.reset()
         badgePaint.isAntiAlias = true
         badgePaint.color = 0xEE091428.toInt()
         badgePaint.style = Paint.Style.FILL
-        canvas.drawRoundRect(scratchRect2, badgeH * 0.5f, badgeH * 0.5f, badgePaint)
+        canvas.drawRoundRect(badgeRect, badgeH * 0.5f, badgeH * 0.5f, badgePaint)
 
         badgePaint.color = withAlpha(KavvoroPalette.cyan, (140 + pulse * 115).toInt())
         badgePaint.style = Paint.Style.STROKE
         badgePaint.strokeWidth = 1.5f * dp
-        canvas.drawRoundRect(scratchRect2, badgeH * 0.5f, badgeH * 0.5f, badgePaint)
+        canvas.drawRoundRect(badgeRect, badgeH * 0.5f, badgeH * 0.5f, badgePaint)
 
         badgePaint.color = KavvoroPalette.cyan
         badgePaint.style = Paint.Style.FILL
-        val dotCx = scratchRect2.left + 10f * dp
-        val dotCy = scratchRect2.centerY()
+        val dotCx = badgeRect.left + 10f * dp
+        val dotCy = badgeRect.centerY()
         val dotRadius = 3f * dp
         canvas.drawCircle(dotCx, dotCy, dotRadius, badgePaint)
 
-        val textY = scratchRect2.centerY() + 3.2f * dp
+        val textY = badgeRect.centerY() + 3.2f * dp
         canvas.drawText(readyText, dotCx + 6f * dp, textY, textPaint)
         textPaint.letterSpacing = 0f
     }
@@ -589,6 +585,8 @@ object HomeMenuRenderer {
         bestStreak: Int,
         currentLevel: Int,
         hypeBalance: Int,
+        dailyReady: Boolean,
+        stateElapsed: Float,
         context: Context,
         paint: Paint,
         dp: Float,
@@ -661,6 +659,11 @@ object HomeMenuRenderer {
             paint = paint,
             dp = dp
         )
+
+        if (dailyReady) {
+            calculator.coinsReadyBadgeRect.toRectF(scratchRect2)
+            drawDailyReadyBadge(canvas, scratchRect2, dp, stateElapsed, t)
+        }
 
         // 4. Settings Button
         calculator.settingsButtonRect.toRectF(scratch)
@@ -1254,18 +1257,14 @@ object HomeMenuRenderer {
                 showSubtitle = calculator.showCardSubtitles,
                 iconRes = R.drawable.ic_missions,
                 accentColor = KavvoroPalette.cyan,
-                active = activeMenuButton == MenuButton.DAILY_RIFT,
-                pulseGlow = dailyReady,
+                active = activeMenuButton == MenuButton.MISSIONS,
+                pulseGlow = false,
                 stateElapsed = stateElapsed,
                 context = context,
                 paint = paint,
                 dp = dp,
                 artBitmap = missionsArtBmp
             )
-            if (dailyReady && !calculator.missionsCardRect.isEmpty()) {
-                drawDailyReadyBadge(canvas, scratch, dp, stateElapsed, t)
-            }
-
             // 7c. Leaderboard Card (3D trophy artwork + cosmic backdrop)
             calculator.leaderboardCardRect.toRectF(scratch)
             val leaderboardArtBmp = worldBitmap("home_card_art_leaderboard")
@@ -1306,7 +1305,7 @@ object HomeMenuRenderer {
                 drawBannerCard(
                     canvas = canvas,
                     rect = scratch,
-                    active = activeMenuButton == MenuButton.DAILY_RIFT,
+                    active = activeMenuButton == MenuButton.MISSIONS,
                     title = HomeCopy.bannerTitle(context),
                     subtitle = HomeCopy.bannerSubtitle(context),
                     artBitmap = bannerArtBmp,
@@ -1330,6 +1329,8 @@ object HomeMenuRenderer {
                 bestStreak = bestStreak,
                 currentLevel = currentLevel,
                 hypeBalance = hypeBalance,
+                dailyReady = dailyReady,
+                stateElapsed = stateElapsed,
                 context = context,
                 paint = paint,
                 dp = dp,

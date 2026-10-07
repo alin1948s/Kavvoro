@@ -56,6 +56,7 @@ class HomeMenuTouchController(
     val menuLeaderboardButton = RectF()
     val menuVaultButton = RectF()
     val menuBannerButton = RectF()
+    val menuCoinsButton = RectF()
     val menuPrivacyButton = RectF()
     val menuSfxButton = RectF()
     val characterRect = RectF()
@@ -71,6 +72,7 @@ class HomeMenuTouchController(
         homeLayoutCalculator.settingsButtonRect.toRectF(menuPrivacyButton)
         homeLayoutCalculator.soundButtonRect.toRectF(menuSfxButton)
         homeLayoutCalculator.playCtaRect.toRectF(menuStartButton)
+        homeLayoutCalculator.coinsChipTouchRect.toRectF(menuCoinsButton)
         homeLayoutCalculator.leaderboardsCardRect.toRectF(menuLeaderboardButton)
         homeLayoutCalculator.vaultCardRect.toRectF(menuVaultButton)
         homeLayoutCalculator.collectionCardRect.toRectF(menuCollectionButton)
@@ -294,11 +296,12 @@ class HomeMenuTouchController(
         if (calculator.soundButtonRect.contains(x, y)) return MenuButton.SFX
 
         if (menuState == MenuState.MODES) {
+            if (calculator.coinsChipTouchRect.contains(x, y)) return MenuButton.DAILY_RIFT
             if (calculator.playCtaRect.contains(x, y)) return MenuButton.PLAY
             if (calculator.leaderboardsCardRect.contains(x, y)) return MenuButton.LEADERBOARDS
-            if (calculator.vaultCardRect.contains(x, y)) return MenuButton.DAILY_RIFT
+            if (calculator.vaultCardRect.contains(x, y)) return MenuButton.MISSIONS
             if (calculator.collectionCardRect.contains(x, y)) return MenuButton.COLLECTION
-            if (calculator.bannerCardRect.contains(x, y)) return MenuButton.DAILY_RIFT
+            if (calculator.bannerCardRect.contains(x, y)) return MenuButton.MISSIONS
         } else {
             for ((button, rect) in modePickerButtons) {
                 if (rect.contains(x, y)) return button
@@ -364,6 +367,7 @@ class HomeMenuTouchController(
         menuStartButton: RectF = this.menuStartButton,
         menuLeaderboardButton: RectF = this.menuLeaderboardButton,
         menuVaultButton: RectF = this.menuVaultButton,
+        menuCoinsButton: RectF = this.menuCoinsButton,
         menuCollectionButton: RectF = this.menuCollectionButton,
         menuBannerButton: RectF = this.menuBannerButton,
         menuClassicContinueButton: RectF = this.menuClassicContinueButton,
@@ -379,11 +383,12 @@ class HomeMenuTouchController(
         if (menuPrivacyButton.hits(x, y)) return MenuButton.SETTINGS
         if (menuSfxButton.hits(x, y)) return MenuButton.SFX
         if (menuState == MenuState.MODES) {
+            if (menuCoinsButton.hits(x, y)) return MenuButton.DAILY_RIFT
             if (menuStartButton.hits(x, y)) return MenuButton.PLAY
             if (menuLeaderboardButton.hits(x, y)) return MenuButton.LEADERBOARDS
-            if (menuVaultButton.hits(x, y)) return MenuButton.DAILY_RIFT
+            if (menuVaultButton.hits(x, y)) return MenuButton.MISSIONS
             if (menuCollectionButton.hits(x, y)) return MenuButton.COLLECTION
-            if (menuBannerButton.hits(x, y)) return MenuButton.DAILY_RIFT
+            if (menuBannerButton.hits(x, y)) return MenuButton.MISSIONS
             if (menuClassicContinueButton.hits(x, y)) return MenuButton.CLASSIC_CONTINUE
             if (menuClassicNewButton.hits(x, y)) return MenuButton.CLASSIC_START
             if (menuChaosContinueButton.hits(x, y)) return MenuButton.CHAOS_CONTINUE

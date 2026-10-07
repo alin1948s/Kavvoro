@@ -69,7 +69,9 @@ import com.moonsolstudios.kavvoro.ui.screens.settings.SettingsLayoutCalculator
 import com.moonsolstudios.kavvoro.model.DailyRiftButton
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.AtmosphereRenderer
+import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
 import com.moonsolstudios.kavvoro.ui.screens.modals.DailyRiftRewardRenderer
+import com.moonsolstudios.kavvoro.ui.screens.missions.MissionsScreenController
 import com.moonsolstudios.kavvoro.ui.screens.modals.TabletOrientationPromptRenderer
 import com.moonsolstudios.kavvoro.ui.screens.home.HomeMenuRenderer
 import com.moonsolstudios.kavvoro.ui.render.BrandTitleRenderer
@@ -107,6 +109,7 @@ import com.moonsolstudios.kavvoro.i18n.TutorialCopy
 import com.moonsolstudios.kavvoro.repository.BallSkinCatalog
 import com.moonsolstudios.kavvoro.repository.AccountProgressStore
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository
+import com.moonsolstudios.kavvoro.repository.DailyMissionsRepository
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.BEST_STREAK_KEY
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.DEFAULT_SKIN_ID
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.HYPE_BANK_KEY
@@ -226,6 +229,30 @@ class ChaosGameView(
     private var collectionFocusSkinId = selectedSkinId
     private val premiumPricesBySkin = mutableMapOf<String, String>()
     private var progressRepository = GameProgressRepository(prefs, ballSkins, premiumPricesBySkin, ::t)
+    private val missionsScreenController: MissionsScreenController = MissionsScreenController(
+        repository = DailyMissionsRepository(prefs),
+        onTouch = { performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP) },
+        onBack = {
+            synchronized(lock) {
+                missionsScreenController.reset()
+                screen = Screen.MENU
+                menuState = MenuState.MODES
+                triggerScreenTransition(0xFF8AA6FF.toInt())
+            }
+        },
+        onReward = { reward ->
+            synchronized(lock) {
+                progressRepository.addHype(reward)
+                audio.playEvent(SoundEvent.UNLOCK, selectedBallIndex())
+                hapticSequence(
+                    HapticFeedbackCompat.confirm to 0L,
+                    HapticFeedbackConstants.LONG_PRESS to 80L
+                )
+                triggerScreenTransition(KavvoroPalette.gold)
+            }
+        },
+        onRejectedClaim = { synchronized(lock) { performHapticFeedback(HapticFeedbackCompat.reject) } }
+    )
 
     private val homeMenuController = HomeMenuTouchController(
         object : HomeMenuActionListener {
@@ -328,10 +355,12 @@ class ChaosGameView(
         getStreak = { bestStreak() },
         getLevel = { level.index },
         getCoinsText = { formatHypeAmount(hypeBalance()) },
+        isDailyCheckReady = { !progressRepository.dailyRiftBonusClaimed() },
         onPlayClicked = { handleMenuButton(MenuButton.PLAY) },
         onSettingsClicked = { handleMenuButton(MenuButton.SETTINGS) },
         onSkinsClicked = { handleMenuButton(MenuButton.COLLECTION) },
-        onMissionsClicked = { handleMenuButton(MenuButton.DAILY_RIFT) },
+        onMissionsClicked = { handleMenuButton(MenuButton.MISSIONS) },
+        onCoinsClicked = { handleMenuButton(MenuButton.DAILY_RIFT) },
         onLeaderboardClicked = { handleMenuButton(MenuButton.LEADERBOARDS) }
     )
     private val collectionBackButton get() = CollectionTouchController.backButtonRect
@@ -464,7 +493,8 @@ class ChaosGameView(
                 true
             }
             Screen.COLLECTION,
-            Screen.LEADERBOARDS -> {
+            Screen.LEADERBOARDS,
+            Screen.MISSIONS -> {
                 screen = Screen.MENU
                 menuState = MenuState.MODES
                 triggerScreenTransition(0xFF8AA6FF.toInt())
@@ -573,6 +603,7 @@ class ChaosGameView(
                 Screen.MENU -> handleMenuTouch(event)
                 Screen.COLLECTION -> handleCollectionTouch(event)
                 Screen.LEADERBOARDS -> handleLeaderboardTouch(event)
+                Screen.MISSIONS -> pendingAction = missionsScreenController.handleTouch(event, viewWidth, viewHeight, uiDensity)
                 Screen.LANGUAGE -> handleLanguageTouch(event)
                 Screen.SETTINGS -> pendingAction = handleSettingsTouch(event)
                 Screen.AD -> pendingAction = AdScreenTouchController.handleTouch(
@@ -620,6 +651,7 @@ class ChaosGameView(
                 if (nextPrefs != null && nextPrefs !== prefs) {
                     prefs = nextPrefs
                     progressRepository = GameProgressRepository(prefs, ballSkins, premiumPricesBySkin, ::t)
+                    missionsScreenController.replaceRepository(DailyMissionsRepository(prefs))
                     reloadProfileState()
                 }
                 accountState = next
@@ -804,6 +836,7 @@ class ChaosGameView(
             Screen.MENU,
             Screen.COLLECTION,
             Screen.LEADERBOARDS,
+            Screen.MISSIONS,
             Screen.LANGUAGE,
             Screen.SETTINGS -> MusicTrack.MENU
             Screen.AD,
@@ -877,6 +910,7 @@ class ChaosGameView(
         if (screen == Screen.MENU ||
             screen == Screen.COLLECTION ||
             screen == Screen.LEADERBOARDS ||
+            screen == Screen.MISSIONS ||
             screen == Screen.LANGUAGE ||
             screen == Screen.SETTINGS
         ) {
@@ -1156,6 +1190,7 @@ class ChaosGameView(
                 addTrauma(0.38f)
             }
             saveBest(score)
+            missionsScreenController.recordRound(won = true, coinsEarned = lastHypeScore)
             val unlockedAfter = unlockedSkinIds()
             val newSkin = ballSkins.firstOrNull { it.id in (unlockedAfter - unlockedBefore) }
             rewardMessage = finishRewardLine(newSkin)
@@ -1175,6 +1210,7 @@ class ChaosGameView(
             }
         } else {
             lastScore = null
+            missionsScreenController.recordRound(won = false, coinsEarned = 0)
             audio.playEvent(SoundEvent.FAIL, selectedBallIndex())
             addTrauma(0.55f)
             hapticSequence(
@@ -1450,6 +1486,14 @@ class ChaosGameView(
                 activeLeaderboardIndex = -1
                 triggerScreenTransition(0xFF8AA6FF.toInt())
                 syncLeaderboards()
+            }
+
+            MenuButton.MISSIONS -> {
+                screen = Screen.MISSIONS
+                menuState = MenuState.MODES
+                activeMenuButton = MenuButton.NONE
+                missionsScreenController.reset()
+                triggerScreenTransition(KavvoroPalette.cyan)
             }
 
             MenuButton.SETTINGS -> openSettings()
@@ -1744,6 +1788,12 @@ class ChaosGameView(
         }
         if (screen == Screen.LEADERBOARDS) {
             drawLeaderboards(canvas)
+            drawScreenTransition(canvas)
+            return
+        }
+        if (screen == Screen.MISSIONS) {
+            drawBackground(canvas)
+            missionsScreenController.draw(canvas, viewWidth, viewHeight, uiDensity, ::t)
             drawScreenTransition(canvas)
             return
         }
@@ -2680,6 +2730,7 @@ class ChaosGameView(
         return when (extra) {
             "language" -> Screen.LANGUAGE
             "settings" -> Screen.SETTINGS
+            "missions" -> Screen.MISSIONS
             else -> Screen.MENU
         }
     }

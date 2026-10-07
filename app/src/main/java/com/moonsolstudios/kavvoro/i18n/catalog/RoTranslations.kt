@@ -523,5 +523,9 @@ internal object RoTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Conectează-te la internet și încearcă din nou pentru a citi documentul actual MoonSol Studios.",
         "Retry" to "Reîncearcă",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "REVENDICĂ RECOMPENSA",
+        "EARN 500 COINS" to "CÂȘTIGĂ 500 DE MONEDE",
+        "PLAY 3 ROUNDS" to "JOACĂ 3 RUNDE",
+        "WIN 1 ROUND" to "CÂȘTIGĂ 1 RUNDĂ",
     )
 }

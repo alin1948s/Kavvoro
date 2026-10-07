@@ -23,8 +23,10 @@ vertical replays.
   premium-content hooks.
 - UI: Home uses the approved portrait and landscape direction, supplied
   Brainball/logo masters, a runtime CTA, and localized watermark copy. Age
-  Check is now a real first-launch flow that stores only an age group; Settings
-  shares the Home palette. Remaining screens follow the active redesign plan.
+  Check is now a real first-launch flow that stores only an age group. Missions
+  opens daily objectives with progress and claimable coin rewards; tap the Coins
+  balance for Daily Check. Settings shares the Home palette. Remaining screens
+  follow the active redesign plan.
 - Sharing: vertical 9:16 MP4 replay export through the Android share sheet,
   including the ball, control trail, tether, score, and challenge code.
 - Monetization: AdMob interstitial/rewarded-ad gates with test IDs in debug
@@ -83,6 +85,10 @@ the capture policy and repeatable scripts.
 | --- | --- | --- | --- |
 | <img src="screenshots/home/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Home screen at 1080 by 2400 pixels"> | <img src="screenshots/play-mode/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro mode picker at 1080 by 2400 pixels"> | <img src="screenshots/language/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro language selector at 1080 by 2400 pixels"> | <img src="screenshots/settings/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro settings screen at 1080 by 2400 pixels"> |
 
+**Missions — phone 1080×2400 px at 420 dpi:**
+
+<img src="screenshots/missions/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro daily missions at 1080 by 2400 pixels">
+
 **Age Check — phone 1080×2400 px at 420 dpi:**
 
 <img src="screenshots/age-check/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Age Check at 1080 by 2400 pixels">
@@ -131,7 +137,7 @@ match the directory.
 | `engine` | physics, level generation, scoring, and gameplay rules |
 | `repository` | canonical catalog/progress persistence access |
 | `i18n` | language selection, `i18n/catalog/*Translations.kt` catalogs, formatting, and translated copy |
-| `ui/screens/<screen>` | isolated per-screen UI (`home`, `agecheck`, `gameplay`, `outcome`, `collection`, `leaderboards`, `settings`, `language`, `ad`, `modals`) |
+| `ui/screens/<screen>` | isolated per-screen UI (`home`, `agecheck`, `missions`, `gameplay`, `outcome`, `collection`, `leaderboards`, `settings`, `language`, `ad`, `modals`) |
 | `ui/layout` | shared locale-aware layout policy |
 | `ui/render` | shared Canvas primitives, brand header, and resource caching |
 | `ui/controller` | shared game-loop director and adaptive quality controller |

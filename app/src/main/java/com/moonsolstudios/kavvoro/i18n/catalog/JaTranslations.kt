@@ -523,5 +523,9 @@ internal object JaTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "インターネットに接続して再試行すると、MoonSol Studiosの最新ドキュメントを読めます。",
         "Retry" to "再試行",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "報酬を受け取る",
+        "EARN 500 COINS" to "コインを500枚獲得",
+        "PLAY 3 ROUNDS" to "3ラウンドプレイ",
+        "WIN 1 ROUND" to "1ラウンド勝利",
     )
 }

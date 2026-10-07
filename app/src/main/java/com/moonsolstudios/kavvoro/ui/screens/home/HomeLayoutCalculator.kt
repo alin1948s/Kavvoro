@@ -49,6 +49,7 @@ class HomeLayoutCalculator {
     val streakChipTouchRect = LayoutRect()
     val levelChipTouchRect = LayoutRect()
     val coinsChipTouchRect = LayoutRect()
+    val coinsReadyBadgeRect = LayoutRect()
     val bannerTouchRect = LayoutRect()
 
     val heroRect = LayoutRect()
@@ -135,7 +136,29 @@ class HomeLayoutCalculator {
         growToTouchTarget(streakChipTouchRect, statCardRects[0], chipGrowthLimit)
         growToTouchTarget(levelChipTouchRect, statCardRects[1], chipGrowthLimit)
         growToTouchTarget(coinsChipTouchRect, statCardRects[2], chipGrowthLimit)
+        coinsChipTouchRect.bottom = max(coinsChipTouchRect.bottom, coinsReadyBadgeRect.bottom)
         growToTouchTarget(bannerTouchRect, bannerCardRect)
+    }
+
+    private fun layoutCoinsReadyBadge(scaleFactor: Float) {
+        val coins = statCardRects[2]
+        if (coins.isEmpty()) {
+            coinsReadyBadgeRect.setEmpty()
+            return
+        }
+        val badgeWidth = min(coins.width(), dp(72f * scaleFactor))
+        val badgeHeight = dp(16f * scaleFactor)
+        val badgeTop = coins.bottom + dp(2f * scaleFactor)
+        coinsReadyBadgeRect.set(
+            coins.centerX() - badgeWidth * 0.5f,
+            badgeTop,
+            coins.centerX() + badgeWidth * 0.5f,
+            badgeTop + badgeHeight
+        )
+        if (coins.top < headerRect.bottom) {
+            headerRect.bottom = max(headerRect.bottom, coinsReadyBadgeRect.bottom)
+        }
+        statsRect.bottom = max(statsRect.bottom, coinsReadyBadgeRect.bottom)
     }
 
     fun calculate(
@@ -262,6 +285,7 @@ class HomeLayoutCalculator {
 
             statsRect.set(contentRect.left, row2Top, contentRect.right, row2Top + row2Height)
         }
+        layoutCoinsReadyBadge(scaleFactor)
 
         // 2. Lower Navigation & Play CTA (Bottom-Up layout with Banner)
         val footerHeight = dp(14f * scaleFactor)
@@ -481,8 +505,9 @@ class HomeLayoutCalculator {
         brandRect.set(safeLeft, headerTop, safeLeft + logoWidth, headerTop + logoHeight)
 
         // 2. Body Viewport
-        val headerBottom = max(brandRect.bottom, settingsButtonRect.bottom) + dp(12f * scaleFactor)
         headerRect.set(safeLeft, headerTop, safeRight, max(brandRect.bottom, settingsButtonRect.bottom))
+        layoutCoinsReadyBadge(scaleFactor)
+        val headerBottom = headerRect.bottom + dp(12f * scaleFactor)
 
         bodyRect.set(safeLeft, headerBottom, safeRight, safeBottom)
         val bodyWidth = bodyRect.width().coerceAtLeast(1f)

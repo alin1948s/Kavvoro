@@ -523,5 +523,9 @@ internal object FrTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Connectez-vous à Internet et réessayez pour lire le document MoonSol Studios actuel.",
         "Retry" to "Réessayer",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "RÉCUPÉRER LA RÉCOMPENSE",
+        "EARN 500 COINS" to "GAGNEZ 500 PIÈCES",
+        "PLAY 3 ROUNDS" to "JOUEZ 3 MANCHES",
+        "WIN 1 ROUND" to "GAGNEZ 1 MANCHE",
     )
 }

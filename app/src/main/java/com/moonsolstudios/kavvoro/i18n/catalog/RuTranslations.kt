@@ -523,5 +523,9 @@ internal object RuTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Подключитесь к интернету и попробуйте снова, чтобы прочитать актуальный документ MoonSol Studios.",
         "Retry" to "Повторить",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "ЗАБРАТЬ НАГРАДУ",
+        "EARN 500 COINS" to "ЗАРАБОТАТЬ 500 МОНЕТ",
+        "PLAY 3 ROUNDS" to "СЫГРАТЬ 3 РАУНДА",
+        "WIN 1 ROUND" to "ВЫИГРАТЬ 1 РАУНД",
     )
 }

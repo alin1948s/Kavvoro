@@ -31,10 +31,12 @@ class HomeAccessibilityTouchHelper(
     private val getStreak: () -> Int,
     private val getLevel: () -> Int,
     private val getCoinsText: () -> String,
+    private val isDailyCheckReady: () -> Boolean,
     private val onPlayClicked: () -> Unit,
     private val onSettingsClicked: () -> Unit,
     private val onSkinsClicked: () -> Unit,
     private val onMissionsClicked: () -> Unit,
+    private val onCoinsClicked: () -> Unit,
     private val onLeaderboardClicked: () -> Unit
 ) : ExploreByTouchHelper(host) {
 
@@ -152,9 +154,11 @@ class HomeAccessibilityTouchHelper(
                 node.isClickable = false
             }
             ID_COINS_CHIP -> {
-                node.contentDescription = "${HomeCopy.coins(context)}: ${getCoinsText()}"
-                node.className = TextView::class.java.name
-                node.isClickable = false
+                val bonusState = if (isDailyCheckReady()) "READY" else "CLAIMED"
+                node.contentDescription = "${HomeCopy.coins(context)}: ${getCoinsText()}, ${KavvoroI18n.t(context, "DAILY RIFT BONUS")}: ${KavvoroI18n.t(context, bonusState)}"
+                node.className = Button::class.java.name
+                node.isClickable = true
+                node.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK)
             }
             else -> {
                 node.contentDescription = ""
@@ -187,6 +191,10 @@ class HomeAccessibilityTouchHelper(
                 }
                 ID_LEADERBOARD_CARD -> {
                     onLeaderboardClicked()
+                    return true
+                }
+                ID_COINS_CHIP -> {
+                    onCoinsClicked()
                     return true
                 }
                 ID_BANNER_CARD -> {

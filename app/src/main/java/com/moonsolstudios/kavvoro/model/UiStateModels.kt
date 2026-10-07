@@ -5,6 +5,7 @@ enum class Screen {
     GAME,
     COLLECTION,
     LEADERBOARDS,
+    MISSIONS,
     LANGUAGE,
     SETTINGS,
     AD
@@ -29,6 +30,7 @@ enum class MenuButton {
     LEADERBOARDS,
     VAULT,
     COLLECTION,
+    MISSIONS,
     DAILY_RIFT,
     SETTINGS,
     PRIVACY,

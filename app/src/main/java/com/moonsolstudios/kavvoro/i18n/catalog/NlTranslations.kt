@@ -523,5 +523,9 @@ internal object NlTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Maak verbinding met internet en probeer het opnieuw om het huidige document van MoonSol Studios te lezen.",
         "Retry" to "Opnieuw proberen",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "BELONING OPHALEN",
+        "EARN 500 COINS" to "VERDIEN 500 MUNTEN",
+        "PLAY 3 ROUNDS" to "SPEEL 3 RONDES",
+        "WIN 1 ROUND" to "WIN 1 RONDE",
     )
 }

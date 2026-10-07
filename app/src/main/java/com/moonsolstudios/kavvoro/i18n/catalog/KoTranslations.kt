@@ -523,5 +523,9 @@ internal object KoTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "인터넷에 연결한 뒤 다시 시도하여 MoonSol Studios의 최신 문서를 확인하세요.",
         "Retry" to "다시 시도",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "보상 받기",
+        "EARN 500 COINS" to "코인 500개 획득",
+        "PLAY 3 ROUNDS" to "라운드 3회 플레이",
+        "WIN 1 ROUND" to "라운드 1회 승리",
     )
 }

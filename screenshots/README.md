@@ -8,6 +8,9 @@ Home includes a phone portrait capture at 1080×2400 px / 420 dpi and a tablet
 landscape capture at 1920×1200 px / 240 dpi. Landscape is stored beside the
 portrait Home matrix because it is a distinct native layout profile.
 
+Missions includes a phone portrait capture at 1080×2400 px / 420 dpi. It shows
+the daily objectives, progress bars, coin rewards, and claim actions.
+
 Age Check screenshots show phone and tablet portrait layouts; the saved profile
 contains only the resolved age group. Home landscape remains a separate native
 tablet profile.

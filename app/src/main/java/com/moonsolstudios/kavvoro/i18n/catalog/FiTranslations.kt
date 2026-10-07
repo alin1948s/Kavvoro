@@ -523,5 +523,9 @@ internal object FiTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Yhdistä internetiin ja yritä uudelleen lukeaksesi MoonSol Studiosin uusimman asiakirjan.",
         "Retry" to "Yritä uudelleen",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "LUNASTA PALKINTO",
+        "EARN 500 COINS" to "KERÄÄ 500 KOLIKKOA",
+        "PLAY 3 ROUNDS" to "PELAA 3 KIERROSTA",
+        "WIN 1 ROUND" to "VOITA 1 KIERROS",
     )
 }

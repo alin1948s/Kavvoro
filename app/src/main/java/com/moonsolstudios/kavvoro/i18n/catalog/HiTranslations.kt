@@ -523,5 +523,9 @@ internal object HiTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "MoonSol Studios का वर्तमान दस्तावेज़ पढ़ने के लिए इंटरनेट से जुड़ें और फिर कोशिश करें।",
         "Retry" to "फिर कोशिश करें",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "इनाम लें",
+        "EARN 500 COINS" to "500 सिक्के कमाएँ",
+        "PLAY 3 ROUNDS" to "3 राउंड खेलें",
+        "WIN 1 ROUND" to "1 राउंड जीतें",
     )
 }

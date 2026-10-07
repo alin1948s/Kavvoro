@@ -523,5 +523,9 @@ internal object IdTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Sambungkan ke internet dan coba lagi untuk membaca dokumen terbaru MoonSol Studios.",
         "Retry" to "Coba lagi",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "AMBIL HADIAH",
+        "EARN 500 COINS" to "DAPATKAN 500 KOIN",
+        "PLAY 3 ROUNDS" to "MAIN 3 RONDE",
+        "WIN 1 ROUND" to "MENANGI 1 RONDE",
     )
 }

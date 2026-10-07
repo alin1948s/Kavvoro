@@ -523,5 +523,9 @@ internal object ViTranslations {
         "Connect to the internet and try again to read the current MoonSol Studios document." to "Kết nối Internet và thử lại để đọc tài liệu hiện tại của MoonSol Studios.",
         "Retry" to "Thử lại",
         "Kavvoro" to "Kavvoro",
+        "CLAIM REWARD" to "NHẬN PHẦN THƯỞNG",
+        "EARN 500 COINS" to "KIẾM 500 XU",
+        "PLAY 3 ROUNDS" to "CHƠI 3 VÁN",
+        "WIN 1 ROUND" to "THẮNG 1 VÁN",
     )
 }
