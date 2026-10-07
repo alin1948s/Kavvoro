@@ -24,9 +24,10 @@ vertical replays.
 - UI: Home uses the approved portrait and landscape direction, supplied
   Brainball/logo masters, a runtime CTA, and localized watermark copy. Age
   Check is now a real first-launch flow that stores only an age group. Missions
-  opens daily objectives with progress and claimable coin rewards; tap the Coins
-  balance for Daily Check. Settings shares the Home palette. Remaining screens
-  follow the active redesign plan.
+  opens harder daily missions and persistent Rift Challenges with gameplay
+  progress, completion popups, and claimable coin rewards; tap the Coins balance
+  for Daily Check. Settings shares the Home palette. Remaining screens follow
+  the active redesign plan.
 - Sharing: vertical 9:16 MP4 replay export through the Android share sheet,
   including the ball, control trail, tether, score, and challenge code.
 - Monetization: AdMob interstitial/rewarded-ad gates with test IDs in debug
@@ -87,7 +88,9 @@ the capture policy and repeatable scripts.
 
 **Missions — phone 1080×2400 px at 420 dpi:**
 
-<img src="screenshots/missions/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro daily missions at 1080 by 2400 pixels">
+| Daily Missions | Rift Challenges |
+| --- | --- |
+| <img src="screenshots/missions/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro daily missions at 1080 by 2400 pixels"> | <img src="screenshots/missions/rift-challenges-phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Rift Challenges at 1080 by 2400 pixels"> |
 
 **Age Check — phone 1080×2400 px at 420 dpi:**
 

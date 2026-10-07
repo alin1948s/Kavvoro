@@ -16,10 +16,10 @@ Codul sursă (`app/src/main/java/com/moonsolstudios/kavvoro/`) este împărțit 
 - `billing/` — `PurchaseBridge`, `PlayBillingController`, `PremiumCatalog`
 - `engine/` — Fizică pură, geometrie, scoruri și generare de nivele (`PhysicsEngine`, `LevelDirector`, `AdvancedLevelDirector`, `GameplayScoreCalculator`, `Geometry`, `ReplayRecorder`)
 - `i18n/` — Infrastructura de localizare (`KavvoroI18n`, `LocalizationCatalog`, `HomeCopy`, `TutorialCopy`, `UiTranslations`) + `i18n/catalog/*Translations.kt` (cele 24 de cataloage de limbă)
-- `model/` — Modele de date imutabile și enum-uri de stare (`BallSkinModels`, `DisplayModels`, `GameSessionModels`, `UiStateModels`)
+- `model/` — Modele de date imutabile și enum-uri de stare (`BallSkinModels`, `DisplayModels`, `GameSessionModels`, `MissionModels`, `UiStateModels`)
 - `playgames/` — `AccountBridge`, `LeaderboardBridge`, `LeaderboardScoreGuard`, `PlayGamesAccountController`, `PlayGamesLeaderboardController`
 - `privacy/` — `PrivacyBridge`, `PrivacyAdsController`, `AgeProfile`, `LegalDocumentActivity`, `LegalDocumentPage`
-- `repository/` — `AccountProgressStore`, `BallSkinCatalog`, `GameProgressRepository`
+- `repository/` — `AccountProgressStore`, `BallSkinCatalog`, `GameProgressRepository`, `MissionsRepository`
 - `share/` — `ReplayShareController`, `ReplayVideoExporter`
 - `startup/` — `FirstFrameStartupGate`
 - `ui/`
@@ -32,7 +32,7 @@ Codul sursă (`app/src/main/java/com/moonsolstudios/kavvoro/`) este împărțit 
   - `screens/` — **Fiecare ecran are propriul sub-pachet izolat:**
     - `screens/home/` — Ecranul Home + Mode Picker (`HomeLayoutCalculator`, `HomeMenuRenderer`, `HomeMenuTouchController`, `HomeAccessibilityTouchHelper`, `ModePickerLayoutCalculator`, `ModePickerRenderer`, `SciFiCtaButtonRenderer`)
     - `screens/agecheck/` — Ecranul de selecție a vârstei la prima pornire (`AgeCheckScreenView`)
-    - `screens/missions/` — Misiuni zilnice (`MissionsLayoutCalculator`, `MissionsUiRenderer`, `MissionsTouchController`, `MissionsScreenController`, `MissionsCompletionPopupRenderer`)
+    - `screens/missions/` — Misiuni zilnice și provocări Rift (`MissionsLayoutCalculator`, `MissionsUiRenderer`, `MissionsTouchController`, `MissionsScreenController`, `MissionsCompletionPopupRenderer`)
     - `screens/gameplay/` — Arena de joc și HUD-ul (`GameplayArenaRenderer`, `GameplayHudRenderer`, `GameplayTouchController`)
     - `screens/outcome/` — Ecranul de Victorie / Înfrângere (`OutcomeUiRenderer`, `OutcomeTouchController`)
     - `screens/collection/` — Ecranul Skins / Colecție (`CollectionLayoutCalculator`, `CollectionUiRenderer`, `CollectionTouchController`, `BallSkinRenderer`)

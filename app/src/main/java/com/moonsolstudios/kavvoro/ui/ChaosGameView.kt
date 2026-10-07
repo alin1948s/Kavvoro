@@ -109,7 +109,7 @@ import com.moonsolstudios.kavvoro.i18n.TutorialCopy
 import com.moonsolstudios.kavvoro.repository.BallSkinCatalog
 import com.moonsolstudios.kavvoro.repository.AccountProgressStore
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository
-import com.moonsolstudios.kavvoro.repository.DailyMissionsRepository
+import com.moonsolstudios.kavvoro.repository.MissionsRepository
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.BEST_STREAK_KEY
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.DEFAULT_SKIN_ID
 import com.moonsolstudios.kavvoro.repository.GameProgressRepository.Companion.HYPE_BANK_KEY
@@ -230,7 +230,7 @@ class ChaosGameView(
     private val premiumPricesBySkin = mutableMapOf<String, String>()
     private var progressRepository = GameProgressRepository(prefs, ballSkins, premiumPricesBySkin, ::t)
     private val missionsScreenController: MissionsScreenController = MissionsScreenController(
-        repository = DailyMissionsRepository(prefs),
+        repository = MissionsRepository(prefs),
         onTouch = { performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP) },
         onBack = {
             synchronized(lock) {
@@ -652,7 +652,7 @@ class ChaosGameView(
                 if (nextPrefs != null && nextPrefs !== prefs) {
                     prefs = nextPrefs
                     progressRepository = GameProgressRepository(prefs, ballSkins, premiumPricesBySkin, ::t)
-                    missionsScreenController.replaceRepository(DailyMissionsRepository(prefs))
+                    missionsScreenController.replaceRepository(MissionsRepository(prefs))
                     reloadProfileState()
                 }
                 accountState = next
@@ -1191,7 +1191,7 @@ class ChaosGameView(
                 addTrauma(0.38f)
             }
             saveBest(score)
-            missionsScreenController.recordRound(won = true, coinsEarned = lastHypeScore)
+            missionsScreenController.recordRound(true, gameMode, lastScore?.rank, lastRiftBreak, maxChain)
             val unlockedAfter = unlockedSkinIds()
             val newSkin = ballSkins.firstOrNull { it.id in (unlockedAfter - unlockedBefore) }
             rewardMessage = finishRewardLine(newSkin)
@@ -1211,7 +1211,7 @@ class ChaosGameView(
             }
         } else {
             lastScore = null
-            missionsScreenController.recordRound(won = false, coinsEarned = 0)
+            missionsScreenController.recordRound(false, gameMode, null, lastRiftBreak, maxChain)
             audio.playEvent(SoundEvent.FAIL, selectedBallIndex())
             addTrauma(0.55f)
             hapticSequence(

@@ -4,12 +4,15 @@ import android.graphics.Canvas
 import android.graphics.Bitmap
 import android.os.SystemClock
 import android.view.MotionEvent
-import com.moonsolstudios.kavvoro.repository.DailyMissionsRepository
-import com.moonsolstudios.kavvoro.model.DailyMissionProgress
+import com.moonsolstudios.kavvoro.model.GameMode
+import com.moonsolstudios.kavvoro.model.MissionCategory
+import com.moonsolstudios.kavvoro.model.MissionProgress
+import com.moonsolstudios.kavvoro.model.MissionRoundResult
+import com.moonsolstudios.kavvoro.repository.MissionsRepository
 
-/** Owns the Missions screen layout, rendering, input, and daily mission state. */
+/** Owns Missions categories, progress, layout, rendering, and claim input. */
 class MissionsScreenController(
-    private var repository: DailyMissionsRepository,
+    private var repository: MissionsRepository,
     private val onTouch: () -> Unit,
     private val onBack: () -> Unit,
     private val onReward: (Int) -> Unit,
@@ -17,21 +20,26 @@ class MissionsScreenController(
     private val worldBitmap: (String) -> Bitmap? = { null }
 ) {
     private val touchController = MissionsTouchController()
+    private var selectedCategory = MissionCategory.DAILY
     private var completionPopup: CompletionPopup? = null
 
-    fun replaceRepository(repository: DailyMissionsRepository) {
+    fun replaceRepository(repository: MissionsRepository) {
         this.repository = repository
+        selectedCategory = MissionCategory.DAILY
         touchController.reset()
         dismissGamePopup()
     }
 
     fun reset() {
+        selectedCategory = MissionCategory.DAILY
         touchController.reset()
         dismissGamePopup()
     }
 
-    fun recordRound(won: Boolean, coinsEarned: Int) {
-        val completed = repository.recordRound(won, coinsEarned)
+    fun recordRound(won: Boolean, gameMode: GameMode, rank: String?, riftBreak: Boolean, maxChain: Int) {
+        val completed = repository.recordRound(
+            MissionRoundResult(won = won, gameMode = gameMode, rank = rank, riftBreak = riftBreak, maxChain = maxChain)
+        )
         if (completed.isNotEmpty()) {
             completionPopup = CompletionPopup(completed, SystemClock.uptimeMillis())
         }
@@ -75,39 +83,49 @@ class MissionsScreenController(
     }
 
     fun draw(canvas: Canvas, width: Int, height: Int, dp: Float, t: (String) -> String) {
+        val missions = repository.missions(selectedCategory)
         val layout = touchController.layoutCalculator
-        layout.calculate(width.toFloat(), height.toFloat(), dp)
+        layout.calculate(width.toFloat(), height.toFloat(), dp, missions.size)
         MissionsUiRenderer.drawScreen(
             canvas = canvas,
             layout = layout,
-            missions = repository.missions(),
+            missions = missions,
             activeClaimIndex = touchController.activeClaimIndex,
             dp = dp,
             missionArt = worldBitmap("brainball_main"),
             coinArt = worldBitmap("ic_stat_coin_3d"),
+            category = selectedCategory,
             t = t
         )
     }
 
     fun handleTouch(event: MotionEvent, width: Int, height: Int, dp: Float): (() -> Unit)? {
+        val missions = repository.missions(selectedCategory)
         val layout = touchController.layoutCalculator
-        layout.calculate(width = width.toFloat(), height = height.toFloat(), density = dp)
-        val action = touchController.handleTouch(event, repository.missions()) ?: return null
-        onTouch()
+        layout.calculate(width = width.toFloat(), height = height.toFloat(), density = dp, missionCount = missions.size)
+        val action = touchController.handleTouch(event, missions) ?: return null
         return when (action) {
             MissionsTouchAction.Back -> {
-                { onBack() }
+                onTouch()
+                onBack
+            }
+            is MissionsTouchAction.SelectCategory -> {
+                selectedCategory = action.category
+                onTouch()
+                null
             }
             is MissionsTouchAction.Claim -> {
+                onTouch()
+                val missionId = action.missionId
                 {
-                    val reward = repository.claim(action.missionId)
+                    val reward = repository.claim(missionId)
                     if (reward > 0) onReward(reward) else onRejectedClaim()
                 }
             }
         }
     }
 
-    private data class CompletionPopup(val missions: List<DailyMissionProgress>, val createdAtMs: Long)
+    private data class CompletionPopup(val missions: List<MissionProgress>, val createdAtMs: Long)
 
     private companion object {
         const val COMPLETION_POPUP_DURATION_MS = 7_000L

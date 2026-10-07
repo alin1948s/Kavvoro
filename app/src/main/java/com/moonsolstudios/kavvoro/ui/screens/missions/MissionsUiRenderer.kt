@@ -8,8 +8,9 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
-import com.moonsolstudios.kavvoro.model.DailyMissionId
-import com.moonsolstudios.kavvoro.model.DailyMissionProgress
+import com.moonsolstudios.kavvoro.model.MissionCategory
+import com.moonsolstudios.kavvoro.model.MissionId
+import com.moonsolstudios.kavvoro.model.MissionProgress
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
@@ -26,9 +27,9 @@ object MissionsUiRenderer {
     private val scratchTextRect = RectF()
     private val scratchCardRect = RectF()
     private val scratchChipRect = RectF()
+    private val scratchButtonRect = RectF()
     private val scratchTrackRect = RectF()
     private val scratchFillRect = RectF()
-    private val scratchButtonRect = RectF()
     private val scratchShadowRect = RectF()
     private val scratchFaceRect = RectF()
     private val scratchIconRect = RectF()
@@ -36,22 +37,24 @@ object MissionsUiRenderer {
     fun drawScreen(
         canvas: Canvas,
         layout: MissionsLayoutCalculator,
-        missions: List<DailyMissionProgress>,
+        missions: List<MissionProgress>,
         activeClaimIndex: Int,
         dp: Float,
         missionArt: Bitmap?,
         coinArt: Bitmap?,
+        category: MissionCategory,
         t: (String) -> String
     ) {
-        drawHeader(canvas, layout, dp, t)
-        if (layout.showSummary) drawSummary(canvas, layout, missions, missionArt, coinArt, dp, t)
+        drawHeader(canvas, layout, dp, category, t)
+        drawCategoryTabs(canvas, layout, category, dp, t)
+        if (layout.showSummary) drawSummary(canvas, layout, missions, missionArt, coinArt, category, dp, t)
         missions.forEachIndexed { index, mission ->
             if (layout.cardRects.getOrNull(index)?.isEmpty() != false) return@forEachIndexed
             drawMissionCard(canvas, layout, mission, index, activeClaimIndex == index, coinArt, dp, t)
         }
     }
 
-    private fun drawHeader(canvas: Canvas, layout: MissionsLayoutCalculator, dp: Float, t: (String) -> String) {
+    private fun drawHeader(canvas: Canvas, layout: MissionsLayoutCalculator, dp: Float, category: MissionCategory, t: (String) -> String) {
         val back = layout.backButtonRect.toRectF(scratchBackRect)
         shapePaint.reset()
         shapePaint.isAntiAlias = true
@@ -88,16 +91,68 @@ object MissionsUiRenderer {
         textPaint.color = 0xFFD1D9F2.toInt()
         textPaint.textSize = 10f * dp
         textPaint.letterSpacing = 0.035f
-        drawFitted(canvas, t("COMPLETE DAILY MISSIONS & WIN").uppercase(), layout.subtitleRect.toRectF(scratchTextRect), textPaint, 7f * dp)
+        val subtitleKey = if (category == MissionCategory.DAILY) "COMPLETE DAILY MISSIONS & WIN" else "MASTER THE RIFT, EARN REWARDS"
+        drawFitted(canvas, t(subtitleKey).uppercase(), layout.subtitleRect.toRectF(scratchTextRect), textPaint, 7f * dp)
         textPaint.letterSpacing = 0f
+    }
+
+    private fun drawCategoryTabs(canvas: Canvas, layout: MissionsLayoutCalculator, selected: MissionCategory, dp: Float, t: (String) -> String) {
+        val tabs = layout.tabsRect.toRectF(scratchCardRect)
+        shapePaint.reset()
+        shapePaint.isAntiAlias = true
+        shapePaint.style = Paint.Style.FILL
+        shapePaint.color = 0xB908142B.toInt()
+        canvas.drawRoundRect(tabs, 17f * dp, 17f * dp, shapePaint)
+        shapePaint.style = Paint.Style.STROKE
+        shapePaint.strokeWidth = 1f * dp
+        shapePaint.color = 0x775DA1CC
+        canvas.drawRoundRect(tabs, 17f * dp, 17f * dp, shapePaint)
+
+        drawCategoryTab(canvas, layout.dailyTabRect.toRectF(scratchTextRect), MissionCategory.DAILY, selected, dp, t)
+        drawCategoryTab(canvas, layout.riftChallengesTabRect.toRectF(scratchIconRect), MissionCategory.RIFT_CHALLENGES, selected, dp, t)
+    }
+
+    private fun drawCategoryTab(
+        canvas: Canvas,
+        rect: RectF,
+        category: MissionCategory,
+        selected: MissionCategory,
+        dp: Float,
+        t: (String) -> String
+    ) {
+        val active = category == selected
+        val accent = if (category == MissionCategory.DAILY) KavvoroPalette.cyan else KavvoroPalette.pink
+        if (active) {
+            shapePaint.style = Paint.Style.FILL
+            shapePaint.shader = LinearGradient(rect.left, rect.top, rect.right, rect.bottom,
+                if (category == MissionCategory.DAILY) 0xFF28D7EE.toInt() else 0xFFE844D8.toInt(),
+                if (category == MissionCategory.DAILY) 0xFF3D70F8.toInt() else 0xFF8D48F4.toInt(),
+                Shader.TileMode.CLAMP)
+            canvas.drawRoundRect(rect, 13f * dp, 13f * dp, shapePaint)
+            shapePaint.shader = null
+            shapePaint.style = Paint.Style.STROKE
+            shapePaint.strokeWidth = 0.8f * dp
+            shapePaint.color = withAlpha(0xFFFFFFFF.toInt(), 125)
+            canvas.drawRoundRect(rect, 13f * dp, 13f * dp, shapePaint)
+        }
+        textPaint.reset()
+        textPaint.isAntiAlias = true
+        textPaint.typeface = AssetResourceManager.spaceGroteskBold()
+        textPaint.textAlign = Paint.Align.CENTER
+        textPaint.textSize = 9.5f * dp
+        textPaint.letterSpacing = 0.01f
+        textPaint.color = if (active) 0xFFFFFFFF.toInt() else withAlpha(accent, 205)
+        val key = if (category == MissionCategory.DAILY) "DAILY MISSIONS" else "RIFT CHALLENGES"
+        drawFitted(canvas, t(key).uppercase(), rect, textPaint, 6.5f * dp)
     }
 
     private fun drawSummary(
         canvas: Canvas,
         layout: MissionsLayoutCalculator,
-        missions: List<DailyMissionProgress>,
+        missions: List<MissionProgress>,
         missionArt: Bitmap?,
         coinArt: Bitmap?,
+        category: MissionCategory,
         dp: Float,
         t: (String) -> String
     ) {
@@ -156,7 +211,8 @@ object MissionsUiRenderer {
         textPaint.letterSpacing = 0.08f
         textPaint.color = 0xFFD6E3FF.toInt()
         val progressRect = layout.summaryProgressTextRect.toRectF(scratchTextRect)
-        canvas.drawText(t("DAILY PROGRESS").uppercase(), progressRect.left, summary.top + 31f * dp, textPaint)
+        val progressLabelKey = if (category == MissionCategory.DAILY) "DAILY PROGRESS" else "MISSIONS COMPLETE"
+        canvas.drawText(t(progressLabelKey).uppercase(), progressRect.left, summary.top + 31f * dp, textPaint)
         textPaint.letterSpacing = 0f
         textPaint.typeface = AssetResourceManager.spaceGroteskExtraBold()
         textPaint.textSize = 30f * dp
@@ -206,7 +262,7 @@ object MissionsUiRenderer {
     private fun drawMissionCard(
         canvas: Canvas,
         layout: MissionsLayoutCalculator,
-        mission: DailyMissionProgress,
+        mission: MissionProgress,
         index: Int,
         active: Boolean,
         coinArt: Bitmap?,
@@ -215,9 +271,10 @@ object MissionsUiRenderer {
     ) {
         val card = layout.cardRects[index].toRectF(scratchCardRect)
         val accent = when (mission.id) {
-            DailyMissionId.PLAY_ROUNDS -> KavvoroPalette.cyan
-            DailyMissionId.WIN_ROUND -> KavvoroPalette.pink
-            DailyMissionId.EARN_COINS -> KavvoroPalette.gold
+            MissionId.DAILY_CLEAR_LEVELS, MissionId.RIFT_CLASSIC_LEVELS -> KavvoroPalette.cyan
+            MissionId.DAILY_A_RANKS, MissionId.RIFT_CHAOS_LEVELS -> KavvoroPalette.pink
+            MissionId.DAILY_RIFT_BREAKS, MissionId.RIFT_BREAKS -> KavvoroPalette.gold
+            MissionId.RIFT_CHAIN_COMBOS -> KavvoroPalette.blue
         }
         val edge = if (mission.isComplete) KavvoroPalette.gold else accent
         val radius = 20f * dp
@@ -370,11 +427,11 @@ object MissionsUiRenderer {
         drawFitted(canvas, "+$reward ${t("COINS").uppercase()}", scratchFaceRect, textPaint, 6f * dp)
     }
 
-    private fun drawMissionGlyph(canvas: Canvas, mission: DailyMissionId, x: Float, y: Float, size: Float, color: Int, dp: Float) {
+    private fun drawMissionGlyph(canvas: Canvas, mission: MissionId, x: Float, y: Float, size: Float, color: Int, dp: Float) {
         shapePaint.style = Paint.Style.FILL
         shapePaint.color = color
         when (mission) {
-            DailyMissionId.PLAY_ROUNDS -> {
+            MissionId.DAILY_CLEAR_LEVELS, MissionId.RIFT_CLASSIC_LEVELS -> {
                 glyphPath.reset()
                 glyphPath.moveTo(x - size * 0.55f, y - size * 0.78f)
                 glyphPath.lineTo(x + size * 0.8f, y)
@@ -382,7 +439,7 @@ object MissionsUiRenderer {
                 glyphPath.close()
                 canvas.drawPath(glyphPath, shapePaint)
             }
-            DailyMissionId.WIN_ROUND -> {
+            MissionId.DAILY_A_RANKS, MissionId.RIFT_CHAOS_LEVELS -> {
                 glyphPath.reset()
                 for (point in 0 until 10) {
                     val angle = Math.PI * point / 5.0 - Math.PI / 2.0
@@ -394,7 +451,25 @@ object MissionsUiRenderer {
                 glyphPath.close()
                 canvas.drawPath(glyphPath, shapePaint)
             }
-            DailyMissionId.EARN_COINS -> drawCoinStack(canvas, x, y, size * 0.78f, color, dp)
+            MissionId.DAILY_RIFT_BREAKS, MissionId.RIFT_BREAKS -> {
+                glyphPath.reset()
+                glyphPath.moveTo(x, y - size)
+                glyphPath.lineTo(x + size * 0.72f, y)
+                glyphPath.lineTo(x, y + size)
+                glyphPath.lineTo(x - size * 0.72f, y)
+                glyphPath.close()
+                canvas.drawPath(glyphPath, shapePaint)
+                shapePaint.style = Paint.Style.STROKE
+                shapePaint.strokeWidth = maxOf(1.2f * dp, size * 0.16f)
+                canvas.drawLine(x - size * 1.12f, y, x + size * 1.12f, y, shapePaint)
+                canvas.drawLine(x, y - size * 1.12f, x, y + size * 1.12f, shapePaint)
+            }
+            MissionId.RIFT_CHAIN_COMBOS -> {
+                shapePaint.style = Paint.Style.STROKE
+                shapePaint.strokeWidth = maxOf(1.5f * dp, size * 0.19f)
+                canvas.drawCircle(x - size * 0.38f, y, size * 0.5f, shapePaint)
+                canvas.drawCircle(x + size * 0.38f, y, size * 0.5f, shapePaint)
+            }
         }
     }
 
@@ -411,22 +486,7 @@ object MissionsUiRenderer {
         canvas.drawCircle(x, y, radius * 0.18f, shapePaint)
     }
 
-    private fun drawCoinStack(canvas: Canvas, x: Float, y: Float, radius: Float, color: Int, dp: Float) {
-        val line = maxOf(1.3f * dp, radius * 0.19f)
-        shapePaint.style = Paint.Style.FILL
-        shapePaint.color = withAlpha(color, 48)
-        scratchIconRect.set(x - radius * 0.82f, y - radius * 0.08f, x + radius * 0.82f, y + radius * 0.8f)
-        canvas.drawRoundRect(scratchIconRect, radius * 0.28f, radius * 0.28f, shapePaint)
-        shapePaint.style = Paint.Style.STROKE
-        shapePaint.strokeWidth = line
-        shapePaint.color = color
-        canvas.drawOval(x - radius * 0.82f, y - radius * 0.36f, x + radius * 0.82f, y + radius * 0.36f, shapePaint)
-        canvas.drawArc(x - radius * 0.82f, y - radius * 0.08f, x + radius * 0.82f, y + radius * 0.64f,
-            0f, 180f, false, shapePaint)
-        canvas.drawLine(x - radius * 0.58f, y + radius * 0.3f, x + radius * 0.58f, y + radius * 0.3f, shapePaint)
-    }
-
-    private fun drawClaimButton(canvas: Canvas, button: RectF, mission: DailyMissionProgress, active: Boolean, dp: Float, t: (String) -> String) {
+    private fun drawClaimButton(canvas: Canvas, button: RectF, mission: MissionProgress, active: Boolean, dp: Float, t: (String) -> String) {
         if (button.isEmpty) return
         val radius = button.height() * 0.46f
         val pressedOffset = if (active && mission.canClaim) 2f * dp else 0f

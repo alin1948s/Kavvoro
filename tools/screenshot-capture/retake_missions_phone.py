@@ -18,6 +18,7 @@ HEIGHT = 2400
 DENSITY = 420
 NAME = f"phone-{WIDTH}x{HEIGHT}-{DENSITY}dpi.png"
 OUTPUT = PROJECT_ROOT / "screenshots" / "missions" / NAME
+RIFT_OUTPUT = PROJECT_ROOT / "screenshots" / "missions" / f"rift-challenges-{NAME}"
 
 
 def run_adb(*args: str, timeout: float = 30.0) -> subprocess.CompletedProcess[bytes]:
@@ -61,7 +62,7 @@ def portrait_png(png_bytes: bytes) -> bytes:
         return output.getvalue()
 
 
-def verify_missions_screen(png_bytes: bytes) -> tuple[bool, str]:
+def verify_missions_screen(png_bytes: bytes, category: str = "daily") -> tuple[bool, str]:
     try:
         image = Image.open(io.BytesIO(png_bytes)).convert("RGB")
     except Exception as error:
@@ -84,11 +85,24 @@ def verify_missions_screen(png_bytes: bytes) -> tuple[bool, str]:
     if float(np.mean(middle)) < 0.035:
         return False, f"mission_cards_not_visible (content={np.mean(middle) * 100:.2f}%)"
 
-    cyan = (pixels[:, :, 1] > 120) & (pixels[:, :, 2] > 130) & (pixels[:, :, 0] < 130)
-    gold = (pixels[:, :, 0] > 150) & (pixels[:, :, 1] > 105) & (pixels[:, :, 2] < 155)
-    accents = int(np.count_nonzero(cyan | gold))
-    if accents < 900:
-        return False, f"missing_mission_accents ({accents} pixels)"
+    if category == "rift":
+        red = pixels[:, :, 0].astype(np.int16)
+        green = pixels[:, :, 1].astype(np.int16)
+        blue = pixels[:, :, 2].astype(np.int16)
+        tab = pixels[230:375, 540:1025]
+        tab_red = tab[:, :, 0].astype(np.int16)
+        tab_green = tab[:, :, 1].astype(np.int16)
+        tab_blue = tab[:, :, 2].astype(np.int16)
+        accents = int(np.count_nonzero((tab_red > 125) & (tab_blue > 125) & (tab_green < 165) &
+                                       (tab_red > tab_green * 1.3) & (tab_blue > tab_green * 1.3)))
+        if accents < 3_000:
+            return False, f"rift_tab_not_selected ({accents} pixels)"
+    else:
+        tab = pixels[230:375, 55:540]
+        cyan = (tab[:, :, 1] > 120) & (tab[:, :, 2] > 130) & (tab[:, :, 0] < 130)
+        accents = int(np.count_nonzero(cyan))
+        if accents < 3_000:
+            return False, f"daily_tab_not_selected ({accents} pixels)"
 
     return True, f"verified (mean={mean_rgb:.1f}, content={np.mean(middle) * 100:.2f}%, accents={accents})"
 
@@ -136,6 +150,29 @@ def capture_missions() -> bytes:
     raise RuntimeError(f"Failed to capture Missions after 3 attempts: {last_reason}")
 
 
+def capture_rift_challenges() -> bytes:
+    # The canonical 1080x2400@420dpi profile places the right tab at this point.
+    run_adb("shell", "input", "tap", "790", "300")
+    time.sleep(0.8)
+    last_reason = "timeout"
+    deadline = time.monotonic() + 8.0
+    while time.monotonic() < deadline:
+        if not missions_activity_is_foreground():
+            last_reason = "missions_activity_not_foreground"
+            time.sleep(0.3)
+            continue
+        try:
+            image = portrait_png(capture_png())
+            valid, reason = verify_missions_screen(image, category="rift")
+            if valid:
+                return image
+            last_reason = reason
+        except Exception as error:
+            last_reason = f"capture_error ({error})"
+        time.sleep(0.3)
+    raise RuntimeError(f"Failed to capture Rift Challenges: {last_reason}")
+
+
 def main() -> None:
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     run_adb("shell", "settings", "put", "global", "stay_on_while_plugged_in", "3")
@@ -147,9 +184,12 @@ def main() -> None:
         run_adb("shell", "wm", "density", str(DENSITY))
         run_adb("shell", "wm", "size", f"{WIDTH}x{HEIGHT}")
         time.sleep(1.0)
-        png_bytes = capture_missions()
-        OUTPUT.write_bytes(png_bytes)
-        print(f"[PASS] {NAME} ({WIDTH}x{HEIGHT} @{DENSITY}dpi, {len(png_bytes)} bytes)")
+        daily_png = capture_missions()
+        OUTPUT.write_bytes(daily_png)
+        print(f"[PASS] {NAME} ({WIDTH}x{HEIGHT} @{DENSITY}dpi, {len(daily_png)} bytes)")
+        rift_png = capture_rift_challenges()
+        RIFT_OUTPUT.write_bytes(rift_png)
+        print(f"[PASS] {RIFT_OUTPUT.name} ({WIDTH}x{HEIGHT} @{DENSITY}dpi, {len(rift_png)} bytes)")
     finally:
         restore_emulator_display(lambda *args: run_adb(*args))
         print("Emulator display restored.", flush=True)

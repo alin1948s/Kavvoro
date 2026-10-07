@@ -64,10 +64,11 @@ Funcționalități și mecanisme de siguranță:
 python .\tools\screenshot-capture\retake_missions_phone.py
 ```
 
-Scriptul capturează pagina Missions la profilul telefon `1080×2400@420dpi`
-în `screenshots/missions/phone-1080x2400-420dpi.png`. Lansează direct ecranul
-Missions pe build-ul debug, folosește profilul de confidențialitate sintetic și
-verifică dimensiunea, conținutul și accentele înainte să salveze imaginea.
+Scriptul capturează ambele categorii Missions la profilul telefon
+`1080×2400@420dpi`: `screenshots/missions/phone-1080x2400-420dpi.png` și
+`screenshots/missions/rift-challenges-phone-1080x2400-420dpi.png`. Lansează
+direct ecranul Missions pe build-ul debug, folosește profilul de confidențialitate
+sintetic și verifică dimensiunea, conținutul și accentele fiecărei categorii.
 Setările de rezoluție și densitate ale emulatorului sunt restaurate la final.
 
 ## Captura Home landscape

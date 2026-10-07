@@ -7,7 +7,7 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
-import com.moonsolstudios.kavvoro.model.DailyMissionProgress
+import com.moonsolstudios.kavvoro.model.MissionProgress
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
@@ -26,12 +26,12 @@ object MissionsCompletionPopupRenderer {
         canvas: Canvas,
         viewWidth: Float,
         viewHeight: Float,
-        missions: List<DailyMissionProgress>,
+        missions: List<MissionProgress>,
         dp: Float,
         alpha: Float,
         t: (String) -> String
     ) {
-        val visibleMissions = missions.take(3)
+        val visibleMissions = missions.take(6)
         if (visibleMissions.isEmpty() || alpha <= 0f) return
         val opacity = (alpha.coerceIn(0f, 1f) * 255f).toInt()
         val width = min((viewWidth - 28f * dp).coerceAtLeast(1f), 448f * dp)
