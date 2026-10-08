@@ -316,7 +316,7 @@ object LanguageSelectorRenderer {
             TextPaint(textPaint),
             maxTextWidth.coerceAtLeast(1f),
             TextUtils.TruncateAt.END
-        ).toString()
+        )?.toString() ?: language.nativeName
         canvas.drawText(displayName, textLeft, baseline, textPaint)
         textPaint.letterSpacing = 0f
         restorePaintDefaults(paint)
@@ -397,20 +397,33 @@ object LanguageSelectorRenderer {
         textPaint.isAntiAlias = true
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
-        textPaint.textSize = (13.5f * visualScale).coerceIn(12f, 16.5f)
+        textPaint.textSize = LanguageSelectorMetrics.CURRENT_STATUS_TEXT_SIZE_DP * dp
         textPaint.letterSpacing = 0.08f
 
         // Prefix: LIMBA CURENTĂ: #9AA8B8
         textPaint.color = 0xE69AA8B8.toInt()
         val fontMetrics = textPaint.fontMetrics
         val textY = if (fontMetrics != null) dotCy - (fontMetrics.ascent + fontMetrics.descent) / 2f else dotCy
-        canvas.drawText(currentPrefix, textX, textY, textPaint)
+        val maxStatusWidth = (rect.right - textX - 18f * visualScale).coerceAtLeast(1f)
+        val prefix = TextUtils.ellipsize(
+            currentPrefix,
+            TextPaint(textPaint),
+            maxStatusWidth * 0.48f,
+            TextUtils.TruncateAt.END
+        )?.toString() ?: currentPrefix
+        canvas.drawText(prefix, textX, textY, textPaint)
 
-        val prefixWidth = textPaint.measureText(currentPrefix + "  ")
+        val prefixWidth = textPaint.measureText("$prefix  ")
         // Language: ROMÂNĂ: #00ECFF
         textPaint.color = 0xFF00ECFF.toInt()
         textPaint.typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
-        canvas.drawText(activeLanguageName, textX + prefixWidth, textY, textPaint)
+        val languageName = TextUtils.ellipsize(
+            activeLanguageName,
+            TextPaint(textPaint),
+            (maxStatusWidth - prefixWidth).coerceAtLeast(1f),
+            TextUtils.TruncateAt.END
+        )?.toString() ?: activeLanguageName
+        canvas.drawText(languageName, textX + prefixWidth, textY, textPaint)
         textPaint.letterSpacing = 0f
         restorePaintDefaults(paint)
     }
@@ -536,15 +549,22 @@ object LanguageSelectorRenderer {
         )
 
         // ── 1c. Telemetric Protocol Kicker (unified with Collection & Leaderboards) ──
-        val kickerY = vh * (LanguageReferenceCanvas.FRAME_TOP + 0.016f)
+        val kickerY = vh * (LanguageReferenceCanvas.FRAME_TOP + 0.010f)
         textPaint.reset()
         textPaint.isAntiAlias = true
         textPaint.textAlign = Paint.Align.CENTER
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.create("sans-serif", Typeface.BOLD)
-        textPaint.textSize = (9.5f * visualScale).coerceIn(8.5f, 16f)
-        textPaint.letterSpacing = 0.16f
+        textPaint.textSize = LanguageSelectorMetrics.LANGUAGE_KICKER_TEXT_SIZE_DP * dp
+        textPaint.letterSpacing = 0.08f
         textPaint.color = 0xFF00E5FF.toInt()
-        canvas.drawText("✦ ${t("SYSTEM").uppercase()} // ${t("CHOOSE LANGUAGE").uppercase()} ✦", deck.centerX(), kickerY, textPaint)
+        val kickerText = "✦ ${t("SYSTEM").uppercase()} // ${t("CHOOSE LANGUAGE").uppercase()} ✦"
+        val kicker = TextUtils.ellipsize(
+            kickerText,
+            TextPaint(textPaint),
+            deck.width() * 0.86f,
+            TextUtils.TruncateAt.END
+        )?.toString() ?: kickerText
+        canvas.drawText(kicker, deck.centerX(), kickerY, textPaint)
 
         // ── 2. Dominant Title Header: "ALEGE LIMBA" (Oxanium Regular/Light weight 300-350, not bold) ──
         val titleY = vh * LanguageReferenceCanvas.TITLE_CENTER_Y

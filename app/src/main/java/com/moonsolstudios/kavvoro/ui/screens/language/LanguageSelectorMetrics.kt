@@ -90,6 +90,8 @@ object LanguageSelectorMetrics {
     const val RADIO_MARGIN_END_DP = 14f
     const val LANGUAGE_NAME_MIN_SIZE_DP = 16f
     const val LANGUAGE_NAME_MAX_SIZE_DP = 20f
+    const val LANGUAGE_KICKER_TEXT_SIZE_DP = 12f
+    const val CURRENT_STATUS_TEXT_SIZE_DP = 13f
     const val SCROLL_END_CLEARANCE_DP = 8f
 
     const val FOOTER_HEIGHT_DP = 48f
