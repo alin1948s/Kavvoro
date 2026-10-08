@@ -127,7 +127,9 @@ object LanguageSelectorLayoutCalculator {
             scroll = 0f
             maxScroll = 0f
         } else {
-            maxScroll = (totalGridHeight - availableGridHeight).coerceAtLeast(0f)
+            maxScroll = (
+                totalGridHeight - availableGridHeight + LanguageSelectorMetrics.SCROLL_END_CLEARANCE_DP * dp
+            ).coerceAtLeast(0f)
             scroll = languageScroll.coerceIn(0f, maxScroll)
             gridTop = gridTopBase - scroll
         }

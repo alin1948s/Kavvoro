@@ -2767,12 +2767,12 @@ class ChaosGameView(
             viewportTop = languageViewportTop(),
             viewportBottom = languageViewportBottom(),
             footerRect = languageFooterRect,
-            deckRect = languageDeckRect,
             typeface = languageTypeface,
             paint = paint,
             dp = uiDensity,
             t = ::t,
-            fitText = ::fitText,
+            deckRect = languageDeckRect,
+            gridViewportRect = latestLanguageLayout?.gridViewport,
             context = context
         )
     }

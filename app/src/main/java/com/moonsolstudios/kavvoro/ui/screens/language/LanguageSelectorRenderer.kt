@@ -9,6 +9,8 @@ import android.graphics.Path
 import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
+import android.text.TextPaint
+import android.text.TextUtils
 import com.moonsolstudios.kavvoro.i18n.KavvoroLanguage
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.CyberShapeRenderer
@@ -135,7 +137,6 @@ object LanguageSelectorRenderer {
         typeface: Typeface?,
         paint: Paint,
         dp: Float,
-        fitText: (String, Float) -> String,
         drawFlagFallback: ((Canvas, RectF, KavvoroLanguage) -> Unit)? = null,
         context: Context? = null
     ) {
@@ -294,7 +295,7 @@ object LanguageSelectorRenderer {
         // Language Name Typography (+20-25% larger, weight 400 for inactive, weight 500 for selected)
         val textLeft = flagRect.right + (itemRect.width() * 0.055f)
         val maxTextWidth = (radioCx - radioR - 10f * visualScale) - textLeft
-        val textSize = (itemRect.height() * 0.36f).coerceIn(17f * visualScale, 23.5f * visualScale)
+        val textSize = LanguageSelectorMetrics.languageNameTextSize(itemRect.height(), dp)
 
         textPaint.reset()
         textPaint.isAntiAlias = true
@@ -306,10 +307,18 @@ object LanguageSelectorRenderer {
         }
         textPaint.textSize = textSize
         textPaint.color = if (selected) 0xFFFFFFFF.toInt() else 0xFFE2EDF8.toInt()
+        textPaint.letterSpacing = if (selected) 0.01f else 0f
 
         val fontMetrics = textPaint.fontMetrics
         val baseline = if (fontMetrics != null) itemRect.centerY() - (fontMetrics.ascent + fontMetrics.descent) / 2f else itemRect.centerY()
-        canvas.drawText(fitText(language.nativeName, maxTextWidth), textLeft, baseline, textPaint)
+        val displayName = TextUtils.ellipsize(
+            language.nativeName,
+            TextPaint(textPaint),
+            maxTextWidth.coerceAtLeast(1f),
+            TextUtils.TruncateAt.END
+        ).toString()
+        canvas.drawText(displayName, textLeft, baseline, textPaint)
+        textPaint.letterSpacing = 0f
         restorePaintDefaults(paint)
     }
 
@@ -431,9 +440,9 @@ object LanguageSelectorRenderer {
         paint: Paint,
         dp: Float,
         t: (String) -> String,
-        fitText: (String, Float) -> String,
         drawFlagFallback: ((Canvas, RectF, KavvoroLanguage) -> Unit)? = null,
         deckRect: RectF? = null,
+        gridViewportRect: RectF? = null,
         context: Context? = null
     ) {
         val vw = if (canvas.width > 0) canvas.width.toFloat() else (if (contentWidth > 0f) contentWidth else 1024f * dp)
@@ -445,7 +454,7 @@ object LanguageSelectorRenderer {
         val frameR = vw * LanguageReferenceCanvas.FRAME_RIGHT
         val frameT = vh * LanguageReferenceCanvas.FRAME_TOP
         val frameB = vh * LanguageReferenceCanvas.FRAME_BOTTOM
-        val deck = deckRect?.apply { set(frameL, frameT, frameR, frameB) } ?: RectF(frameL, frameT, frameR, frameB)
+        val deck = deckRect?.takeUnless { it.isEmpty } ?: RectF(frameL, frameT, frameR, frameB)
 
         val deckCorner = 18f * visualScale
         val deckNotch = 14f * visualScale
@@ -635,16 +644,15 @@ object LanguageSelectorRenderer {
         textPaint.letterSpacing = 0f
 
         // ── 5. Language Cards Grid ──
-        val resolvedFooterRect = footerRect.apply {
-            set(
-                vw * LanguageReferenceCanvas.FOOTER_LEFT,
-                vh * LanguageReferenceCanvas.FOOTER_TOP,
-                vw * LanguageReferenceCanvas.FOOTER_RIGHT,
-                vh * LanguageReferenceCanvas.FOOTER_BOTTOM
-            )
-        }
-        val clipTop = subY + 14f * visualScale
-        val clipBottom = resolvedFooterRect.top - 6f * dp
+        val resolvedFooterRect = footerRect.takeUnless { it.isEmpty } ?: RectF(
+            vw * LanguageReferenceCanvas.FOOTER_LEFT,
+            vh * LanguageReferenceCanvas.FOOTER_TOP,
+            vw * LanguageReferenceCanvas.FOOTER_RIGHT,
+            vh * LanguageReferenceCanvas.FOOTER_BOTTOM
+        )
+        val resolvedGridViewport = gridViewportRect?.takeUnless { it.isEmpty }
+        val clipTop = resolvedGridViewport?.top ?: (subY + 14f * visualScale)
+        val clipBottom = resolvedGridViewport?.bottom ?: (resolvedFooterRect.top - 6f * dp)
         canvas.save()
         canvas.clipRect(deck.left + 2f * dp, clipTop, deck.right - 2f * dp, clipBottom)
         val displayLanguages = KavvoroLanguage.selectableLanguages
@@ -666,7 +674,6 @@ object LanguageSelectorRenderer {
                     typeface = typeface,
                     paint = paint,
                     dp = dp,
-                    fitText = fitText,
                     drawFlagFallback = drawFlagFallback,
                     context = context
                 )

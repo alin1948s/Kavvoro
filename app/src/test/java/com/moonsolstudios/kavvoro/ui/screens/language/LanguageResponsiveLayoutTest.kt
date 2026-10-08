@@ -201,6 +201,71 @@ class LanguageResponsiveLayoutTest {
     }
 
     @Test
+    fun lastLanguageRemainsReachableAtMaximumScrollAcrossScreenSizes() {
+        val specs = testMatrix + listOf(
+            ResolutionTestSpec("320x568 small phone", 320f, 568f, 1f, LayoutMode.COMPACT),
+            ResolutionTestSpec("393x873 high density phone", 1179f, 2619f, 3f, LayoutMode.COMPACT),
+            ResolutionTestSpec("1280x720 landscape tablet", 1280f, 720f, 1f, LayoutMode.TABLET),
+            ResolutionTestSpec("1920x1080 landscape", 1920f, 1080f, 1f, LayoutMode.TABLET)
+        )
+
+        for (spec in specs) {
+            val backButton = RectF()
+            val itemRects = mutableListOf<RectF>()
+            val deckRect = RectF()
+            val footerRect = RectF()
+            val viewportTop = 24f * spec.density
+            val viewportBottom = spec.height - 24f * spec.density
+
+            val initial = LanguageSelectorLayoutCalculator.layoutLanguageSelector(
+                side = 0f,
+                contentWidth = spec.width,
+                compact = spec.width / spec.density < 430f,
+                headerY = 28f * spec.density,
+                viewportTop = viewportTop,
+                viewportBottom = viewportBottom,
+                languageScroll = 0f,
+                dp = spec.density,
+                languageBackButton = backButton,
+                languageItemRects = itemRects,
+                languageDeckRect = deckRect,
+                languageFooterRect = footerRect,
+                viewportWidth = spec.width
+            )
+            val bottom = LanguageSelectorLayoutCalculator.layoutLanguageSelector(
+                side = 0f,
+                contentWidth = spec.width,
+                compact = spec.width / spec.density < 430f,
+                headerY = 28f * spec.density,
+                viewportTop = viewportTop,
+                viewportBottom = viewportBottom,
+                languageScroll = initial.maxScroll,
+                dp = spec.density,
+                languageBackButton = backButton,
+                languageItemRects = itemRects,
+                languageDeckRect = deckRect,
+                languageFooterRect = footerRect,
+                viewportWidth = spec.width
+            )
+            val lastCard = bottom.languageCards.last().bounds
+
+            if (bottom.maxScroll > 0f) {
+                val expectedBottom = bottom.gridViewport.bottom - LanguageSelectorMetrics.SCROLL_END_CLEARANCE_DP * spec.density
+                assertEquals("${spec.name}: last language should stop above footer", expectedBottom, lastCard.bottom, 0.75f)
+                assertTrue("${spec.name}: last language must remain inside the visible grid", lastCard.bottom <= bottom.gridViewport.bottom)
+            } else {
+                assertTrue("${spec.name}: all languages fit above footer", lastCard.bottom <= bottom.footer.top)
+            }
+
+            val languageTextSize = LanguageSelectorMetrics.languageNameTextSize(bottom.languageCards.first().bounds.height(), spec.density)
+            assertTrue(
+                "${spec.name}: language labels should stay within accessible responsive size",
+                languageTextSize / spec.density in LanguageSelectorMetrics.LANGUAGE_NAME_MIN_SIZE_DP..LanguageSelectorMetrics.LANGUAGE_NAME_MAX_SIZE_DP
+            )
+        }
+    }
+
+    @Test
     fun testV3ConsoleProportions() {
         val layoutManager = LanguageSelectorLayoutCalculator
         // Tablet portrait spec: 800x1280 (matches Pixel Tablet 1600x2560 with dp=2.0)

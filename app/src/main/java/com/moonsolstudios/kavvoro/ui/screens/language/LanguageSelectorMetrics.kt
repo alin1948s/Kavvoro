@@ -88,6 +88,9 @@ object LanguageSelectorMetrics {
     const val RADIO_SIZE_DP = 20f
     const val RADIO_INNER_DOT_DP = 7f
     const val RADIO_MARGIN_END_DP = 14f
+    const val LANGUAGE_NAME_MIN_SIZE_DP = 16f
+    const val LANGUAGE_NAME_MAX_SIZE_DP = 20f
+    const val SCROLL_END_CLEARANCE_DP = 8f
 
     const val FOOTER_HEIGHT_DP = 48f
     const val FOOTER_BOTTOM_MARGIN_DP = 16f
@@ -111,4 +114,7 @@ object LanguageSelectorMetrics {
     const val SELECTED_CHAMFER_SCALE = LanguageReferenceCanvas.SELECTED_CHAMFER_SCALE
     const val FRAME_GLOW_ALPHA = LanguageReferenceCanvas.FRAME_GLOW_ALPHA
     const val FRAME_GLOW_RADIUS = LanguageReferenceCanvas.FRAME_GLOW_RADIUS
+
+    fun languageNameTextSize(cardHeight: Float, dp: Float): Float =
+        (cardHeight * 0.36f).coerceIn(LANGUAGE_NAME_MIN_SIZE_DP * dp, LANGUAGE_NAME_MAX_SIZE_DP * dp)
 }
