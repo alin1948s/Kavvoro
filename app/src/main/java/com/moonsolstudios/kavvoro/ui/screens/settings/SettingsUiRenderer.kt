@@ -422,8 +422,13 @@ object SettingsUiRenderer {
             scratchRect2.set(rect.left, rect.top + press, rect.right, rect.bottom - depth + press)
             CyberShapeRenderer.createChamferPath(tempPath, scratchRect2, corner, notch)
             paint.shader = LinearGradient(
-                scratchRect2.left, scratchRect2.top, scratchRect2.left, scratchRect2.bottom,
-                0xFF00E5FF.toInt(), 0xFF007F9E.toInt(), Shader.TileMode.CLAMP
+                scratchRect2.left,
+                scratchRect2.top,
+                scratchRect2.right,
+                scratchRect2.bottom,
+                intArrayOf(KavvoroPalette.cyan, KavvoroPalette.blue, KavvoroPalette.pink),
+                floatArrayOf(0f, 0.54f, 1f),
+                Shader.TileMode.CLAMP
             )
             canvas.drawPath(tempPath, paint)
             paint.shader = null
