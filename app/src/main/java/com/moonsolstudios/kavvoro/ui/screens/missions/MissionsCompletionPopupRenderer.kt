@@ -30,7 +30,8 @@ object MissionsCompletionPopupRenderer {
         missions: List<MissionProgress>,
         dp: Float,
         alpha: Float,
-        t: (String) -> String
+        t: (String) -> String,
+        skinName: (String) -> String = { it }
     ) {
         val visibleMissions = missions.take(6)
         if (visibleMissions.isEmpty() || alpha <= 0f) return
@@ -108,7 +109,21 @@ object MissionsCompletionPopupRenderer {
             textPaint.textAlign = Paint.Align.RIGHT
             textPaint.textSize = 10.5f * dp
             textPaint.color = withAlpha(KavvoroPalette.gold, opacity)
-            canvas.drawText("+${mission.rewardCoins}", rowRect.right - 14f * dp, rowRect.centerY() + 3.8f * dp, textPaint)
+            val rewardSkinId = mission.rewardSkinId
+            val rewardLabel = if (rewardSkinId != null) {
+                "+${mission.rewardCoins} + ${skinName(rewardSkinId).uppercase()}"
+            } else {
+                "+${mission.rewardCoins}"
+            }
+            drawFitted(
+                canvas,
+                rewardLabel,
+                rowRect.right - width * 0.4f,
+                rowRect.centerY() + 3.8f * dp,
+                width * 0.36f,
+                textPaint,
+                7f * dp
+            )
             paint.style = Paint.Style.FILL
             paint.color = withAlpha(KavvoroPalette.gold, opacity)
             canvas.drawCircle(rowRect.right - 5f * dp, rowRect.centerY(), 2.2f * dp, paint)

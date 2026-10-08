@@ -37,7 +37,7 @@ class MissionProgressLogicTest {
             .map { MissionProgress(it, 0, claimed = false) }
         val afterClassic = MissionProgressLogic.recordRound(
             challenges,
-            MissionRoundResult(won = true, gameMode = GameMode.CLASSIC, rank = "B", maxChain = 2)
+            MissionRoundResult(won = true, gameMode = GameMode.CLASSIC, rank = "B", maxChain = 2, completedLevel = 1)
         )
         assertEquals(1, afterClassic.single { it.id == MissionId.RIFT_CLASSIC_LEVELS }.progress)
         assertEquals(0, afterClassic.single { it.id == MissionId.RIFT_CHAOS_LEVELS }.progress)
@@ -64,5 +64,32 @@ class MissionProgressLogicTest {
         assertEquals(updated, MissionProgressLogic.newlyCompleted(previous, updated))
         assertFalse(updated.single().claimed)
         assertTrue(MissionProgressLogic.newlyCompleted(updated, updated).isEmpty())
+    }
+
+    @Test
+    fun levelMilestoneMissionsTrackHighestClearedLevelAndAwardTheirAssignedSkin() {
+        val challenges = MissionId.inCategory(MissionCategory.RIFT_CHALLENGES)
+            .map { MissionProgress(it, 0, claimed = false) }
+        val beforeMilestone = MissionProgressLogic.recordRound(
+            challenges,
+            MissionRoundResult(won = true, gameMode = GameMode.CLASSIC, completedLevel = 24)
+        )
+        assertEquals(24, beforeMilestone.single { it.id == MissionId.RIFT_CLASSIC_LEVELS }.progress)
+        assertEquals(0, beforeMilestone.single { it.id == MissionId.RIFT_CHAOS_LEVELS }.progress)
+
+        val atMilestone = MissionProgressLogic.recordRound(
+            beforeMilestone,
+            MissionRoundResult(won = true, gameMode = GameMode.CLASSIC, completedLevel = 25)
+        )
+        val classicMission = atMilestone.single { it.id == MissionId.RIFT_CLASSIC_LEVELS }
+        assertTrue(classicMission.canClaim)
+        assertEquals("blop_13", classicMission.rewardSkinId)
+        assertTrue(MissionProgressLogic.newlyCompleted(beforeMilestone, atMilestone).contains(classicMission))
+
+        val replayedEarlierLevel = MissionProgressLogic.recordRound(
+            atMilestone,
+            MissionRoundResult(won = true, gameMode = GameMode.CLASSIC, completedLevel = 3)
+        )
+        assertEquals(25, replayedEarlierLevel.single { it.id == MissionId.RIFT_CLASSIC_LEVELS }.progress)
     }
 }

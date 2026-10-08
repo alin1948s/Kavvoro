@@ -36,6 +36,7 @@ import com.moonsolstudios.kavvoro.model.ButtonId
 import com.moonsolstudios.kavvoro.model.CollectionFilter
 import com.moonsolstudios.kavvoro.model.CollectionSort
 import com.moonsolstudios.kavvoro.model.GameMode
+import com.moonsolstudios.kavvoro.model.LevelProgressionLogic
 import com.moonsolstudios.kavvoro.model.GameState
 import com.moonsolstudios.kavvoro.model.MenuButton
 import com.moonsolstudios.kavvoro.model.MenuState
@@ -242,7 +243,7 @@ class ChaosGameView(
         },
         onReward = { reward ->
             synchronized(lock) {
-                progressRepository.addHype(reward)
+                if (reward.coins > 0) progressRepository.addHype(reward.coins)
                 audio.playEvent(SoundEvent.UNLOCK, selectedBallIndex())
                 hapticSequence(
                     HapticFeedbackCompat.confirm to 0L,
@@ -252,7 +253,8 @@ class ChaosGameView(
             }
         },
         onRejectedClaim = { synchronized(lock) { performHapticFeedback(HapticFeedbackCompat.reject) } },
-        worldBitmap = ::worldBitmap
+        worldBitmap = ::worldBitmap,
+        skinName = { id -> ballSkins.firstOrNull { it.id == id }?.name ?: id }
     )
 
     private val homeMenuController = HomeMenuTouchController(
@@ -1148,6 +1150,7 @@ class ChaosGameView(
     }
 
     private fun finishSimulation(outcome: PhysicsOutcome) {
+        if (state != GameState.SIMULATING) return
         replayFrames = replay.snapshot()
         releaseRiftControl(withHaptic = false)
         state = if (outcome == PhysicsOutcome.WON) GameState.WON else GameState.LOST
@@ -1158,7 +1161,7 @@ class ChaosGameView(
             val unlockedBefore = unlockedSkinIds()
             val score = replay.buildScore(level, inkUsed, simElapsed)
             lastScore = score
-            streak += 1
+            streak = (streak.toLong() + 1L).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
             lastRiftBreak = GameplayScoreCalculator.shouldTriggerRiftBreak(
                 riftEnergy = riftEnergy,
                 maxChain = maxChain,
@@ -1190,8 +1193,11 @@ class ChaosGameView(
                 powerMessageTimer = 2.35f
                 addTrauma(0.38f)
             }
+            missionsScreenController.recordRound(
+                won = true, gameMode = gameMode, rank = score.rank,
+                riftBreak = lastRiftBreak, maxChain = maxChain, completedLevel = score.level
+            )
             saveBest(score)
-            missionsScreenController.recordRound(true, gameMode, lastScore?.rank, lastRiftBreak, maxChain)
             val unlockedAfter = unlockedSkinIds()
             val newSkin = ballSkins.firstOrNull { it.id in (unlockedAfter - unlockedBefore) }
             rewardMessage = finishRewardLine(newSkin)
@@ -1321,21 +1327,14 @@ class ChaosGameView(
         if (current == null || rankValue(score.rank) < rankValue(current)) {
             prefs.edit { putString(GameProgressRepository.bestKey(gameMode, score.level), score.rank) }
         }
-        val nextLevel = max(modeProgress(gameMode), score.level + 1)
-        val nextBestStreak = max(modeBestStreak(gameMode), streak)
-        val newHypeBalance = (hypeBalance().toLong() + lastHypeScore.toLong())
-            .coerceAtMost(Int.MAX_VALUE.toLong())
-            .toInt()
-        prefs.edit {
-            putInt(GameProgressRepository.progressKey(gameMode), nextLevel)
-            putInt(GameProgressRepository.streakKey(gameMode), streak)
-            putInt(highestLevelKey(gameMode), max(modeHighestLevel(gameMode), nextLevel))
-            putInt(bestModeStreakKey(gameMode), nextBestStreak)
-            putInt(BEST_STREAK_KEY, max(bestStreak(), streak))
-            putInt("clear_streak", streak)
-            putInt("last_hype", lastHypeScore)
-            putInt(HYPE_BANK_KEY, newHypeBalance)
-        }
+        val progression = progressRepository.recordLevelWin(
+            mode = gameMode,
+            completedLevel = score.level,
+            currentStreak = streak,
+            hypeReward = lastHypeScore
+        )
+        val nextLevel = progression.currentLevel
+        val nextBestStreak = progression.bestStreak
         val levelBoard = if (gameMode == GameMode.CLASSIC) LeaderboardBoard.CLASSIC_LEVEL else LeaderboardBoard.CHAOS_LEVEL
         val streakBoard = if (gameMode == GameMode.CLASSIC) LeaderboardBoard.CLASSIC_STREAK else LeaderboardBoard.CHAOS_STREAK
         if (selectedBallSkin().power == BallPower.NONE) {
@@ -1615,7 +1614,7 @@ class ChaosGameView(
 
     private fun advanceToNextLevel() {
         val previousLevel = levelIndex
-        levelIndex += 1
+        levelIndex = LevelProgressionLogic.nextLevel(levelIndex)
         resetRound()
         if (previousLevel == 10) {
             powerMessage = "${gameMode.menuTitle(::t)} ${t("RIFT ONLINE").uppercase()}"

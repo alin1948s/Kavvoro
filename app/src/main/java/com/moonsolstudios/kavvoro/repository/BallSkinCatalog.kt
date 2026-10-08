@@ -3,6 +3,7 @@ package com.moonsolstudios.kavvoro.repository
 import com.moonsolstudios.kavvoro.R
 import com.moonsolstudios.kavvoro.engine.BallPower
 import com.moonsolstudios.kavvoro.model.BallSkin
+import com.moonsolstudios.kavvoro.model.MissionId
 import com.moonsolstudios.kavvoro.model.SkinStyle
 import com.moonsolstudios.kavvoro.model.UnlockRule
 import com.moonsolstudios.kavvoro.model.UnlockType
@@ -19,9 +20,9 @@ BallSkin("prism_king", "VORO PRIME", "unlimited aura final boss", 0xFFF7F4FF.toI
         BallSkin("plasma_crown", "NOVA KAV", "galaxy rizz meltdown", 0xFFFFCF4A.toInt(), 0xFFC15CFF.toInt(), 0xFFFF8C42.toInt(), SkinStyle.PLASMA, UnlockRule(UnlockType.PREMIUM, 0, "Premium 0.99 local price"), BallPower.PLASMA_SURGE),
         BallSkin("nodlo", "KAVVORO", "the original brainrot specimen", 0xFFF7F4FF.toInt(), 0xFF1DE8C8.toInt(), 0xFF1DE8C8.toInt(), SkinStyle.CLASSIC, UnlockRule(UnlockType.DEFAULT, 0, "Unlocked")),
         BallSkin("curse_grad", "VORO GRAD", "graduated brain academy", 0xFF8AA6FF.toInt(), 0xFFFFCF4A.toInt(), 0xFF8AA6FF.toInt(), SkinStyle.CROWN, UnlockRule(UnlockType.TUTORIAL_CLEAR, 10, "Clear tutorial L10")),
-        BallSkin("blop_13", "BLOP VORO", "emotionally aerodynamic", 0xFF64E572.toInt(), 0xFF07090F.toInt(), 0xFF64E572.toInt(), SkinStyle.BLOP, UnlockRule(UnlockType.CLASSIC_LEVEL, 25, "Clear Classic L25")),
+        BallSkin("blop_13", "BLOP VORO", "emotionally aerodynamic", 0xFF64E572.toInt(), 0xFF07090F.toInt(), 0xFF64E572.toInt(), SkinStyle.BLOP, UnlockRule(UnlockType.MISSION_REWARD, 25, "Clear the Classic level 25 mission", MissionId.RIFT_CLASSIC_LEVELS)),
         BallSkin("fizz_nana", "FIZZ KAV", "battery ate the charger", 0xFFFFCF4A.toInt(), 0xFF07090F.toInt(), 0xFFFFCF4A.toInt(), SkinStyle.ZAP, UnlockRule(UnlockType.BEST_STREAK, 15, "Reach streak 15")),
-        BallSkin("lala_glitch", "LALA VORO", "wifi password was wrong", 0xFFFF4D8D.toInt(), 0xFF45F2FF.toInt(), 0xFFFF4D8D.toInt(), SkinStyle.GLITCH, UnlockRule(UnlockType.CHAOS_LEVEL, 25, "Clear Chaos L25")),
+        BallSkin("lala_glitch", "LALA VORO", "wifi password was wrong", 0xFFFF4D8D.toInt(), 0xFF45F2FF.toInt(), 0xFFFF4D8D.toInt(), SkinStyle.GLITCH, UnlockRule(UnlockType.MISSION_REWARD, 15, "Win the Chaos level 15 mission", MissionId.RIFT_CHAOS_LEVELS)),
         BallSkin("womp_loop", "WOMP KAV", "looping the same thought", 0xFF8AA6FF.toInt(), 0xFFFFCF4A.toInt(), 0xFF8AA6FF.toInt(), SkinStyle.LOOP, UnlockRule(UnlockType.BEST_STREAK, 25, "Reach streak 25")),
         BallSkin("mimi_static", "MIMI VORO", "staring aggressively in 4k", 0xFFC15CFF.toInt(), 0xFFF7F4FF.toInt(), 0xFFC15CFF.toInt(), SkinStyle.STATIC, UnlockRule(UnlockType.CLASSIC_LEVEL, 40, "Clear Classic L40")),
         BallSkin("zaza_volt", "ZAZA KAV", "too fast for homework", 0xFFFF8C42.toInt(), 0xFF07090F.toInt(), 0xFFFF8C42.toInt(), SkinStyle.ZAP, UnlockRule(UnlockType.BEST_STREAK, 35, "Reach streak 35")),

@@ -44,14 +44,15 @@ object MissionsUiRenderer {
         missionArt: Bitmap?,
         coinArt: Bitmap?,
         category: MissionCategory,
-        t: (String) -> String
+        t: (String) -> String,
+        skinName: (String) -> String = { it }
     ) {
         drawHeader(canvas, layout, dp, category, t)
         drawCategoryTabs(canvas, layout, category, dp, t)
         if (layout.showSummary) drawSummary(canvas, layout, missions, missionArt, coinArt, category, dp, t)
         missions.forEachIndexed { index, mission ->
             if (layout.cardRects.getOrNull(index)?.isEmpty() != false) return@forEachIndexed
-            drawMissionCard(canvas, layout, mission, index, activeClaimIndex == index, coinArt, dp, t)
+            drawMissionCard(canvas, layout, mission, index, activeClaimIndex == index, coinArt, dp, t, skinName)
         }
     }
 
@@ -268,7 +269,8 @@ object MissionsUiRenderer {
         active: Boolean,
         coinArt: Bitmap?,
         dp: Float,
-        t: (String) -> String
+        t: (String) -> String,
+        skinName: (String) -> String
     ) {
         val card = layout.cardRects[index].toRectF(scratchCardRect)
         val accent = when (mission.id) {
@@ -337,7 +339,7 @@ object MissionsUiRenderer {
         textPaint.textAlign = if (layout.gridLayout) Paint.Align.CENTER else Paint.Align.LEFT
         drawFitted(canvas, t(mission.id.titleKey).uppercase(), layout.titleTextRects[index].toRectF(scratchTextRect), textPaint, 8f * dp)
 
-        drawRewardChip(canvas, layout.rewardTextRects[index].toRectF(scratchChipRect), mission.rewardCoins, coinArt, dp, t)
+        drawRewardChip(canvas, layout.rewardTextRects[index].toRectF(scratchChipRect), mission, coinArt, dp, t, skinName)
 
         val progressRect = layout.progressTextRects[index].toRectF(scratchTextRect)
         textPaint.reset()
@@ -399,7 +401,15 @@ object MissionsUiRenderer {
         drawClaimButton(canvas, layout.claimButtonRects[index].toRectF(scratchButtonRect), mission, active, dp, t)
     }
 
-    private fun drawRewardChip(canvas: Canvas, rect: RectF, reward: Int, coinArt: Bitmap?, dp: Float, t: (String) -> String) {
+    private fun drawRewardChip(
+        canvas: Canvas,
+        rect: RectF,
+        mission: MissionProgress,
+        coinArt: Bitmap?,
+        dp: Float,
+        t: (String) -> String,
+        skinName: (String) -> String
+    ) {
         if (rect.isEmpty) return
         shapePaint.reset()
         shapePaint.isAntiAlias = true
@@ -422,10 +432,22 @@ object MissionsUiRenderer {
         textPaint.isAntiAlias = true
         textPaint.typeface = AssetResourceManager.spaceGroteskBold()
         textPaint.textAlign = Paint.Align.CENTER
-        textPaint.textSize = 8.7f * dp
-        textPaint.color = KavvoroPalette.gold
         scratchFaceRect.set(rect.left + 24f * dp, rect.top, rect.right - 5f * dp, rect.bottom)
-        drawFitted(canvas, "+$reward ${t("COINS").uppercase()}", scratchFaceRect, textPaint, 6f * dp)
+        val rewardSkinId = mission.rewardSkinId
+        if (rewardSkinId != null) {
+            textPaint.textSize = 7.8f * dp
+            textPaint.color = KavvoroPalette.gold
+            scratchFaceRect.set(rect.left + 24f * dp, rect.top + 1f * dp, rect.right - 5f * dp, rect.centerY())
+            drawFitted(canvas, "+${mission.rewardCoins} ${t("COINS").uppercase()}", scratchFaceRect, textPaint, 5.4f * dp)
+            textPaint.textSize = 6.5f * dp
+            textPaint.color = KavvoroPalette.cyan
+            scratchFaceRect.set(rect.left + 24f * dp, rect.centerY(), rect.right - 5f * dp, rect.bottom - 1f * dp)
+            drawFitted(canvas, "+ ${skinName(rewardSkinId).uppercase()}", scratchFaceRect, textPaint, 5f * dp)
+        } else {
+            textPaint.textSize = 8.7f * dp
+            textPaint.color = KavvoroPalette.gold
+            drawFitted(canvas, "+${mission.rewardCoins} ${t("COINS").uppercase()}", scratchFaceRect, textPaint, 6f * dp)
+        }
     }
 
     private fun drawMissionGlyph(canvas: Canvas, mission: MissionId, x: Float, y: Float, size: Float, color: Int, dp: Float) {

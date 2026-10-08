@@ -6,6 +6,9 @@ import com.moonsolstudios.kavvoro.BuildConfig
 import com.moonsolstudios.kavvoro.engine.LevelDirector
 import com.moonsolstudios.kavvoro.model.BallSkin
 import com.moonsolstudios.kavvoro.model.GameMode
+import com.moonsolstudios.kavvoro.model.LevelProgression
+import com.moonsolstudios.kavvoro.model.LevelProgressionLogic
+import com.moonsolstudios.kavvoro.model.MissionId
 import com.moonsolstudios.kavvoro.model.NextReward
 import com.moonsolstudios.kavvoro.model.UnlockRule
 import com.moonsolstudios.kavvoro.model.UnlockType
@@ -101,6 +104,7 @@ class GameProgressRepository(
             UnlockType.CLASSIC_LEVEL -> clearedLevel(GameMode.CLASSIC) >= rule.value
             UnlockType.CHAOS_LEVEL -> clearedLevel(GameMode.CHAOS) >= rule.value
             UnlockType.TUTORIAL_CLEAR -> max(clearedLevel(GameMode.CLASSIC), clearedLevel(GameMode.CHAOS)) >= rule.value
+            UnlockType.MISSION_REWARD -> false
             UnlockType.BEST_STREAK -> bestStreak() >= rule.value
             UnlockType.SHARE_COUNT -> prefs.getInt(SHARE_COUNT_KEY, 0) >= rule.value
             UnlockType.HYPE_COST -> false
@@ -126,14 +130,50 @@ class GameProgressRepository(
 
     fun hypeBalance(): Int = prefs.getInt(HYPE_BANK_KEY, prefs.getInt("last_hype", 0)).coerceAtLeast(0)
 
-    fun addHype(amount: Int) {
-        val next = (hypeBalance() + amount.coerceAtLeast(0)).coerceAtLeast(0)
+    fun addHype(amount: Int) = synchronized(prefs) {
+        val next = (hypeBalance().toLong() + amount.coerceAtLeast(0).toLong())
+            .coerceAtMost(Int.MAX_VALUE.toLong())
+            .toInt()
         prefs.edit { putInt(HYPE_BANK_KEY, next) }
     }
 
-    fun spendHype(amount: Int) {
-        val next = (hypeBalance() - amount.coerceAtLeast(0)).coerceAtLeast(0)
+    fun spendHype(amount: Int) = synchronized(prefs) {
+        val next = (hypeBalance().toLong() - amount.coerceAtLeast(0).toLong())
+            .coerceAtLeast(0L)
+            .toInt()
         prefs.edit { putInt(HYPE_BANK_KEY, next) }
+    }
+
+    /** Persists one successful level clear as a single, monotonic progression update. */
+    fun recordLevelWin(
+        mode: GameMode,
+        completedLevel: Int,
+        currentStreak: Int,
+        hypeReward: Int
+    ): LevelProgression = synchronized(prefs) {
+        val progression = LevelProgressionLogic.recordWin(
+            currentLevel = modeProgress(mode),
+            highestLevel = modeHighestLevel(mode),
+            completedLevel = completedLevel,
+            currentStreak = currentStreak,
+            previousBestStreak = modeBestStreak(mode)
+        )
+        val safeStreak = currentStreak.coerceAtLeast(0)
+        val safeHypeReward = hypeReward.coerceAtLeast(0)
+        val newHypeBalance = (hypeBalance().toLong() + safeHypeReward.toLong())
+            .coerceAtMost(Int.MAX_VALUE.toLong())
+            .toInt()
+        prefs.edit {
+            putInt(progressKey(mode), progression.currentLevel)
+            putInt(streakKey(mode), safeStreak)
+            putInt(highestLevelKey(mode), progression.highestLevel)
+            putInt(bestModeStreakKey(mode), progression.bestStreak)
+            putInt(BEST_STREAK_KEY, max(bestStreak(), safeStreak))
+            putInt("clear_streak", safeStreak)
+            putInt("last_hype", safeHypeReward)
+            putInt(HYPE_BANK_KEY, newHypeBalance)
+        }
+        progression
     }
 
     fun skinHypePrice(skin: BallSkin): Int? {
@@ -320,6 +360,9 @@ class GameProgressRepository(
             UnlockType.BEST_STREAK -> (rule.value - bestStreak()).coerceAtLeast(0)
             UnlockType.SHARE_COUNT -> (rule.value - prefs.getInt(SHARE_COUNT_KEY, 0)).coerceAtLeast(0)
             UnlockType.HYPE_COST -> (rule.value - hypeBalance()).coerceAtLeast(0)
+            UnlockType.MISSION_REWARD -> rule.missionId?.let { mission ->
+                (mission.target - missionProgress(mission)).coerceAtLeast(0)
+            }
             UnlockType.DEFAULT,
             UnlockType.PREMIUM -> null
         }
@@ -333,6 +376,7 @@ class GameProgressRepository(
             UnlockType.BEST_STREAK -> bestStreak()
             UnlockType.SHARE_COUNT -> prefs.getInt(SHARE_COUNT_KEY, 0)
             UnlockType.HYPE_COST -> hypeBalance()
+            UnlockType.MISSION_REWARD -> rule.missionId?.let(::missionProgress) ?: 0
             UnlockType.DEFAULT,
             UnlockType.PREMIUM -> 0
         }
@@ -345,6 +389,11 @@ class GameProgressRepository(
             UnlockType.CLASSIC_LEVEL -> "${t("CLASSIC")} L${skin.unlock.value.toString().padStart(2, '0')}"
             UnlockType.CHAOS_LEVEL -> "${t("CHAOS")} L${skin.unlock.value.toString().padStart(2, '0')}"
             UnlockType.TUTORIAL_CLEAR -> "${t("TUTORIAL")} L${skin.unlock.value.toString().padStart(2, '0')}"
+            UnlockType.MISSION_REWARD -> {
+                val ready = skin.unlock.missionId?.let { missionProgress(it) >= it.target } == true
+                if (ready) "${t("MISSIONS").uppercase()} ${t("READY").uppercase()}"
+                else "${t("MISSIONS").uppercase()} L${skin.unlock.value.toString().padStart(2, '0')}"
+            }
             UnlockType.BEST_STREAK -> "${t("STREAK")} ${skin.unlock.value}"
             UnlockType.SHARE_COUNT -> "${t("SHARE")} ${skin.unlock.value}"
             UnlockType.HYPE_COST -> "${formatHypeAmount(skin.unlock.value)} ${t("HYPE").uppercase()}"
@@ -355,6 +404,11 @@ class GameProgressRepository(
         return when (skin.unlock.type) {
             UnlockType.PREMIUM -> "${premiumPriceLabel(skin)} - ${t("local price from Play Billing")}"
             UnlockType.HYPE_COST -> "${t("UNLOCK WITH").uppercase()} ${formatHypeAmount(skin.unlock.value)} ${t("HYPE").uppercase()} / ${t("HYPE BANK").uppercase()} ${formatHypeAmount(hypeBalance())}"
+            UnlockType.MISSION_REWARD -> {
+                val mission = skin.unlock.missionId
+                if (mission == null) unlockShortLabel(skin)
+                else "${t("RIFT CHALLENGES").uppercase()} / ${t(mission.titleKey).uppercase()}"
+            }
             // UnlockRule.label is retained as an English data/debug description,
             // but must never be rendered directly. Build the visible label from
             // the structured rule so every locale uses the same vocabulary.
@@ -386,6 +440,12 @@ class GameProgressRepository(
 
     fun modeBestStreak(mode: GameMode, currentStreak: Int = 0): Int {
         return prefs.getInt(bestModeStreakKey(mode), modeStreak(mode, currentStreak)).coerceAtLeast(0)
+    }
+
+    private fun missionProgress(mission: MissionId): Int {
+        val savedProgress = prefs.getInt("rift_challenge_${mission.name.lowercase()}_progress", 0)
+        val levelProgress = mission.levelMilestoneMode?.let(::clearedLevel) ?: 0
+        return max(savedProgress, levelProgress).coerceIn(0, mission.target)
     }
 
     fun resetModeProgress(mode: GameMode) {

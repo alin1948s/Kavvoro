@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.moonsolstudios.kavvoro.engine.LevelDirector
 import com.moonsolstudios.kavvoro.model.MissionCategory
+import com.moonsolstudios.kavvoro.model.MissionClaimReward
 import com.moonsolstudios.kavvoro.model.MissionId
 import com.moonsolstudios.kavvoro.model.MissionProgress
 import com.moonsolstudios.kavvoro.model.MissionProgressLogic
@@ -29,13 +30,16 @@ class MissionsRepository(
         MissionProgressLogic.newlyCompleted(previous, updated)
     }
 
-    /** Returns zero when the mission is incomplete or was already claimed. */
-    fun claim(missionId: MissionId): Int = synchronized(prefs) {
+    /** Grants the currency and any skin in one preferences transaction; duplicate claims are rejected. */
+    fun claim(missionId: MissionId): MissionClaimReward = synchronized(prefs) {
         ensureCurrentDay()
         val mission = readMission(missionId)
-        if (!mission.canClaim) return@synchronized 0
-        prefs.edit { putBoolean(claimedKey(missionId), true) }
-        mission.rewardCoins
+        if (!mission.canClaim) return@synchronized MissionClaimReward.EMPTY
+        prefs.edit {
+            putBoolean(claimedKey(missionId), true)
+            mission.rewardSkinId?.let { putBoolean(GameProgressRepository.earnedSkinKey(it), true) }
+        }
+        MissionClaimReward(coins = mission.rewardCoins, skinId = mission.rewardSkinId)
     }
 
     private fun ensureCurrentDay() {
@@ -53,11 +57,26 @@ class MissionsRepository(
     private fun readMissions(category: MissionCategory): List<MissionProgress> =
         MissionId.inCategory(category).map(::readMission)
 
-    private fun readMission(missionId: MissionId): MissionProgress = MissionProgress(
-        id = missionId,
-        progress = prefs.getInt(progressKey(missionId), 0).coerceIn(0, missionId.target),
-        claimed = prefs.getBoolean(claimedKey(missionId), false)
-    )
+    private fun readMission(missionId: MissionId): MissionProgress {
+        val savedProgress = prefs.getInt(progressKey(missionId), 0).coerceIn(0, missionId.target)
+        val milestoneProgress = missionId.levelMilestoneMode?.let(::clearedLevelFromPreferences) ?: 0
+        return MissionProgress(
+            id = missionId,
+            progress = maxOf(savedProgress, milestoneProgress).coerceIn(0, missionId.target),
+            claimed = prefs.getBoolean(claimedKey(missionId), false)
+        )
+    }
+
+    private fun clearedLevelFromPreferences(mode: com.moonsolstudios.kavvoro.model.GameMode): Int {
+        val (highestKey, progressKey, legacyKey) = when (mode) {
+            com.moonsolstudios.kavvoro.model.GameMode.CLASSIC ->
+                Triple("highest_level_classic", "classic_level", "unlocked_level")
+            com.moonsolstudios.kavvoro.model.GameMode.CHAOS ->
+                Triple("highest_level_chaos", "chaos_level", "chaos_level")
+        }
+        val fallback = prefs.getInt(progressKey, prefs.getInt(legacyKey, 1)).coerceAtLeast(1)
+        return (prefs.getInt(highestKey, fallback).coerceAtLeast(1) - 1).coerceAtLeast(0)
+    }
 
     private fun progressKey(id: MissionId): String =
         if (id.category == MissionCategory.DAILY) "daily_mission_${id.name.lowercase()}_progress"

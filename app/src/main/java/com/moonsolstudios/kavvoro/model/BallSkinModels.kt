@@ -49,6 +49,7 @@ enum class UnlockType {
     TUTORIAL_CLEAR,
     CLASSIC_LEVEL,
     CHAOS_LEVEL,
+    MISSION_REWARD,
     BEST_STREAK,
     SHARE_COUNT,
     HYPE_COST,
@@ -58,7 +59,8 @@ enum class UnlockType {
 data class UnlockRule(
     val type: UnlockType,
     val value: Int,
-    val label: String
+    val label: String,
+    val missionId: MissionId? = null
 )
 
 data class BallSkin(

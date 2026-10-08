@@ -6,6 +6,7 @@ import android.os.SystemClock
 import android.view.MotionEvent
 import com.moonsolstudios.kavvoro.model.GameMode
 import com.moonsolstudios.kavvoro.model.MissionCategory
+import com.moonsolstudios.kavvoro.model.MissionClaimReward
 import com.moonsolstudios.kavvoro.model.MissionProgress
 import com.moonsolstudios.kavvoro.model.MissionRoundResult
 import com.moonsolstudios.kavvoro.repository.MissionsRepository
@@ -15,9 +16,10 @@ class MissionsScreenController(
     private var repository: MissionsRepository,
     private val onTouch: () -> Unit,
     private val onBack: () -> Unit,
-    private val onReward: (Int) -> Unit,
+    private val onReward: (MissionClaimReward) -> Unit,
     private val onRejectedClaim: () -> Unit,
-    private val worldBitmap: (String) -> Bitmap? = { null }
+    private val worldBitmap: (String) -> Bitmap? = { null },
+    private val skinName: (String) -> String = { it }
 ) {
     private val touchController = MissionsTouchController()
     private var selectedCategory = MissionCategory.DAILY
@@ -36,9 +38,23 @@ class MissionsScreenController(
         dismissGamePopup()
     }
 
-    fun recordRound(won: Boolean, gameMode: GameMode, rank: String?, riftBreak: Boolean, maxChain: Int) {
+    fun recordRound(
+        won: Boolean,
+        gameMode: GameMode,
+        rank: String?,
+        riftBreak: Boolean,
+        maxChain: Int,
+        completedLevel: Int = 0
+    ) {
         val completed = repository.recordRound(
-            MissionRoundResult(won = won, gameMode = gameMode, rank = rank, riftBreak = riftBreak, maxChain = maxChain)
+            MissionRoundResult(
+                won = won,
+                gameMode = gameMode,
+                rank = rank,
+                riftBreak = riftBreak,
+                maxChain = maxChain,
+                completedLevel = completedLevel
+            )
         )
         if (completed.isNotEmpty()) {
             completionPopup = CompletionPopup(completed, SystemClock.uptimeMillis())
@@ -78,7 +94,8 @@ class MissionsScreenController(
             missions = popup.missions,
             dp = dp,
             alpha = minOf(fadeIn, fadeOut),
-            t = t
+            t = t,
+            skinName = skinName
         )
     }
 
@@ -95,7 +112,8 @@ class MissionsScreenController(
             missionArt = worldBitmap("brainball_main"),
             coinArt = worldBitmap("ic_stat_coin_3d"),
             category = selectedCategory,
-            t = t
+            t = t,
+            skinName = skinName
         )
     }
 
@@ -119,7 +137,7 @@ class MissionsScreenController(
                 val missionId = action.missionId
                 {
                     val reward = repository.claim(missionId)
-                    if (reward > 0) onReward(reward) else onRejectedClaim()
+                    if (!reward.isEmpty) onReward(reward) else onRejectedClaim()
                 }
             }
         }
