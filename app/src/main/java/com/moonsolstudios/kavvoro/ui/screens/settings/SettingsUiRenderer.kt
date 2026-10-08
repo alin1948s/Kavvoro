@@ -327,66 +327,64 @@ object SettingsUiRenderer {
         viewWidth: Float = rect.width(),
         viewHeight: Float = rect.height()
     ) {
-        val inset = 0.8f * dp
-        val corner = 14f * dp
+        val corner = 10f * dp
+        val notch = 4f * dp
         val pressOffset = if (active) 0.8f * dp else 0f
-        val faceTop = rect.top + inset + pressOffset
-        val faceBottom = rect.bottom - inset + pressOffset
-        val faceLeft = rect.left + inset
-        val faceRight = rect.right - inset
-        scratchRect.set(faceLeft, faceTop, faceRight, faceBottom)
+        scratchRect.set(rect.left + 0.8f * dp, rect.top + pressOffset, rect.right - 0.8f * dp, rect.bottom - 2.4f * dp + pressOffset)
 
-        // A quiet dark surface keeps this secondary action within the Settings visual system.
+        // A slim lower rail gives the control a tactile edge without the old chrome slab.
+        scratchRect2.set(scratchRect.left, scratchRect.top + 2.8f * dp, scratchRect.right, rect.bottom)
+        CyberShapeRenderer.createChamferPath(tempPath, scratchRect2, corner, notch)
         paint.style = Paint.Style.FILL
+        paint.color = if (active) 0xFF063B49.toInt() else 0xFF040C18.toInt()
+        canvas.drawPath(tempPath, paint)
+
+        CyberShapeRenderer.createChamferPath(tempPath, scratchRect, corner, notch)
         paint.shader = LinearGradient(
-            scratchRect.left, scratchRect.top, scratchRect.left, scratchRect.bottom,
-            if (active) 0xFF12364A.toInt() else 0xFF102235.toInt(),
-            if (active) 0xFF0B2437.toInt() else 0xFF0A1727.toInt(),
+            scratchRect.left, scratchRect.top, scratchRect.right, scratchRect.bottom,
+            if (active) 0xFF12384A.toInt() else 0xFF102238.toInt(),
+            if (active) 0xFF181B3A.toInt() else 0xFF0A1424.toInt(),
             Shader.TileMode.CLAMP
         )
-        canvas.drawRoundRect(scratchRect, corner, corner, paint)
+        canvas.drawPath(tempPath, paint)
         paint.shader = null
 
-        // Subtle interior light, with enough contrast to read as a control rather than a panel.
-        scratchRect2.set(
-            scratchRect.left + 2f * dp,
-            scratchRect.top + 1f * dp,
-            scratchRect.right - 2f * dp,
-            scratchRect.centerY()
-        )
+        // Restrained light is clipped to the cut-corner silhouette.
+        val buttonSave = canvas.save()
+        canvas.clipPath(tempPath)
+        scratchRect2.set(scratchRect.left, scratchRect.top, scratchRect.right, scratchRect.centerY())
         paint.shader = LinearGradient(
             scratchRect2.left, scratchRect2.top, scratchRect2.left, scratchRect2.bottom,
-            if (active) 0x263DEBFF else 0x143DEBFF,
+            if (active) 0x283DEBFF else 0x1B3DEBFF,
             0x00000000,
             Shader.TileMode.CLAMP
         )
-        canvas.drawRoundRect(scratchRect2, corner - 2f * dp, corner - 2f * dp, paint)
+        canvas.drawRect(scratchRect2, paint)
         paint.shader = null
+        canvas.restoreToCount(buttonSave)
 
+        CyberShapeRenderer.createChamferPath(tempPath, scratchRect, corner, notch)
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = if (active) 1.8f * dp else 1.2f * dp
+        paint.strokeWidth = if (active) 1.8f * dp else 1.25f * dp
         paint.shader = LinearGradient(
             scratchRect.left, scratchRect.top, scratchRect.right, scratchRect.bottom,
-            if (active) 0xFFFF69D8.toInt() else withAlpha(KavvoroPalette.cyan, 220),
-            if (active) 0xFF35E8FF.toInt() else withAlpha(KavvoroPalette.pink, 190),
+            if (active) 0xFFFF73DD.toInt() else withAlpha(KavvoroPalette.cyan, 235),
+            if (active) 0xFF40ECFF.toInt() else withAlpha(KavvoroPalette.pink, 205),
             Shader.TileMode.CLAMP
         )
-        canvas.drawRoundRect(scratchRect, corner, corner, paint)
+        canvas.drawPath(tempPath, paint)
         paint.shader = null
 
-        // Compact round back icon; its arrow remains clear at small phone sizes.
-        val badgeRadius = minOf(18f * dp, scratchRect.height() * 0.34f)
-        val arrowCenterX = scratchRect.centerX()
-        val arrowCenterY = scratchRect.centerY()
+        val badgeRadius = minOf(19f * dp, scratchRect.height() * 0.34f)
         val textBaseSize = SettingsLayoutCalculator.backTextSize(viewWidth, dp, viewHeight)
-        val gap = 12f * dp
+        val gap = 13f * dp
         val horizontalInset = 18f * dp
         val maxTextWidth = (scratchRect.width() - horizontalInset * 2f - badgeRadius * 2f - gap).coerceAtLeast(0f)
 
         textPaint.reset()
         textPaint.isAntiAlias = true
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.create("sans-serif", Typeface.BOLD)
-        textPaint.letterSpacing = 0.035f
+        textPaint.letterSpacing = 0.045f
         textPaint.textSize = textBaseSize
         val measuredLabelWidth = textPaint.measureText(label)
         if (measuredLabelWidth > maxTextWidth && measuredLabelWidth > 0f) {
@@ -396,39 +394,110 @@ object SettingsUiRenderer {
         val labelWidth = textPaint.measureText(displayLabel).coerceAtMost(maxTextWidth)
         val groupWidth = badgeRadius * 2f + gap + labelWidth
         val groupLeft = scratchRect.centerX() - groupWidth * 0.5f
+        val groupRight = groupLeft + groupWidth
         val badgeCenterX = groupLeft + badgeRadius
+        val centerY = scratchRect.centerY()
 
-        paint.style = Paint.Style.FILL
-        paint.color = if (active) 0xFF0C3A4A.toInt() else 0xFF0A1B2B.toInt()
-        canvas.drawCircle(badgeCenterX, arrowCenterY, badgeRadius + 1.5f * dp, paint)
+        // Fine light rails connect the centered label to the button frame.
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 1.1f * dp
-        paint.color = if (active) 0xCC65F3FF.toInt() else withAlpha(KavvoroPalette.cyan, 180)
-        canvas.drawCircle(badgeCenterX, arrowCenterY, badgeRadius, paint)
-        paint.style = Paint.Style.FILL
-        paint.color = KavvoroPalette.pink
-        canvas.drawCircle(badgeCenterX + badgeRadius * 0.72f, arrowCenterY - badgeRadius * 0.68f, 1.7f * dp, paint)
+        paint.strokeWidth = 0.85f * dp
+        val railLeft = scratchRect.left + corner + notch + 4f * dp
+        val railRight = scratchRect.right - corner - notch - 4f * dp
+        if (groupLeft - railLeft > 8f * dp) {
+            paint.shader = LinearGradient(railLeft, centerY, groupLeft - 7f * dp, centerY, 0x003FEAFF, withAlpha(KavvoroPalette.cyan, 145), Shader.TileMode.CLAMP)
+            canvas.drawLine(railLeft, centerY, groupLeft - 7f * dp, centerY, paint)
+            paint.shader = null
+        }
+        if (railRight - groupRight > 8f * dp) {
+            paint.shader = LinearGradient(groupRight + 7f * dp, centerY, railRight, centerY, withAlpha(KavvoroPalette.pink, 145), 0x00FF62D6, Shader.TileMode.CLAMP)
+            canvas.drawLine(groupRight + 7f * dp, centerY, railRight, centerY, paint)
+            paint.shader = null
+        }
 
+        // Geometric portal glyph: the arrow is framed by a split-color hex gate.
+        val hexRadius = badgeRadius * 0.94f
+        paint.style = Paint.Style.FILL
+        paint.shader = RadialGradient(
+            badgeCenterX, centerY, hexRadius * 2.1f,
+            intArrayOf(
+                if (active) 0x6640E8FF.toInt() else 0x4A40DFFF.toInt(),
+                0x1C8747D9,
+                0x00000000
+            ),
+            floatArrayOf(0f, 0.58f, 1f),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawCircle(badgeCenterX, centerY, hexRadius * 2.1f, paint)
+        paint.shader = null
+
+        tempPath.reset()
+        tempPath.moveTo(badgeCenterX, centerY - hexRadius)
+        tempPath.lineTo(badgeCenterX + hexRadius * 0.86f, centerY - hexRadius * 0.5f)
+        tempPath.lineTo(badgeCenterX + hexRadius * 0.86f, centerY + hexRadius * 0.5f)
+        tempPath.lineTo(badgeCenterX, centerY + hexRadius)
+        tempPath.lineTo(badgeCenterX - hexRadius * 0.86f, centerY + hexRadius * 0.5f)
+        tempPath.lineTo(badgeCenterX - hexRadius * 0.86f, centerY - hexRadius * 0.5f)
+        tempPath.close()
+        paint.style = Paint.Style.FILL
+        paint.shader = LinearGradient(
+            badgeCenterX - hexRadius, centerY - hexRadius,
+            badgeCenterX + hexRadius, centerY + hexRadius,
+            if (active) 0xFF41EAFF.toInt() else 0xFF28DDF4.toInt(),
+            if (active) 0xFFE45BD5.toInt() else 0xFF8150CE.toInt(),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(tempPath, paint)
+        paint.shader = null
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 2f * dp
+        paint.strokeWidth = 1.6f * dp
+        paint.shader = LinearGradient(badgeCenterX - hexRadius, centerY, badgeCenterX + hexRadius, centerY, 0xFF48E8FF.toInt(), 0xFFE85FD4.toInt(), Shader.TileMode.CLAMP)
+        canvas.drawPath(tempPath, paint)
+        paint.shader = null
+
+        val innerRadius = hexRadius * 0.72f
+        tempPath.reset()
+        tempPath.moveTo(badgeCenterX, centerY - innerRadius)
+        tempPath.lineTo(badgeCenterX + innerRadius * 0.86f, centerY - innerRadius * 0.5f)
+        tempPath.lineTo(badgeCenterX + innerRadius * 0.86f, centerY + innerRadius * 0.5f)
+        tempPath.lineTo(badgeCenterX, centerY + innerRadius)
+        tempPath.lineTo(badgeCenterX - innerRadius * 0.86f, centerY + innerRadius * 0.5f)
+        tempPath.lineTo(badgeCenterX - innerRadius * 0.86f, centerY - innerRadius * 0.5f)
+        tempPath.close()
+        paint.style = Paint.Style.FILL
+        paint.shader = LinearGradient(
+            badgeCenterX - innerRadius, centerY - innerRadius,
+            badgeCenterX + innerRadius, centerY + innerRadius,
+            if (active) 0xFF102F46.toInt() else 0xFF0B1B30.toInt(),
+            if (active) 0xFF1B1B39.toInt() else 0xFF101329.toInt(),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(tempPath, paint)
+        paint.shader = null
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 0.9f * dp
+        paint.color = withAlpha(KavvoroPalette.cyan, if (active) 175 else 125)
+        canvas.drawPath(tempPath, paint)
+
+        val arrowSize = 6.2f * dp
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 2.1f * dp
         paint.strokeCap = Paint.Cap.ROUND
         paint.strokeJoin = Paint.Join.ROUND
-        paint.color = if (active) 0xFFFFFFFF.toInt() else 0xFF6AF1FF.toInt()
-        val arrowSize = 6f * dp
+        paint.color = if (active) 0xFFFFFFFF.toInt() else 0xFF83F4FF.toInt()
         tempPath.reset()
-        tempPath.moveTo(badgeCenterX + arrowSize * 0.85f, arrowCenterY)
-        tempPath.lineTo(badgeCenterX - arrowSize, arrowCenterY)
-        tempPath.moveTo(badgeCenterX - arrowSize * 0.25f, arrowCenterY - arrowSize * 0.72f)
-        tempPath.lineTo(badgeCenterX - arrowSize, arrowCenterY)
-        tempPath.lineTo(badgeCenterX - arrowSize * 0.25f, arrowCenterY + arrowSize * 0.72f)
+        tempPath.moveTo(badgeCenterX + arrowSize * 0.95f, centerY)
+        tempPath.lineTo(badgeCenterX - arrowSize, centerY)
+        tempPath.moveTo(badgeCenterX - arrowSize * 0.18f, centerY - arrowSize * 0.68f)
+        tempPath.lineTo(badgeCenterX - arrowSize, centerY)
+        tempPath.lineTo(badgeCenterX - arrowSize * 0.18f, centerY + arrowSize * 0.68f)
         canvas.drawPath(tempPath, paint)
         paint.strokeCap = Paint.Cap.BUTT
         paint.strokeJoin = Paint.Join.MITER
 
         textPaint.textAlign = Paint.Align.LEFT
-        textPaint.color = 0xFFFFFFFF.toInt()
-        textPaint.setShadowLayer(3f * dp, 0f, 1f * dp, 0x99000000.toInt())
-        val baseline = arrowCenterY - (textPaint.ascent() + textPaint.descent()) * 0.5f
+        textPaint.color = 0xFFF3FBFF.toInt()
+        textPaint.setShadowLayer(4f * dp, 0f, 1f * dp, 0x99000000.toInt())
+        val baseline = centerY - (textPaint.ascent() + textPaint.descent()) * 0.5f
         canvas.drawText(displayLabel, badgeCenterX + badgeRadius + gap, baseline, textPaint)
         textPaint.clearShadowLayer()
         textPaint.letterSpacing = 0f
