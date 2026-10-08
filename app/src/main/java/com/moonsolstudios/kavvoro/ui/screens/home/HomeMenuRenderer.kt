@@ -883,21 +883,6 @@ object HomeMenuRenderer {
         }
         val subtitleCenterY = rect.top + rect.height() * 0.83f
 
-        val chevronSize = 16f * dp
-        val chevronRight = rect.right - 10f * dp
-        val chevronTop = titleCenterY - chevronSize * 0.5f
-        val chevron = chevronDrawable(context)
-        if (chevron != null) {
-            chevron.setBounds(
-                (chevronRight - chevronSize).toInt(),
-                chevronTop.toInt(),
-                chevronRight.toInt(),
-                (chevronTop + chevronSize).toInt()
-            )
-            chevron.setTint(withAlpha(accentColor, 180))
-            chevron.draw(canvas)
-        }
-
         if (artBitmap != null) {
             paint.reset()
             paint.isAntiAlias = true
@@ -946,15 +931,35 @@ object HomeMenuRenderer {
         var cardTitleSize = (rect.height() * 0.09f).coerceIn(17f * dp, 25f * dp)
         textPaint.textSize = cardTitleSize
         textPaint.letterSpacing = 0.03f
-        val maxTitleW = rect.width() - 28f * dp - chevronSize
+        val chevronSize = 14f * dp
+        val titleChevronGap = 8f * dp
+        val maxTitleW = (rect.width() - 28f * dp - chevronSize - titleChevronGap).coerceAtLeast(1f * dp)
         val measuredTitleW = textPaint.measureText(title)
         if (measuredTitleW > maxTitleW && measuredTitleW > 0f) {
             cardTitleSize *= (maxTitleW / measuredTitleW)
             textPaint.textSize = cardTitleSize
         }
+        val titleWidth = textPaint.measureText(title)
+        val titleGroupWidth = titleWidth + titleChevronGap + chevronSize
+        val titleGroupLeft = rect.centerX() - titleGroupWidth * 0.5f
+        val titleCenterX = titleGroupLeft + titleWidth * 0.5f
         val titleFm = textPaint.fontMetrics
         val titleBaseline = titleCenterY - (titleFm.ascent + titleFm.descent) / 2f
-        canvas.drawText(title, rect.centerX(), titleBaseline, textPaint)
+        canvas.drawText(title, titleCenterX, titleBaseline, textPaint)
+
+        // Keep the chevron attached to the localized title, with one consistent gap.
+        val chevronLeft = titleGroupLeft + titleWidth + titleChevronGap
+        val chevronTop = titleCenterY - chevronSize * 0.5f
+        chevronDrawable(context)?.let { chevron ->
+            chevron.setBounds(
+                chevronLeft.toInt(),
+                chevronTop.toInt(),
+                (chevronLeft + chevronSize).toInt(),
+                (chevronTop + chevronSize).toInt()
+            )
+            chevron.setTint(withAlpha(accentColor, 220))
+            chevron.draw(canvas)
+        }
 
         if (showSubtitle && subtitle.isNotBlank()) {
             textPaint.reset()
