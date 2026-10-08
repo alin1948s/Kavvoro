@@ -327,69 +327,113 @@ object SettingsUiRenderer {
         viewWidth: Float = rect.width(),
         viewHeight: Float = rect.height()
     ) {
-        val corner = 8f * dp
-        val notch = 6f * dp
-        val depth = (3.5f * dp).coerceAtLeast(2.5f)
-        val press = if (active) 1.8f * dp else 0f
+        val inset = 0.8f * dp
+        val corner = 14f * dp
+        val pressOffset = if (active) 0.8f * dp else 0f
+        val faceTop = rect.top + inset + pressOffset
+        val faceBottom = rect.bottom - inset + pressOffset
+        val faceLeft = rect.left + inset
+        val faceRight = rect.right - inset
+        scratchRect.set(faceLeft, faceTop, faceRight, faceBottom)
 
-        // 1. Tactile 3D Bottom Lip
-        scratchRect.set(rect.left, rect.top + depth, rect.right, rect.bottom)
-        CyberShapeRenderer.createChamferPath(tempPath, scratchRect, corner, notch)
+        // A quiet dark surface keeps this secondary action within the Settings visual system.
         paint.style = Paint.Style.FILL
-        paint.color = if (active) 0xFF003844.toInt() else 0xFF050E18.toInt()
-        canvas.drawPath(tempPath, paint)
-
-        // 2. Raised Button Face
-        scratchRect2.set(rect.left, rect.top + press, rect.right, rect.bottom - depth + press)
-        CyberShapeRenderer.createChamferPath(tempPath, scratchRect2, corner, notch)
-        paint.shader = LinearGradient(
-            scratchRect2.left, scratchRect2.top, scratchRect2.left, scratchRect2.bottom,
-            if (active) 0xFF00E5FF.toInt() else 0xF0132840.toInt(),
-            if (active) 0xFF007A99.toInt() else 0xF8081422.toInt(),
-            Shader.TileMode.CLAMP
-        )
-        canvas.drawPath(tempPath, paint)
-        paint.shader = null
-
-        // 3. Specular Curved Glossy Glare on top 48%
-        scratchRect.set(scratchRect2.left + 2f * dp, scratchRect2.top + 0.8f * dp, scratchRect2.right - 2f * dp, scratchRect2.top + scratchRect2.height() * 0.48f)
         paint.shader = LinearGradient(
             scratchRect.left, scratchRect.top, scratchRect.left, scratchRect.bottom,
-            0x75FFFFFF.toInt(), 0x05FFFFFF, Shader.TileMode.CLAMP
+            if (active) 0xFF12364A.toInt() else 0xFF102235.toInt(),
+            if (active) 0xFF0B2437.toInt() else 0xFF0A1727.toInt(),
+            Shader.TileMode.CLAMP
         )
-        canvas.drawRoundRect(scratchRect, corner - 2f * dp, corner - 2f * dp, paint)
+        canvas.drawRoundRect(scratchRect, corner, corner, paint)
         paint.shader = null
 
-        // 4. Specular Top Highlight Line
+        // Subtle interior light, with enough contrast to read as a control rather than a panel.
+        scratchRect2.set(
+            scratchRect.left + 2f * dp,
+            scratchRect.top + 1f * dp,
+            scratchRect.right - 2f * dp,
+            scratchRect.centerY()
+        )
+        paint.shader = LinearGradient(
+            scratchRect2.left, scratchRect2.top, scratchRect2.left, scratchRect2.bottom,
+            if (active) 0x263DEBFF else 0x143DEBFF,
+            0x00000000,
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawRoundRect(scratchRect2, corner - 2f * dp, corner - 2f * dp, paint)
+        paint.shader = null
+
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 1.1f * dp
-        paint.color = 0xDDFFFFFF.toInt()
-        canvas.drawLine(scratchRect2.left + corner + notch, scratchRect2.top + 0.8f * dp, scratchRect2.right - corner - notch, scratchRect2.top + 0.8f * dp, paint)
+        paint.strokeWidth = if (active) 1.8f * dp else 1.2f * dp
+        paint.shader = LinearGradient(
+            scratchRect.left, scratchRect.top, scratchRect.right, scratchRect.bottom,
+            if (active) 0xFFFF69D8.toInt() else withAlpha(KavvoroPalette.cyan, 220),
+            if (active) 0xFF35E8FF.toInt() else withAlpha(KavvoroPalette.pink, 190),
+            Shader.TileMode.CLAMP
+        )
+        canvas.drawRoundRect(scratchRect, corner, corner, paint)
+        paint.shader = null
 
-        // 5. Border
-        paint.strokeWidth = if (active) 2f * dp else 1.4f * dp
-        paint.color = if (active) 0xFFFFFFFF.toInt() else KavvoroPalette.cyan
-        canvas.drawPath(tempPath, paint)
+        // Compact round back icon; its arrow remains clear at small phone sizes.
+        val badgeRadius = minOf(18f * dp, scratchRect.height() * 0.34f)
+        val arrowCenterX = scratchRect.centerX()
+        val arrowCenterY = scratchRect.centerY()
+        val textBaseSize = SettingsLayoutCalculator.backTextSize(viewWidth, dp, viewHeight)
+        val gap = 12f * dp
+        val horizontalInset = 18f * dp
+        val maxTextWidth = (scratchRect.width() - horizontalInset * 2f - badgeRadius * 2f - gap).coerceAtLeast(0f)
 
-        // 6. Tactical Corner End Ticks
-        paint.style = Paint.Style.FILL
-        paint.color = KavvoroPalette.cyan
-        canvas.drawCircle(scratchRect2.left + notch + 4f * dp, scratchRect2.centerY(), 1.5f * dp, paint)
-        paint.color = KavvoroPalette.pink
-        canvas.drawCircle(scratchRect2.right - notch - 4f * dp, scratchRect2.centerY(), 1.5f * dp, paint)
-
-        // 7. High-Contrast Text with Dual Chevrons
         textPaint.reset()
         textPaint.isAntiAlias = true
-        textPaint.textAlign = Paint.Align.CENTER
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.create("sans-serif", Typeface.BOLD)
-        textPaint.textSize = SettingsLayoutCalculator.backTextSize(viewWidth, dp, viewHeight)
-        textPaint.letterSpacing = 0.06f
+        textPaint.letterSpacing = 0.035f
+        textPaint.textSize = textBaseSize
+        val measuredLabelWidth = textPaint.measureText(label)
+        if (measuredLabelWidth > maxTextWidth && measuredLabelWidth > 0f) {
+            textPaint.textSize = (textBaseSize * maxTextWidth / measuredLabelWidth).coerceAtLeast(11f * dp)
+        }
+        val displayLabel = ellipsizeForPaint(label, textPaint, maxTextWidth)
+        val labelWidth = textPaint.measureText(displayLabel).coerceAtMost(maxTextWidth)
+        val groupWidth = badgeRadius * 2f + gap + labelWidth
+        val groupLeft = scratchRect.centerX() - groupWidth * 0.5f
+        val badgeCenterX = groupLeft + badgeRadius
+
+        paint.style = Paint.Style.FILL
+        paint.color = if (active) 0xFF0C3A4A.toInt() else 0xFF0A1B2B.toInt()
+        canvas.drawCircle(badgeCenterX, arrowCenterY, badgeRadius + 1.5f * dp, paint)
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 1.1f * dp
+        paint.color = if (active) 0xCC65F3FF.toInt() else withAlpha(KavvoroPalette.cyan, 180)
+        canvas.drawCircle(badgeCenterX, arrowCenterY, badgeRadius, paint)
+        paint.style = Paint.Style.FILL
+        paint.color = KavvoroPalette.pink
+        canvas.drawCircle(badgeCenterX + badgeRadius * 0.72f, arrowCenterY - badgeRadius * 0.68f, 1.7f * dp, paint)
+
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 2f * dp
+        paint.strokeCap = Paint.Cap.ROUND
+        paint.strokeJoin = Paint.Join.ROUND
+        paint.color = if (active) 0xFFFFFFFF.toInt() else 0xFF6AF1FF.toInt()
+        val arrowSize = 6f * dp
+        tempPath.reset()
+        tempPath.moveTo(badgeCenterX + arrowSize * 0.85f, arrowCenterY)
+        tempPath.lineTo(badgeCenterX - arrowSize, arrowCenterY)
+        tempPath.moveTo(badgeCenterX - arrowSize * 0.25f, arrowCenterY - arrowSize * 0.72f)
+        tempPath.lineTo(badgeCenterX - arrowSize, arrowCenterY)
+        tempPath.lineTo(badgeCenterX - arrowSize * 0.25f, arrowCenterY + arrowSize * 0.72f)
+        canvas.drawPath(tempPath, paint)
+        paint.strokeCap = Paint.Cap.BUTT
+        paint.strokeJoin = Paint.Join.MITER
+
+        textPaint.textAlign = Paint.Align.LEFT
         textPaint.color = 0xFFFFFFFF.toInt()
-        textPaint.setShadowLayer(4f * dp, 0f, 1.5f * dp, 0xAA000000.toInt())
-        canvas.drawText("◀◀   $label", scratchRect2.centerX(), scratchRect2.centerY() + textPaint.textSize * 0.35f, textPaint)
+        textPaint.setShadowLayer(3f * dp, 0f, 1f * dp, 0x99000000.toInt())
+        val baseline = arrowCenterY - (textPaint.ascent() + textPaint.descent()) * 0.5f
+        canvas.drawText(displayLabel, badgeCenterX + badgeRadius + gap, baseline, textPaint)
         textPaint.clearShadowLayer()
         textPaint.letterSpacing = 0f
+        paint.shader = null
+        paint.style = Paint.Style.FILL
     }
 
     fun drawTabPill(
