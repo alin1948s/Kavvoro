@@ -698,7 +698,7 @@ object HomeMenuRenderer {
         drawStatChip3D(
             canvas = canvas,
             rect = scratch,
-            iconBmp = worldBitmap("ic_stat_star_3d"),
+            iconBmp = worldBitmap("ic_stat_level_3d"),
             label = HomeCopy.level(context),
             value = currentLevel.toString(),
             paint = paint,

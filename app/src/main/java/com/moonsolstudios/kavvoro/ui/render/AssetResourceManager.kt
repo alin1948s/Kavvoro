@@ -141,7 +141,7 @@ object AssetResourceManager {
         "planet_cyan" to R.drawable.planet_blue_ring,
         "planet_magenta" to R.drawable.planet_pink_wink,
         "ic_stat_flame_3d" to R.drawable.ic_stat_flame_3d,
-        "ic_stat_star_3d" to R.drawable.ic_stat_star_3d,
+        "ic_stat_level_3d" to R.drawable.ic_stat_level_3d,
         "ic_stat_hype_3d" to R.drawable.ic_stat_hype_3d,
         "btn_settings_3d" to R.drawable.btn_settings_3d,
         "home_portal_disc" to R.drawable.home_portal_disc,
@@ -173,7 +173,7 @@ object AssetResourceManager {
             "home_card_art_missions",
             "home_card_art_leaderboard",
             "ic_stat_flame_3d",
-            "ic_stat_star_3d",
+            "ic_stat_level_3d",
             "ic_stat_hype_3d",
             "btn_settings_3d"
         )
