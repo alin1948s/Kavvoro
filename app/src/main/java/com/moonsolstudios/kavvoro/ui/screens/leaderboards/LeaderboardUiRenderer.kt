@@ -85,28 +85,32 @@ object LeaderboardUiRenderer {
         // Back button
         drawBackButton(canvas, backButton, active)
 
-        // Header titles
+        // Keep the title block between the leading Back control and trailing status pill.
         textPaint.reset()
         textPaint.isAntiAlias = true
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.typeface = oxaniumBold
         textPaint.textSize = UiTypography.EYEBROW_DP * dp
         textPaint.color = 0xFF1DE8C8.toInt()
-        val kicker = fitText(t("Global Hall of Fame // Top Sigmas").uppercase(), (right - left - 28f * dp).coerceAtLeast(50f * dp))
-        canvas.drawText("✦ $kicker ✦", left + 14f * dp, top + 14f * dp, textPaint)
+        val statusPillW = minOf(120f * dp, (right - left) * 0.34f).coerceAtLeast(80f * dp)
+        val statusPillH = 20f * dp
+        val pillRight = right - 14f * dp
+        val pillLeft = pillRight - statusPillW
+        val textLeft = maxOf(left + 14f * dp, backButton.right + 12f * dp)
+        val textRight = pillLeft - 10f * dp
+        val textWidth = (textRight - textLeft).coerceAtLeast(1f * dp)
+        val kickerWidth = (textWidth - 20f * dp).coerceAtLeast(1f * dp)
+        val kicker = fitText(t("Global Hall of Fame // Top Sigmas").uppercase(), kickerWidth)
+        canvas.drawText("✦ $kicker ✦", textLeft, top + 14f * dp, textPaint)
 
         textPaint.textSize = UiTypography.PANEL_TITLE_DP * dp
         textPaint.color = 0xFFF7F4FF.toInt()
         textPaint.setShadowLayer(8f * dp, 0f, 0f, 0x881DE8C8.toInt())
-        val titleText = fitText(t("LEADERBOARDS").uppercase(), (backButton.left - left - 18f * dp).coerceAtLeast(80f * dp))
-        canvas.drawText(titleText, left + 14f * dp, top + 34f * dp, textPaint)
+        val titleText = fitText(t("LEADERBOARDS").uppercase(), textWidth)
+        canvas.drawText(titleText, textLeft, top + 34f * dp, textPaint)
         textPaint.clearShadowLayer()
 
-        // Google Play connection status pill (next to back button)
-        val statusPillW = 120f * dp
-        val statusPillH = 20f * dp
-        val pillRight = backButton.left - 10f * dp
-        val pillLeft = pillRight - statusPillW
+        // Google Play connection status pill, anchored to the trailing edge.
         val pillTop = top + (plaqueH - statusPillH) * 0.5f
         scratchRect2.set(pillLeft, pillTop, pillRight, pillTop + statusPillH)
 

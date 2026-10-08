@@ -65,9 +65,9 @@ object CollectionLayoutCalculator {
         val contentWidth = contentRight - contentLeft
         val size = 42f * dp
         backButton.apply {
-            left = contentRight - size
+            left = contentLeft
             top = safeTop22
-            right = contentRight
+            right = contentLeft + size
             bottom = safeTop22 + size
         }
         restoreButton.apply {

@@ -133,6 +133,10 @@ class CollectionSortingAndFilterTest {
             itemRects = itemRects
         )
 
+        assertEquals("Back button should use the shared leading-edge position", contentLeft, backButton.left, 0.01f)
+        assertEquals(contentLeft + 42f * dp, backButton.right, 0.01f)
+        assertEquals("Restore button should preserve its trailing inset", contentRight - 50f * dp, restoreButton.right, 0.01f)
+        assertTrue("Header controls should not overlap", backButton.right < restoreButton.left)
         assertFalse("sortButtonRect should not be empty", CollectionTouchController.sortButtonRect.isEmpty)
 
         val firstPod = itemRects[0]

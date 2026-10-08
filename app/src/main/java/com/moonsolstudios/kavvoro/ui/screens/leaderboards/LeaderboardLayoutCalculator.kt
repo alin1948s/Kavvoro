@@ -19,13 +19,13 @@ object LeaderboardLayoutCalculator {
         leaderboardItemRects: MutableList<RectF>
     ) {
         val backSize = 44f * dp
-        val backLeft = contentRight - backSize
+        val backLeft = side
         val backBottom = backTop + backSize
         leaderboardBackButton.left = backLeft
         leaderboardBackButton.top = backTop
-        leaderboardBackButton.right = contentRight
+        leaderboardBackButton.right = backLeft + backSize
         leaderboardBackButton.bottom = backBottom
-        leaderboardBackButton.set(backLeft, backTop, contentRight, backBottom)
+        leaderboardBackButton.set(backLeft, backTop, backLeft + backSize, backBottom)
         val gap = 10f * dp
         val height = min(88f * dp, (viewHeight - itemsTop - 94f * dp - gap * 3f) / 4f)
         repeat(4) { index ->

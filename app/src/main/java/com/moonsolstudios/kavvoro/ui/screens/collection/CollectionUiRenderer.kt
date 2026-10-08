@@ -117,22 +117,27 @@ object CollectionUiRenderer {
         paint.color = 0x44FFFFFF
         canvas.drawLine(left + 14f * dp, top + 1f * dp, right - 14f * dp, top + 1f * dp, paint)
 
-        // Protocol kicker
+        val textLeft = backButton.right + 12f * dp
+        val textRight = restoreButton.left - 10f * dp
+        val textWidth = (textRight - textLeft).coerceAtLeast(1f * dp)
+
+        // Protocol kicker stays clear of both navigation controls.
         textPaint.reset()
         textPaint.isAntiAlias = true
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.create("sans-serif", Typeface.BOLD)
         textPaint.textSize = UiTypography.EYEBROW_DP * dp
         textPaint.color = 0xFF1DE8C8.toInt()
-        val kicker = fitText(t("Brainrot Vault // 50 Meme Legends").uppercase(), (right - left - 28f * dp).coerceAtLeast(50f * dp))
-        canvas.drawText("✦ $kicker ✦", left + 14f * dp, top + 14f * dp, textPaint)
+        val kickerWidth = (textWidth - 20f * dp).coerceAtLeast(1f * dp)
+        val kicker = fitText(t("Brainrot Vault // 50 Meme Legends").uppercase(), kickerWidth)
+        canvas.drawText("✦ $kicker ✦", textLeft, top + 14f * dp, textPaint)
 
         // Main title
         textPaint.textSize = UiTypography.PANEL_TITLE_DP * dp
         textPaint.color = 0xFFF7F4FF.toInt()
         textPaint.setShadowLayer(8f * dp, 0f, 0f, 0x881DE8C8.toInt())
-        val titleText = fitText(t("COLLECTION").uppercase(), (restoreButton.left - left - 24f * dp).coerceAtLeast(80f * dp))
-        canvas.drawText(titleText, left + 14f * dp, top + 34f * dp, textPaint)
+        val titleText = fitText(t("COLLECTION").uppercase(), textWidth)
+        canvas.drawText(titleText, textLeft, top + 34f * dp, textPaint)
         textPaint.clearShadowLayer()
 
         // Back button

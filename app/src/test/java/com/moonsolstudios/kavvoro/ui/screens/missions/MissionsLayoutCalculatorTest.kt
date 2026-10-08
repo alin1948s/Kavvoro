@@ -17,6 +17,8 @@ class MissionsLayoutCalculatorTest {
         assertTrue(layout.dailyTabRect.left >= 0f && layout.dailyTabRect.right <= 1080f)
         assertTrue(layout.riftChallengesTabRect.left >= 0f && layout.riftChallengesTabRect.right <= 1080f)
         assertTrue(layout.dailyTabRect.right < layout.riftChallengesTabRect.left)
+        assertTrue("Mission title should start after the Back button", layout.backButtonRect.right < layout.titleRect.left)
+        assertTrue("Mission header stack should be vertically centered against Back", layout.backButtonRect.centerY() in (layout.titleRect.top..layout.subtitleRect.bottom))
         assertTrue(layout.summaryRect.left >= 0f && layout.summaryRect.right <= 1080f)
         assertTrue(layout.summaryRect.bottom < layout.cardRects.first().top)
         layout.cardRects.take(layout.visibleMissionCount).forEachIndexed { index, card ->
