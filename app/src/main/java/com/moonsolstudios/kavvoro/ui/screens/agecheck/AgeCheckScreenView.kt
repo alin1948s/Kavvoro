@@ -1,10 +1,12 @@
 package com.moonsolstudios.kavvoro.ui.screens.agecheck
 
+import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.graphics.Typeface
@@ -19,6 +21,8 @@ import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.view.VelocityTracker
+import android.view.animation.DecelerateInterpolator
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.FrameLayout
 import android.widget.ImageView
@@ -31,6 +35,7 @@ import com.moonsolstudios.kavvoro.privacy.AgeGroup
 import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
 import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import kotlin.math.abs
+import kotlin.math.min
 import kotlin.math.roundToInt
 
 /** Startup age selection screen. The exact age remains in memory and is never persisted. */
@@ -221,27 +226,14 @@ class AgeCheckScreenView @JvmOverloads constructor(
         return border
     }
 
-    private fun continueButton() = TextView(context).apply {
-        text = t("CONTINUE").uppercase(KavvoroI18n.active(context).let { locale ->
-            java.util.Locale.forLanguageTag(locale.code.replace('_', '-'))
-        })
-        setTextColor(Color.rgb(6, 22, 43))
-        setTextSize(20f)
-        letterSpacing = 0.08f
-        gravity = Gravity.CENTER
-        typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
-        isClickable = true
-        isFocusable = true
-        contentDescription = text
-        background = android.graphics.drawable.GradientDrawable(
-            android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
-            intArrayOf(KavvoroPalette.cyan, KavvoroPalette.blue)
-        ).apply { cornerRadius = dp(16f).toFloat() }
-        elevation = dp(5f).toFloat()
-        setOnClickListener {
-            performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+    private fun continueButton(): View {
+        val locale = java.util.Locale.forLanguageTag(KavvoroI18n.active(context).code.replace('_', '-'))
+        val button = AgeContinueButton(context, t("CONTINUE").uppercase(locale))
+        button.setOnClickListener {
+            button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             onConfirm(ageGroupForAge(selectedAge))
         }
+        return button
     }
 
     private fun privacyNote() = TextView(context).apply {
@@ -311,12 +303,165 @@ internal fun ageGroupForAge(age: Int): AgeGroup = when {
     else -> AgeGroup.ADULT
 }
 
+/** A compact portal-style call to action that stays legible across translated labels. */
+private class AgeContinueButton(context: Context, private val label: String) : View(context) {
+    private val density = resources.displayMetrics.density
+    private val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
+    private val facePaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val accentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+    private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeCap = Paint.Cap.ROUND
+        strokeJoin = Paint.Join.ROUND
+    }
+    private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.rgb(241, 249, 255)
+        textAlign = Paint.Align.CENTER
+        typeface = Typeface.create("sans-serif-medium", Typeface.BOLD)
+    }
+    private val shellPath = Path()
+    private val facePath = Path()
+    private val iconPath = Path()
+
+    init {
+        isClickable = true
+        isFocusable = true
+        importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
+        contentDescription = label
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        val inset = dp(1f)
+        val left = inset
+        val top = inset
+        val right = width - inset
+        val bottom = height - inset
+        val cut = dp(13f).coerceAtMost(height * 0.24f)
+        createBeveledPath(shellPath, left, top, right, bottom, cut)
+
+        val scale = if (isPressed) 0.985f else 1f
+        val centerX = width / 2f
+        val centerY = height / 2f
+        canvas.save()
+        canvas.scale(scale, scale, centerX, centerY)
+
+        facePaint.shader = null
+        facePaint.color = 0xFF020A1C.toInt()
+        canvas.save()
+        canvas.translate(0f, dp(3f))
+        canvas.drawPath(shellPath, facePaint)
+        canvas.restore()
+
+        edgePaint.strokeWidth = dp(1.5f)
+        edgePaint.shader = LinearGradient(
+            left, top, right, bottom,
+            intArrayOf(KavvoroPalette.cyan, KavvoroPalette.blue, KavvoroPalette.magenta),
+            null, Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(shellPath, edgePaint)
+        edgePaint.shader = null
+
+        createBeveledPath(facePath, left + dp(2.5f), top + dp(2.5f),
+            right - dp(2.5f), bottom - dp(2.5f), cut - dp(1.5f))
+        facePaint.shader = LinearGradient(
+            left, top, right, bottom,
+            if (isPressed) intArrayOf(0xFF145A78.toInt(), 0xFF172957.toInt(), 0xFF301C57.toInt())
+            else intArrayOf(0xFF123B5B.toInt(), 0xFF101D3C.toInt(), 0xFF21183F.toInt()),
+            null, Shader.TileMode.CLAMP
+        )
+        canvas.drawPath(facePath, facePaint)
+        facePaint.shader = null
+
+        // One restrained glint and one energy seam keep the layered plate visually connected.
+        accentPaint.strokeWidth = dp(1.2f)
+        accentPaint.shader = LinearGradient(left + dp(20f), top, right - dp(20f), top,
+            intArrayOf(0x0031E8FF, 0xCC31E8FF.toInt(), 0xAAD93DFF.toInt(), 0x00D93DFF),
+            null, Shader.TileMode.CLAMP)
+        canvas.drawLine(left + cut + dp(9f), top + dp(1.5f), right - cut - dp(9f), top + dp(1.5f), accentPaint)
+        accentPaint.strokeWidth = dp(2.2f)
+        canvas.drawLine(left + dp(21f), bottom - dp(1.5f), right - dp(21f), bottom - dp(1.5f), accentPaint)
+        accentPaint.shader = null
+
+        drawPortalMark(canvas, left + dp(30f), centerY)
+        drawForwardMark(canvas, right - dp(29f), centerY)
+
+        val textMaxWidth = (width - dp(108f)).coerceAtLeast(dp(80f))
+        var textSize = dp(19f)
+        textPaint.textSize = textSize
+        while (textPaint.measureText(label) > textMaxWidth && textSize > dp(13f)) {
+            textSize -= dp(0.5f)
+            textPaint.textSize = textSize
+        }
+        textPaint.alpha = if (isPressed) 255 else 244
+        canvas.drawText(label, centerX, centerY - (textPaint.ascent() + textPaint.descent()) / 2f, textPaint)
+        canvas.restore()
+    }
+
+    override fun onInitializeAccessibilityNodeInfo(info: AccessibilityNodeInfo) {
+        super.onInitializeAccessibilityNodeInfo(info)
+        info.className = android.widget.Button::class.java.name
+        info.contentDescription = label
+    }
+
+    private fun drawPortalMark(canvas: Canvas, centerX: Float, centerY: Float) {
+        val size = dp(10f)
+        iconPath.reset()
+        iconPath.moveTo(centerX, centerY - size)
+        iconPath.lineTo(centerX + size, centerY)
+        iconPath.lineTo(centerX, centerY + size)
+        iconPath.lineTo(centerX - size, centerY)
+        iconPath.close()
+        iconPaint.strokeWidth = dp(1.4f)
+        iconPaint.color = 0xFF31E8FF.toInt()
+        iconPaint.setShadowLayer(dp(5f), 0f, 0f, 0xAA31E8FF.toInt())
+        canvas.drawPath(iconPath, iconPaint)
+        iconPaint.clearShadowLayer()
+        iconPaint.style = Paint.Style.FILL
+        canvas.drawCircle(centerX, centerY, dp(2.2f), iconPaint)
+        iconPaint.style = Paint.Style.STROKE
+    }
+
+    private fun drawForwardMark(canvas: Canvas, centerX: Float, centerY: Float) {
+        iconPath.reset()
+        iconPath.moveTo(centerX - dp(5f), centerY - dp(6f))
+        iconPath.lineTo(centerX + dp(1f), centerY)
+        iconPath.lineTo(centerX - dp(5f), centerY + dp(6f))
+        iconPath.moveTo(centerX - dp(1f), centerY - dp(6f))
+        iconPath.lineTo(centerX + dp(5f), centerY)
+        iconPath.lineTo(centerX - dp(1f), centerY + dp(6f))
+        iconPaint.color = 0xFF58E9FF.toInt()
+        iconPaint.strokeWidth = dp(1.8f)
+        canvas.drawPath(iconPath, iconPaint)
+    }
+
+    private fun createBeveledPath(path: Path, left: Float, top: Float, right: Float, bottom: Float, cut: Float) {
+        path.reset()
+        path.moveTo(left + cut, top)
+        path.lineTo(right - cut, top)
+        path.lineTo(right, top + cut)
+        path.lineTo(right, bottom - cut)
+        path.lineTo(right - cut, bottom)
+        path.lineTo(left + cut, bottom)
+        path.lineTo(left, bottom - cut)
+        path.lineTo(left, top + cut)
+        path.close()
+    }
+
+    private fun dp(value: Float): Float = value * density
+}
+
 private class AgePickerView(context: Context, initialAge: Int) : View(context) {
     private val density = resources.displayMetrics.density
     private val selectedTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(244, 246, 255)
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
+        setShadowLayer(dp(8f), 0f, 0f, 0x8831E8FF.toInt())
     }
     private val adjacentTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFF8995B9.toInt()
@@ -325,7 +470,18 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
     }
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val railPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeWidth = dp(1f) }
-    private var downY = 0f
+    private val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        strokeCap = Paint.Cap.ROUND
+        strokeWidth = dp(2f)
+    }
+    private var centerGlow: Shader? = null
+    private var railShader: Shader? = null
+    private var itemExtentPx = dp(70f)
+    private var scrollOffsetPx = 0f
+    private var lastY = 0f
+    private var dragDistancePx = 0f
+    private var velocityTracker: VelocityTracker? = null
+    private var scrollAnimator: ValueAnimator? = null
     private var age = initialAge.coerceIn(AgeCheckScreenView.MIN_AGE, AgeCheckScreenView.MAX_AGE)
 
     var onAgeChanged: ((Int) -> Unit)? = null
@@ -338,75 +494,116 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
         contentDescription = accessibilityLabel()
     }
 
+    override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight)
+        itemExtentPx = min(dp(70f), height * 0.29f).coerceAtLeast(dp(52f))
+        centerGlow = RadialGradient(
+            width / 2f, height / 2f, maxOf(width * 0.44f, dp(60f)),
+            intArrayOf(0x4431E8FF, 0x1A7B43FF, Color.TRANSPARENT),
+            floatArrayOf(0f, 0.58f, 1f), Shader.TileMode.CLAMP
+        )
+        railShader = LinearGradient(
+            dp(12f), height / 2f, width - dp(12f), height / 2f,
+            intArrayOf(0x0031E8FF, 0xB431E8FF.toInt(), 0xB4D93DFF.toInt(), 0x00D93DFF),
+            null, Shader.TileMode.CLAMP
+        )
+    }
+
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         val centerX = width / 2f
         val centerY = height / 2f
         val radiusX = width * 0.44f
         val radiusY = dp(60f)
-        glowPaint.shader = RadialGradient(
-            centerX,
-            centerY,
-            maxOf(radiusX, radiusY),
-            intArrayOf(0x4431E8FF, 0x1A7B43FF, Color.TRANSPARENT),
-            floatArrayOf(0f, 0.58f, 1f),
-            Shader.TileMode.CLAMP
-        )
+        glowPaint.shader = centerGlow
         canvas.drawOval(centerX - radiusX, centerY - radiusY, centerX + radiusX,
             centerY + radiusY, glowPaint)
         glowPaint.shader = null
 
-        val gap = minOf(dp(70f), height * 0.29f)
+        val gap = itemExtentPx
         val selectedSize = minOf(dp(76f), height * 0.38f)
-        val adjacentSize = minOf(dp(28f), height * 0.16f)
-        selectedTextPaint.textSize = selectedSize
-        adjacentTextPaint.textSize = adjacentSize
-        val rail = LinearGradient(
-            dp(12f).toFloat(), centerY, width - dp(12f).toFloat(), centerY,
-            intArrayOf(0x0031E8FF, 0xB431E8FF.toInt(), 0xB4D93DFF.toInt(), 0x00D93DFF),
-            null,
-            Shader.TileMode.CLAMP
-        )
-        railPaint.shader = rail
+        railPaint.shader = railShader
         canvas.drawLine(dp(14f).toFloat(), centerY - gap * 0.55f,
             width - dp(14f).toFloat(), centerY - gap * 0.55f, railPaint)
         canvas.drawLine(dp(14f).toFloat(), centerY + gap * 0.55f,
             width - dp(14f).toFloat(), centerY + gap * 0.55f, railPaint)
         railPaint.shader = null
 
-        if (age > AgeCheckScreenView.MIN_AGE) {
-            canvas.drawText((age - 1).toString(), centerX,
-                centerY - gap + adjacentSize * 0.34f, adjacentTextPaint)
+        for (step in -2..2) {
+            val candidateAge = age + step
+            if (candidateAge !in AgeCheckScreenView.MIN_AGE..AgeCheckScreenView.MAX_AGE) continue
+            val baselineY = centerY + step * gap - scrollOffsetPx
+            val distance = abs(baselineY - centerY) / gap
+            if (distance > 2.1f) continue
+            val scale = 1f - 0.62f * distance.coerceAtMost(1f)
+            val textSize = selectedSize * scale
+            val focused = distance < 0.48f
+            val paint = if (focused) selectedTextPaint else adjacentTextPaint
+            paint.textSize = textSize
+            paint.alpha = (255 * (1f - 0.47f * distance.coerceAtMost(1.7f))).toInt().coerceIn(35, 255)
+            val tilt = ((baselineY - centerY) / gap * 7f).coerceIn(-12f, 12f)
+            canvas.save()
+            canvas.rotate(tilt, centerX, baselineY)
+            canvas.drawText(candidateAge.toString(), centerX, baselineY + textSize * 0.34f, paint)
+            canvas.restore()
         }
-        canvas.drawText(age.toString(), centerX, centerY + selectedSize * 0.34f, selectedTextPaint)
-        if (age < AgeCheckScreenView.MAX_AGE) {
-            canvas.drawText((age + 1).toString(), centerX,
-                centerY + gap + adjacentSize * 0.34f, adjacentTextPaint)
-        }
+        selectedTextPaint.alpha = 255
+        adjacentTextPaint.alpha = 255
+
+        markerPaint.color = 0xFF31E8FF.toInt()
+        markerPaint.alpha = (210 - abs(scrollOffsetPx / gap) * 50f).toInt().coerceIn(120, 210)
+        val markerX = width * 0.19f
+        canvas.drawLine(markerX, centerY - dp(7f), markerX, centerY + dp(7f), markerPaint)
+        canvas.drawLine(width - markerX, centerY - dp(7f), width - markerX, centerY + dp(7f), markerPaint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                downY = event.y
+                scrollAnimator?.cancel()
+                scrollAnimator = null
+                velocityTracker?.recycle()
+                velocityTracker = VelocityTracker.obtain()
+                velocityTracker?.addMovement(event)
+                lastY = event.y
+                dragDistancePx = 0f
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                velocityTracker?.addMovement(event)
+                val delta = lastY - event.y
+                lastY = event.y
+                dragDistancePx += abs(delta)
+                if (delta != 0f) applyScrollDelta(delta, withHaptics = true)
                 return true
             }
             MotionEvent.ACTION_UP -> {
-                val delta = downY - event.y
-                if (abs(delta) > dp(12f)) {
-                    val steps = (abs(delta) / dp(48f)).roundToInt().coerceAtLeast(1)
-                    adjustAge(if (delta > 0f) steps else -steps)
-                } else if (event.y < height * 0.42f) {
-                    adjustAge(-1)
-                } else if (event.y > height * 0.58f) {
-                    adjustAge(1)
+                velocityTracker?.addMovement(event)
+                velocityTracker?.computeCurrentVelocity(1000, dp(4200f))
+                if (dragDistancePx < dp(10f)) {
+                    if (event.y < height * 0.42f) animateAgeSteps(-1)
+                    else if (event.y > height * 0.58f) animateAgeSteps(1)
+                } else {
+                    settleScroll(velocityTracker?.yVelocity ?: 0f)
                 }
+                recycleVelocityTracker()
                 performClick()
                 return true
             }
-            MotionEvent.ACTION_CANCEL -> return true
+            MotionEvent.ACTION_CANCEL -> {
+                settleScroll(0f)
+                recycleVelocityTracker()
+                return true
+            }
         }
         return true
+    }
+
+    override fun onDetachedFromWindow() {
+        scrollAnimator?.cancel()
+        scrollAnimator = null
+        recycleVelocityTracker()
+        super.onDetachedFromWindow()
     }
 
     override fun performClick(): Boolean {
@@ -425,23 +622,91 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
 
     override fun performAccessibilityAction(action: Int, arguments: android.os.Bundle?): Boolean {
         when (action) {
-            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD -> adjustAge(1)
-            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD -> adjustAge(-1)
+            AccessibilityNodeInfo.ACTION_SCROLL_FORWARD -> animateAgeSteps(1)
+            AccessibilityNodeInfo.ACTION_SCROLL_BACKWARD -> animateAgeSteps(-1)
             else -> return super.performAccessibilityAction(action, arguments)
         }
         return true
     }
 
-    private fun adjustAge(delta: Int) = setAge(age + delta)
+    private fun animateAgeSteps(steps: Int) {
+        val targetSteps = (scrollOffsetPx / itemExtentPx).roundToInt() + steps
+        animateToSteps(targetSteps.coerceIn(-12, 12))
+    }
 
-    private fun setAge(value: Int) {
+    private fun settleScroll(fingerVelocityY: Float) {
+        val projected = scrollOffsetPx - fingerVelocityY * 0.14f
+        val targetSteps = (projected / itemExtentPx).roundToInt().coerceIn(-12, 12)
+        animateToSteps(targetSteps)
+    }
+
+    private fun animateToSteps(targetSteps: Int) {
+        scrollAnimator?.cancel()
+        val targetOffset = targetSteps * itemExtentPx
+        val travel = targetOffset - scrollOffsetPx
+        if (abs(travel) < 1f) {
+            scrollOffsetPx = 0f
+            invalidate()
+            return
+        }
+        var previousValue = 0f
+        val animator = ValueAnimator.ofFloat(0f, travel).apply {
+            duration = (190L + abs(targetSteps) * 24L).coerceIn(190L, 480L)
+            interpolator = DecelerateInterpolator(1.45f)
+            addUpdateListener { animation ->
+                val value = animation.animatedValue as Float
+                applyScrollDelta(value - previousValue, withHaptics = true)
+                previousValue = value
+            }
+            addListener(object : android.animation.AnimatorListenerAdapter() {
+                override fun onAnimationEnd(animation: android.animation.Animator) {
+                    scrollOffsetPx = 0f
+                    scrollAnimator = null
+                    invalidate()
+                }
+            })
+        }
+        scrollAnimator = animator
+        animator.start()
+    }
+
+    private fun applyScrollDelta(delta: Float, withHaptics: Boolean) {
+        scrollOffsetPx += delta.coerceIn(-itemExtentPx * 12f, itemExtentPx * 12f)
+        var crossedSteps = 0
+        while (scrollOffsetPx >= itemExtentPx && crossedSteps < 12) {
+            if (age >= AgeCheckScreenView.MAX_AGE) {
+                scrollOffsetPx = itemExtentPx * 0.16f
+                break
+            }
+            scrollOffsetPx -= itemExtentPx
+            updateAge(age + 1, withHaptics)
+            crossedSteps++
+        }
+        while (scrollOffsetPx <= -itemExtentPx && crossedSteps > -12) {
+            if (age <= AgeCheckScreenView.MIN_AGE) {
+                scrollOffsetPx = -itemExtentPx * 0.16f
+                break
+            }
+            scrollOffsetPx += itemExtentPx
+            updateAge(age - 1, withHaptics)
+            crossedSteps--
+        }
+        postInvalidateOnAnimation()
+    }
+
+    private fun updateAge(value: Int, withHaptics: Boolean) {
         val updated = value.coerceIn(AgeCheckScreenView.MIN_AGE, AgeCheckScreenView.MAX_AGE)
         if (updated == age) return
         age = updated
+        if (withHaptics) performHapticFeedback(HapticFeedbackConstants.CLOCK_TICK)
         contentDescription = accessibilityLabel()
-        invalidate()
         onAgeChanged?.invoke(age)
         sendAccessibilityEvent(android.view.accessibility.AccessibilityEvent.TYPE_VIEW_SELECTED)
+    }
+
+    private fun recycleVelocityTracker() {
+        velocityTracker?.recycle()
+        velocityTracker = null
     }
 
     private fun accessibilityLabel(): String = "$age. ${KavvoroI18n.t(context, "Enter your age in years.")}"
