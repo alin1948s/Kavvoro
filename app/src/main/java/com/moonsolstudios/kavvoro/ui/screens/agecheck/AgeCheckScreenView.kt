@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.text.SpannableString
@@ -420,15 +421,19 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
         color = Color.rgb(244, 246, 255)
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
+        setShadowLayer(dp(4f), 0f, 0f, 0x5531E8FF.toInt())
     }
     private val adjacentTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFF8995B9.toInt()
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create("sans-serif", Typeface.NORMAL)
     }
+    private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val railPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeWidth = dp(1f) }
     private var railShader: Shader? = null
+    private var numberGlowShader: Shader? = null
     private var itemExtentPx = dp(70f)
+    private var selectedNumberSizePx = dp(60f)
     private var scrollOffsetPx = 0f
     private var lastY = 0f
     private var dragDistancePx = 0f
@@ -449,6 +454,12 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
         itemExtentPx = min(dp(70f), height * 0.29f).coerceAtLeast(dp(52f))
+        selectedNumberSizePx = minOf(dp(60f), height * 0.34f)
+        numberGlowShader = RadialGradient(
+            width / 2f, height / 2f, selectedNumberSizePx * 1.3f,
+            intArrayOf(0x2631E8FF, 0x1431E8FF, Color.TRANSPARENT),
+            floatArrayOf(0f, 0.46f, 1f), Shader.TileMode.CLAMP
+        )
         railShader = LinearGradient(
             dp(12f), height / 2f, width - dp(12f), height / 2f,
             intArrayOf(0x0031E8FF, 0xB431E8FF.toInt(), 0xB4D93DFF.toInt(), 0x00D93DFF),
@@ -461,12 +472,18 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
         val centerX = width / 2f
         val centerY = height / 2f
         val gap = itemExtentPx
-        val selectedSize = minOf(dp(60f), height * 0.34f)
+        val selectedSize = selectedNumberSizePx
+        glowPaint.shader = numberGlowShader
+        canvas.drawCircle(centerX, centerY, selectedSize * 1.3f, glowPaint)
+        glowPaint.shader = null
+
+        // Keep the selector rails outside the focused numeral while respecting the wheel pitch.
+        val railOffset = maxOf(gap * 0.62f, selectedSize * 0.55f).coerceAtMost(gap * 0.72f)
         railPaint.shader = railShader
-        canvas.drawLine(dp(14f).toFloat(), centerY - gap * 0.55f,
-            width - dp(14f).toFloat(), centerY - gap * 0.55f, railPaint)
-        canvas.drawLine(dp(14f).toFloat(), centerY + gap * 0.55f,
-            width - dp(14f).toFloat(), centerY + gap * 0.55f, railPaint)
+        canvas.drawLine(dp(14f), centerY - railOffset,
+            width - dp(14f), centerY - railOffset, railPaint)
+        canvas.drawLine(dp(14f), centerY + railOffset,
+            width - dp(14f), centerY + railOffset, railPaint)
         railPaint.shader = null
 
         for (step in -2..2) {
