@@ -51,7 +51,6 @@ object HomeMenuRenderer {
     private val laserPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val badgePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val GEAR_ANGLE_FACTORS = floatArrayOf(-0.50f, -0.34f, -0.21f, 0.21f, 0.34f, 0.50f)
-    private var cachedChevronDrawable: android.graphics.drawable.Drawable? = null
     private var cachedTrophyDrawable: android.graphics.drawable.Drawable? = null
     private var cachedNavTitleSize = Float.NaN
     private var cachedNavTitleWidth = Float.NaN
@@ -93,7 +92,7 @@ object HomeMenuRenderer {
             navTitleMeasurePaint.measureText(missionsTitle),
             leaderboardTitle?.let(navTitleMeasurePaint::measureText) ?: 0f
         )
-        val availableWidth = (cardWidth - 50f * dp).coerceAtLeast(1f * dp)
+        val availableWidth = (cardWidth - 28f * dp).coerceAtLeast(1f * dp)
         val computedSize = if (widestTitle > availableWidth && widestTitle > 0f) {
             baseSize * (availableWidth / widestTitle)
         } else {
@@ -109,11 +108,6 @@ object HomeMenuRenderer {
         cachedNavTitleSize = computedSize
         return computedSize
     }
-
-    private fun chevronDrawable(context: Context): android.graphics.drawable.Drawable? =
-        cachedChevronDrawable ?: ContextCompat.getDrawable(context, R.drawable.ic_chevron_right)?.mutate()?.also {
-            cachedChevronDrawable = it
-        }
 
     private fun trophyDrawable(context: Context): android.graphics.drawable.Drawable? =
         cachedTrophyDrawable ?: ContextCompat.getDrawable(context, R.drawable.ic_trophy)?.mutate()?.also {
@@ -988,29 +982,9 @@ object HomeMenuRenderer {
         textPaint.color = Color.WHITE
         textPaint.textSize = titleTextSize
         textPaint.letterSpacing = 0.03f
-        val chevronSize = 14f * dp
-        val titleChevronGap = 8f * dp
-        val titleWidth = textPaint.measureText(title)
-        val titleGroupWidth = titleWidth + titleChevronGap + chevronSize
-        val titleGroupLeft = rect.centerX() - titleGroupWidth * 0.5f
-        val titleCenterX = titleGroupLeft + titleWidth * 0.5f
         val titleFm = textPaint.fontMetrics
         val titleBaseline = titleCenterY - (titleFm.ascent + titleFm.descent) / 2f
-        canvas.drawText(title, titleCenterX, titleBaseline, textPaint)
-
-        // Keep the chevron attached to the localized title, with one consistent gap.
-        val chevronLeft = titleGroupLeft + titleWidth + titleChevronGap
-        val chevronTop = titleCenterY - chevronSize * 0.5f
-        chevronDrawable(context)?.let { chevron ->
-            chevron.setBounds(
-                chevronLeft.toInt(),
-                chevronTop.toInt(),
-                (chevronLeft + chevronSize).toInt(),
-                (chevronTop + chevronSize).toInt()
-            )
-            chevron.setTint(withAlpha(accentColor, 220))
-            chevron.draw(canvas)
-        }
+        canvas.drawText(title, rect.centerX(), titleBaseline, textPaint)
 
         if (showSubtitle && subtitle.isNotBlank()) {
             textPaint.reset()
