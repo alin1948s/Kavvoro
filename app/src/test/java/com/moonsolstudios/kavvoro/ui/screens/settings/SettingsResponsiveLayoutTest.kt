@@ -166,16 +166,28 @@ class SettingsResponsiveLayoutTest {
     }
 
     @Test
-    fun audioSliderThumbStaysClearOfPercentCapsuleAtFullVolume() {
+    fun audioSliderRailIsLargeAlignedAndClearOfPercentCapsule() {
         for (spec in testMatrix) {
             val calculator = layoutFor(spec, SettingsTab.AUDIO)
+            val row = calculator.masterButton
+            val slider = calculator.masterSlider
             val largestCapsuleLeft = calculator.masterButton.right - 44f * spec.density
-            val activeThumbRight = calculator.masterSlider.right + 8.4f * spec.density
+            val activeThumbRight = slider.right + 8.4f * spec.density
             val clearance = largestCapsuleLeft - activeThumbRight
+            val expectedTrackY = row.centerY() + minOf(20f * spec.density, row.height() * 0.24f)
 
             assertTrue(
                 "100% thumb must stay clear of the value capsule on ${spec.name} (clearance=$clearance)",
                 clearance >= 4f * spec.density
+            )
+            assertTrue(
+                "Volume rail should remain comfortably wide on ${spec.name} (width=${slider.width()})",
+                slider.width() >= 120f * spec.density
+            )
+            assertEquals("Volume rail should align with the lower control row on ${spec.name}", expectedTrackY, slider.centerY(), 0.5f)
+            assertTrue(
+                "Slider glow should stay within its card on ${spec.name}",
+                slider.centerY() + 18f * spec.density <= row.bottom + 0.5f
             )
         }
     }

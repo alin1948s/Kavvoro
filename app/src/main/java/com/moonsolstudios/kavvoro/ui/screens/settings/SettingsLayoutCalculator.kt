@@ -349,19 +349,15 @@ class SettingsLayoutCalculator {
             return
         }
         val cardWidth = buttonRect.width()
-        // Reserve 16dp for the percentage capsule, the thumb rim, and a clear gap.
-        val thumbAndValueReserve = 16f * dp
-        val sliderRight = buttonRect.right - (44f * dp + thumbAndValueReserve)
-        val nominalSliderWidth = if (cardWidth > 500f * dp) {
-            (cardWidth * 0.40f).coerceIn(160f * dp, 300f * dp)
-        } else if (cardWidth > 380f * dp) {
-            (cardWidth * 0.35f).coerceIn(120f * dp, 200f * dp)
-        } else {
-            (cardWidth * 0.28f).coerceIn(86f * dp, 136f * dp)
-        }
-        val sliderWidth = (nominalSliderWidth - thumbAndValueReserve).coerceAtLeast(70f * dp)
+        val capsuleAndGap = 44f * dp
+        val thumbClearance = 13f * dp
+        val sliderRight = buttonRect.right - capsuleAndGap - thumbClearance
+        val targetSliderWidth = (cardWidth * 0.62f).coerceIn(150f * dp, 420f * dp)
+        val availableWidth = (sliderRight - buttonRect.left).coerceAtLeast(1f)
+        val sliderWidth = minOf(targetSliderWidth, availableWidth)
         val sliderLeft = sliderRight - sliderWidth
-        sliderRect.set(sliderLeft, buttonRect.centerY(), sliderRight, buttonRect.centerY())
+        val trackY = buttonRect.centerY() + minOf(20f * dp, buttonRect.height() * 0.24f)
+        sliderRect.set(sliderLeft, trackY, sliderRight, trackY)
     }
 
     companion object {

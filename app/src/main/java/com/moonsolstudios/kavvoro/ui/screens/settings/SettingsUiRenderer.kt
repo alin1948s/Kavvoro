@@ -155,7 +155,7 @@ object SettingsUiRenderer {
         val fillWidth = rect.width() * (value / 100f)
 
         // 1. Recessed cyber groove channel
-        val grooveHeight = 5.5f * dp
+        val grooveHeight = 7f * dp
         scratchRect.set(rect.left, cy - grooveHeight * 0.5f, rect.right, cy + grooveHeight * 0.5f)
         paint.style = Paint.Style.FILL
         paint.shader = null
@@ -172,7 +172,7 @@ object SettingsUiRenderer {
         paint.color = 0x30FFFFFF.toInt()
         for (step in 1..3) {
             val stepX = rect.left + rect.width() * (step * 0.25f)
-            canvas.drawCircle(stepX, cy, 1.2f * dp, paint)
+            canvas.drawCircle(stepX, cy, 1.4f * dp, paint)
         }
 
         // 3. Active filled luminous track with energy beam
@@ -197,8 +197,8 @@ object SettingsUiRenderer {
 
         // 4. Knurled Cyber Thumb Knob
         val knobX = rect.left + fillWidth
-        val outerRadius = (if (active) 11.5f else 9.5f) * dp
-        val coreRadius = (if (active) 7.5f else 6.2f) * dp
+        val outerRadius = (if (active) 12f else 10f) * dp
+        val coreRadius = (if (active) 8f else 7f) * dp
 
         // Soft glow halo
         paint.style = Paint.Style.FILL
@@ -937,8 +937,6 @@ object SettingsUiRenderer {
         compact: Boolean,
         paint: Paint,
         dp: Float,
-        fitText: (String, Float) -> String,
-        breakpoint: SettingsBreakpoint = SettingsBreakpoint.MOBILE,
         viewWidth: Float = 0f,
         viewHeight: Float = 0f
     ) {
@@ -959,8 +957,19 @@ object SettingsUiRenderer {
         SettingsIconRenderer.drawSettingsIcon(canvas, iconScratchRect, iconId, accent, active, paint, dp)
 
         val textLeft = iconLeft + badgeSize + gap
-        val maxTextWidth = (sliderRect.left - textLeft - 8f * dp).coerceAtLeast(32f * dp)
-        drawRowCopy(canvas, rect, title, subtitle, textLeft, maxTextWidth, 0xFFFFFFFF.toInt(), compact, dp, breakpoint, vw, vh)
+        val valueCapsuleReserve = 56f * dp
+        val maxTextWidth = (rect.right - textLeft - valueCapsuleReserve).coerceAtLeast(32f * dp)
+        drawVolumeRowCopy(
+            canvas = canvas,
+            rect = rect,
+            title = title,
+            subtitle = subtitle,
+            textLeft = textLeft,
+            maxTextWidth = maxTextWidth,
+            dp = dp,
+            viewWidth = vw,
+            viewHeight = vh
+        )
 
         drawSlider(canvas, sliderRect, value, accent, active, paint, dp)
 
@@ -969,8 +978,9 @@ object SettingsUiRenderer {
         val capH = (if (compact) 18f else 20f) * dp
         val capRight = rect.right - 6f * dp
         val capLeft = capRight - capW
-        val capTop = rect.centerY() - capH * 0.5f
-        val capBottom = rect.centerY() + capH * 0.5f
+        val capCenterY = sliderRect.centerY()
+        val capTop = capCenterY - capH * 0.5f
+        val capBottom = capCenterY + capH * 0.5f
         controlScratchRect.set(capLeft, capTop, capRight, capBottom)
 
         // Capsule glass body
@@ -1244,6 +1254,37 @@ object SettingsUiRenderer {
         canvas.restore()
     }
 
+    private fun drawVolumeRowCopy(
+        canvas: Canvas,
+        rect: RectF,
+        title: String,
+        subtitle: String,
+        textLeft: Float,
+        maxTextWidth: Float,
+        dp: Float,
+        viewWidth: Float,
+        viewHeight: Float
+    ) {
+        val titleSize = SettingsLayoutCalculator.rowTitleSize(viewWidth, dp, viewHeight) * 0.82f
+        val subtitleSize = SettingsLayoutCalculator.rowSubtitleSize(viewWidth, dp, viewHeight) * 0.9f
+        val centerY = rect.centerY()
+
+        textPaint.reset()
+        textPaint.isAntiAlias = true
+        textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
+        textPaint.textAlign = Paint.Align.LEFT
+        textPaint.textSize = titleSize
+        textPaint.color = 0xFFF4F8FF.toInt()
+        val fittedTitle = ellipsizeForPaint(title, textPaint, maxTextWidth)
+        canvas.drawText(fittedTitle, textLeft, centerY - 12f * dp, textPaint)
+
+        textPaint.typeface = Typeface.DEFAULT
+        textPaint.textSize = subtitleSize
+        textPaint.color = 0xCCA4C4E0.toInt()
+        val fittedSubtitle = ellipsizeForPaint(subtitle, textPaint, maxTextWidth)
+        canvas.drawText(fittedSubtitle, textLeft, centerY + 4f * dp, textPaint)
+    }
+
     fun drawSettingsScreen(
         canvas: Canvas,
         viewWidth: Float,
@@ -1392,15 +1433,15 @@ object SettingsUiRenderer {
         when (activeSettingsTab) {
             SettingsTab.AUDIO -> {
                 if (!settingsMasterButton.isEmpty) {
-                    drawSliderRow(canvas, settingsMasterButton, settingsMasterSlider, t("MASTER VOLUME"), t("Main game volume"), settingsMasterVolume, KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.MASTER_VOLUME, activeSettingsButton == SettingsButton.MASTER_VOLUME, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawSliderRow(canvas, settingsMasterButton, settingsMasterSlider, t("MASTER VOLUME"), t("Main game volume"), settingsMasterVolume, KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.MASTER_VOLUME, activeSettingsButton == SettingsButton.MASTER_VOLUME, compact, paint, dp, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsMasterButton.left, settingsMasterButton.right, settingsMasterButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsMusicButton.isEmpty) {
-                    drawSliderRow(canvas, settingsMusicButton, settingsMusicSlider, t("MUSIC VOLUME"), t("Synthwave soundtrack"), settingsMusicVolume, KavvoroPalette.pink, SettingsIconRenderer.SettingsIconId.MUSIC_VOLUME, activeSettingsButton == SettingsButton.MUSIC_VOLUME, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawSliderRow(canvas, settingsMusicButton, settingsMusicSlider, t("MUSIC VOLUME"), t("Synthwave soundtrack"), settingsMusicVolume, KavvoroPalette.pink, SettingsIconRenderer.SettingsIconId.MUSIC_VOLUME, activeSettingsButton == SettingsButton.MUSIC_VOLUME, compact, paint, dp, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsMusicButton.left, settingsMusicButton.right, settingsMusicButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsSfxButton.isEmpty) {
-                    drawSliderRow(canvas, settingsSfxButton, settingsSfxSlider, t("SOUND EFFECTS"), t("Arcade sound effects"), settingsSfxVolume, KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.SFX_VOLUME, activeSettingsButton == SettingsButton.SFX_VOLUME, compact, paint, dp, fitText, breakpoint, viewWidth, viewHeight)
+                    drawSliderRow(canvas, settingsSfxButton, settingsSfxSlider, t("SOUND EFFECTS"), t("Arcade sound effects"), settingsSfxVolume, KavvoroPalette.cyan, SettingsIconRenderer.SettingsIconId.SFX_VOLUME, activeSettingsButton == SettingsButton.SFX_VOLUME, compact, paint, dp, viewWidth, viewHeight)
                     drawPanelDivider(canvas, settingsSfxButton.left, settingsSfxButton.right, settingsSfxButton.bottom, paint, dp, 0f, 0f, rowDividerColor)
                 }
                 if (!settingsHapticToggle.isEmpty) {
