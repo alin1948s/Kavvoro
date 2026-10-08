@@ -532,7 +532,6 @@ object SettingsUiRenderer {
         left: Float,
         right: Float,
         baseline: Float,
-        compact: Boolean,
         accent: Int,
         paint: Paint,
         dp: Float,
@@ -541,7 +540,7 @@ object SettingsUiRenderer {
     ) {
         val titleSize = SettingsLayoutCalculator.sectionTitleSize(viewWidth, dp, viewHeight)
         val cy = baseline - titleSize * 0.35f
-        val pillHeight = titleSize * 1.75f
+        val pillHeight = titleSize * 2f
         val pillTop = cy - pillHeight * 0.5f
         val pillBottom = cy + pillHeight * 0.5f
 
@@ -550,9 +549,18 @@ object SettingsUiRenderer {
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
         textPaint.textSize = titleSize
         textPaint.letterSpacing = 0.05f
+        val leadingSpace = 24f * dp
+        val trailingSpace = 16f * dp
+        val maxTextWidth = (right - left - leadingSpace - trailingSpace).coerceAtLeast(1f * dp)
+        val originalTextWidth = textPaint.measureText(label)
+        val labelSize = if (originalTextWidth > maxTextWidth && originalTextWidth > 0f) {
+            (titleSize * maxTextWidth / originalTextWidth).coerceAtLeast(9f * dp)
+        } else {
+            titleSize
+        }
+        textPaint.textSize = labelSize
         val textWidth = textPaint.measureText(label)
-        val pillPadX = 12f * dp
-        val pillWidth = textWidth + pillPadX * 2f + 18f * dp
+        val pillWidth = (textWidth + leadingSpace + trailingSpace).coerceAtMost(right - left)
         val pillLeft = left
         val pillRight = pillLeft + pillWidth
 
@@ -583,32 +591,29 @@ object SettingsUiRenderer {
         scratchRect2.set(pillLeft + 1f * dp, pillTop + 2.5f * dp, pillLeft + 3.5f * dp, pillBottom - 2.5f * dp)
         canvas.drawRoundRect(scratchRect2, 1f * dp, 1f * dp, paint)
 
-        // 4. Pill Content: Diamond Node + Prefix // + Label
-        val diamondX = pillLeft + 11f * dp
-        drawDiamondNode(canvas, diamondX, cy, 2.2f * dp, paint)
+        // 4. Pill Content: one lead marker and a comfortably inset title.
+        val diamondX = pillLeft + 12f * dp
+        paint.style = Paint.Style.FILL
+        paint.color = withAlpha(accent, 30)
+        canvas.drawCircle(diamondX, cy, 5f * dp, paint)
+        paint.color = accent
+        drawDiamondNode(canvas, diamondX, cy, 2.3f * dp, paint)
 
-        val prefixX = diamondX + 7f * dp
-        textPaint.typeface = Typeface.MONOSPACE
-        textPaint.textSize = titleSize * 0.82f
-        textPaint.color = withAlpha(accent, 180)
-        textPaint.textAlign = Paint.Align.LEFT
-        canvas.drawText("// ", prefixX, baseline, textPaint)
-        val prefixW = textPaint.measureText("// ")
-
-        // Text with underglow
-        val labelX = prefixX + prefixW
+        val labelX = diamondX + 12f * dp
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
-        textPaint.textSize = titleSize
+        textPaint.textSize = labelSize
+        textPaint.textAlign = Paint.Align.LEFT
         textPaint.color = withAlpha(accent, 80)
         canvas.drawText(label, labelX, baseline + 0.8f * dp, textPaint)
-        textPaint.color = 0xFFFFFFFF.toInt()
+        textPaint.color = 0xFFF2FBFF.toInt()
         canvas.drawText(label, labelX, baseline, textPaint)
         textPaint.letterSpacing = 0f
 
-        // 5. Flanking Laser Tracking Line to the right margin
-        val lineStart = pillRight + 12f * dp
+        // 5. Continue the divider directly from the pill rim, then let it fade out.
+        val lineStart = pillRight - 1f * dp
         if (lineStart < right - 8f * dp) {
             paint.style = Paint.Style.STROKE
+            paint.strokeCap = Paint.Cap.ROUND
             paint.strokeWidth = 1f * dp
             paint.shader = LinearGradient(
                 lineStart, cy, right - 8f * dp, cy,
@@ -616,11 +621,6 @@ object SettingsUiRenderer {
             )
             canvas.drawLine(lineStart, cy, right - 8f * dp, cy, paint)
             paint.shader = null
-
-            // Terminal diamond node at line start
-            paint.style = Paint.Style.FILL
-            paint.color = accent
-            drawDiamondNode(canvas, lineStart, cy, 1.8f * dp, paint)
         }
     }
 
@@ -1268,7 +1268,7 @@ object SettingsUiRenderer {
 
         drawSectionLabel(
             canvas, headerTitle.uppercase(), pLeft + sectionInset, pRight - sectionInset, pTop,
-            compact, KavvoroPalette.cyan, paint, dp, viewWidth, viewHeight
+            KavvoroPalette.cyan, paint, dp, viewWidth, viewHeight
         )
 
         val rowDividerColor = withAlpha(KavvoroPalette.cyan, 18)
