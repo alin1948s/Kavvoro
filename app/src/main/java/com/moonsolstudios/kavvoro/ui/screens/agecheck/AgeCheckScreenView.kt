@@ -144,7 +144,7 @@ class AgeCheckScreenView @JvmOverloads constructor(
 
         val formColumn = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_HORIZONTAL
+            gravity = Gravity.CENTER
         }
         formColumn.addView(makeAgeCard(compact = true), linearParams(height = dp(288f)))
         formColumn.addView(continueButton(), linearParams(height = dp(58f)).apply { topMargin = dp(18f) })

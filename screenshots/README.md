@@ -12,9 +12,11 @@ Missions includes phone portrait captures at 1080×2400 px / 420 dpi for Daily
 Missions and persistent Rift Challenges. They show the category tabs, mission
 progress, and claimable coin rewards.
 
-Age Check screenshots show phone and tablet portrait layouts; the saved profile
-contains only the resolved age group. Home landscape remains a separate native
-tablet profile.
+Age Check contains the full 11-profile portrait matrix: five phone sizes and
+six tablet sizes, plus a dedicated native tablet landscape capture at
+1920×1200 px / 240 dpi. The saved profile contains only the resolved age group.
+The portrait and landscape capture scripts temporarily remove and then restore
+only the age-profile preference; they preserve the rest of the app data.
 
 Reguli:
 

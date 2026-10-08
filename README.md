@@ -92,9 +92,13 @@ the capture policy and repeatable scripts.
 | --- | --- |
 | <img src="screenshots/missions/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro daily missions at 1080 by 2400 pixels"> | <img src="screenshots/missions/rift-challenges-phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Rift Challenges at 1080 by 2400 pixels"> |
 
-**Age Check — phone 1080×2400 px at 420 dpi:**
+**Age Check — 11 portrait profiles plus tablet landscape:**
 
-<img src="screenshots/age-check/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Age Check at 1080 by 2400 pixels">
+| Phone portrait | Tablet portrait | Tablet landscape |
+| --- | --- | --- |
+| <img src="screenshots/age-check/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Age Check on a phone at 1080 by 2400 pixels"> | <img src="screenshots/age-check/tablet-1600x2560-320dpi.png" width="200" alt="Kavvoro Age Check on a tablet at 1600 by 2560 pixels"> | <img src="screenshots/age-check/tablet-landscape-1920x1200-240dpi.png" width="320" alt="Kavvoro Age Check in native tablet landscape at 1920 by 1200 pixels"> |
+
+[View all 12 Age Check device captures](screenshots/age-check/).
 
 **Home landscape, tablet 1920×1200 px at 240 dpi:**
 

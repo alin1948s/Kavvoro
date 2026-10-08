@@ -4,7 +4,7 @@ Acesta este folderul permanent pentru scripturile reproductibile de captură ale
 aplicației.
 
 `capture_support.py` este sursa comună pentru calea SDK-ului Android, package,
-APK și matricea celor 11 rezoluții. SDK-ul se rezolvă din `ANDROID_HOME` sau
+APK și matricea celor 11 profiluri portret. SDK-ul se rezolvă din `ANDROID_HOME` sau
 `ANDROID_SDK_ROOT`, fără căi absolute către o stație de lucru.
 
 Păstrăm aici doar automatizări care pot fi reluate pe alt calculator. Scripturile
@@ -21,7 +21,22 @@ python .\tools\screenshot-capture\retake_age_check_11.py
 
 Scriptul capturează setul standard actual în `screenshots/age-check`, în
 portrait pe telefoane și tablete. Captura verifică și nodul accesibil al
-selectorului, ca să nu accepte din greșeală ecranul Home.
+selectorului, ca să nu accepte din greșeală ecranul Home. Pentru a proteja
+datele existente, scriptul salvează temporar doar `privacy_profile.xml`, șterge
+doar această preferință cât timp capturează Age Check și o restaurează la final;
+nu mai execută `pm clear`.
+
+Pentru layout-ul nativ de tabletă landscape, pornește AVD-ul `Pixel_Tablet`, apoi
+selectează-l explicit și rulează:
+
+```powershell
+$env:ANDROID_SERIAL = "emulator-5556"
+python .\tools\screenshot-capture\retake_age_check_landscape.py
+```
+
+Această captură verifică un viewport real landscape de 1920×1200 px la 240 dpi,
+inclusiv nodul accesibil al selectorului. Setările de afișare și preferința de
+vârstă sunt restaurate la final.
 
 ## Captura Settings
 

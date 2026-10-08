@@ -20,6 +20,37 @@ def run(*args: str, timeout: float = 45.0) -> subprocess.CompletedProcess[bytes]
     )
 
 
+def backup_age_profile() -> bytes | None:
+    try:
+        return run("exec-out", "run-as", PACKAGE, "cat", "shared_prefs/privacy_profile.xml").stdout
+    except subprocess.CalledProcessError as error:
+        if b"No such file" in error.stdout:
+            return None
+        raise
+
+
+def remove_age_profile() -> None:
+    run("shell", "am", "force-stop", PACKAGE)
+    run("shell", "run-as", PACKAGE, "rm", "-f", "shared_prefs/privacy_profile.xml")
+
+
+def restore_age_profile(profile: bytes | None) -> None:
+    if profile is None:
+        return
+    command = (
+        f"run-as {PACKAGE} sh -c "
+        f"'cat > /data/user/0/{PACKAGE}/shared_prefs/privacy_profile.xml'"
+    )
+    subprocess.run(
+        [ADB, "shell", command],
+        check=True,
+        input=profile,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        timeout=20.0,
+    )
+
+
 def capture_png() -> bytes:
     return subprocess.check_output(
         [ADB, "exec-out", "screencap", "-p"], timeout=60.0
@@ -32,7 +63,9 @@ def image_size(png: bytes) -> tuple[int, int]:
 
 
 def wait_for_viewport(width: int, height: int) -> None:
-    deadline = time.monotonic() + 15.0
+    # Large tablet frames can take several seconds each to capture, so allow
+    # enough time to observe multiple stable frames at the highest resolution.
+    deadline = time.monotonic() + 45.0
     last_size = None
     stable_frames = 0
     while time.monotonic() < deadline:
@@ -138,6 +171,8 @@ def wait_for_age_check(width: int, height: int) -> bytes:
 def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     run("install", "-r", str(APK), timeout=90.0)
+    original_age_profile = backup_age_profile()
+    remove_age_profile()
     try:
         run("shell", "settings", "put", "system", "accelerometer_rotation", "0")
         run("shell", "settings", "put", "system", "user_rotation", "1")
@@ -157,13 +192,18 @@ def main() -> None:
                 run("shell", "wm", "size", f"{width}x{height}")
             wait_for_viewport(output_width, output_height)
             run("shell", "am", "force-stop", PACKAGE)
-            run("shell", "pm", "clear", PACKAGE)
             run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
             time.sleep(2.0)
             dismiss_fullscreen_prompt_if_shown()
             (OUTPUT / output_name).write_bytes(wait_for_age_check(output_width, output_height))
     finally:
-        restore_emulator_display(lambda *args: run(*args))
+        try:
+            restore_emulator_display(lambda *args: run(*args))
+        finally:
+            try:
+                restore_age_profile(original_age_profile)
+            finally:
+                run("shell", "rm", "-f", "/sdcard/kavvoro_age_check.xml", "/sdcard/kavvoro_window.xml")
 
 
 if __name__ == "__main__":
