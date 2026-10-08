@@ -62,32 +62,37 @@ object SettingsIconRenderer {
         drawTile(canvas, rect, size, tint, active, paint)
 
         val saveCount = canvas.save()
-        val scale = size / ICON_UNITS
-        canvas.scale(scale, scale, cx, cy)
-        paint.reset()
-        paint.isAntiAlias = true
-        paint.strokeCap = Paint.Cap.ROUND
-        paint.strokeJoin = Paint.Join.ROUND
+        try {
+            val scale = size / ICON_UNITS
+            canvas.translate(cx, cy)
+            canvas.scale(scale, scale)
+            paint.reset()
+            paint.isAntiAlias = true
+            paint.strokeCap = Paint.Cap.ROUND
+            paint.strokeJoin = Paint.Join.ROUND
 
-        when (id) {
-            SettingsIconId.MASTER_VOLUME -> drawSpeaker(canvas, cx, cy, tint, paint)
-            SettingsIconId.MUSIC_VOLUME -> drawMusicNotes(canvas, cx, cy, tint, paint)
-            SettingsIconId.SFX_VOLUME -> drawEqualizer(canvas, cx, cy, tint, paint)
-            SettingsIconId.HAPTIC -> drawHaptics(canvas, cx, cy, tint, paint)
-            SettingsIconId.SCREEN_SHAKE -> drawScreenShake(canvas, cx, cy, tint, paint)
-            SettingsIconId.PERFORMANCE -> drawPerformance(canvas, cx, cy, tint, paint)
-            SettingsIconId.LANGUAGE -> drawLanguage(canvas, cx, cy, tint, paint)
-            SettingsIconId.ACCOUNT -> drawAccount(canvas, cx, cy, tint, paint)
-            SettingsIconId.PRIVACY -> drawPrivacy(canvas, cx, cy, tint, paint)
-            SettingsIconId.TERMS -> drawTerms(canvas, cx, cy, tint, paint)
-            SettingsIconId.DATA_DELETION -> drawDataDeletion(canvas, cx, cy, tint, paint)
-            SettingsIconId.ABOUT -> drawAbout(canvas, cx, cy, tint, paint)
-            SettingsIconId.RESET -> drawReset(canvas, cx, cy, tint, paint)
+            // Glyphs use a centered 48-unit view box. Keeping the drawings inside
+            // that box gives every symbol the same optical margin on every device.
+            when (id) {
+                SettingsIconId.MASTER_VOLUME -> drawSpeaker(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.MUSIC_VOLUME -> drawMusicNotes(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.SFX_VOLUME -> drawEqualizer(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.HAPTIC -> drawHaptics(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.SCREEN_SHAKE -> drawScreenShake(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.PERFORMANCE -> drawPerformance(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.LANGUAGE -> drawLanguage(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.ACCOUNT -> drawAccount(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.PRIVACY -> drawPrivacy(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.TERMS -> drawTerms(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.DATA_DELETION -> drawDataDeletion(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.ABOUT -> drawAbout(canvas, 0f, 0f, tint, paint)
+                SettingsIconId.RESET -> drawReset(canvas, 0f, 0f, tint, paint)
+            }
+        } finally {
+            canvas.restoreToCount(saveCount)
+            paint.reset()
+            paint.isAntiAlias = true
         }
-
-        canvas.restoreToCount(saveCount)
-        paint.reset()
-        paint.isAntiAlias = true
     }
 
     private fun drawGlow(canvas: Canvas, cx: Float, cy: Float, size: Float, tint: Int, active: Boolean, paint: Paint) {
@@ -103,7 +108,7 @@ object SettingsIconRenderer {
     private fun drawTile(canvas: Canvas, rect: RectF, size: Float, tint: Int, active: Boolean, paint: Paint) {
         val inset = size * 0.035f
         tileRect.set(rect.left + inset, rect.top + inset, rect.right - inset, rect.bottom - inset)
-        val radius = size * 0.28f
+        val radius = size * 0.24f
 
         paint.reset()
         paint.isAntiAlias = true
@@ -135,106 +140,114 @@ object SettingsIconRenderer {
 
     private fun drawSpeaker(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         glyphPath.rewind()
-        glyphPath.moveTo(cx - 12f, cy - 5f)
-        glyphPath.lineTo(cx - 7f, cy - 5f)
-        glyphPath.lineTo(cx + 1f, cy - 11f)
-        glyphPath.lineTo(cx + 1f, cy + 11f)
-        glyphPath.lineTo(cx - 7f, cy + 5f)
-        glyphPath.lineTo(cx - 12f, cy + 5f)
+        glyphPath.moveTo(cx - 14f, cy - 5f)
+        glyphPath.lineTo(cx - 9f, cy - 5f)
+        glyphPath.lineTo(cx - 1f, cy - 11f)
+        glyphPath.lineTo(cx - 1f, cy + 11f)
+        glyphPath.lineTo(cx - 9f, cy + 5f)
+        glyphPath.lineTo(cx - 14f, cy + 5f)
         glyphPath.close()
 
         paint.style = Paint.Style.FILL
         paint.color = tint
         canvas.drawPath(glyphPath, paint)
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 0.9f
+        paint.strokeWidth = 1.25f
         paint.color = withAlpha(0xFFFFFFFF.toInt(), 205)
         canvas.drawPath(glyphPath, paint)
-        canvas.drawLine(cx - 7f, cy - 4.8f, cx - 1f, cy - 9f, paint)
+        canvas.drawLine(cx - 8f, cy - 4.8f, cx - 1f, cy - 10f, paint)
 
-        paint.strokeWidth = 1.8f
+        paint.strokeWidth = 2f
         paint.color = tint
-        glyphRect.set(cx - 3f, cy - 8f, cx + 12f, cy + 8f)
-        canvas.drawArc(glyphRect, -52f, 104f, false, paint)
-        glyphRect.set(cx - 4f, cy - 12f, cx + 18f, cy + 12f)
+        glyphPath.rewind()
+        glyphPath.moveTo(cx + 3f, cy - 6f)
+        glyphPath.cubicTo(cx + 9f, cy - 3f, cx + 9f, cy + 3f, cx + 3f, cy + 6f)
+        canvas.drawPath(glyphPath, paint)
+        glyphPath.rewind()
+        glyphPath.moveTo(cx + 6f, cy - 10f)
+        glyphPath.cubicTo(cx + 15f, cy - 5f, cx + 15f, cy + 5f, cx + 6f, cy + 10f)
         paint.color = withAlpha(tint, 190)
-        canvas.drawArc(glyphRect, -47f, 94f, false, paint)
+        canvas.drawPath(glyphPath, paint)
     }
 
     private fun drawMusicNotes(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         paint.style = Paint.Style.FILL
         paint.color = tint
-        glyphRect.set(cx - 12f, cy + 2f, cx - 4f, cy + 8f)
+        glyphRect.set(cx - 13f, cy + 2f, cx - 5f, cy + 8f)
         canvas.drawOval(glyphRect, paint)
-        glyphRect.set(cx + 1f, cy, cx + 9f, cy + 6f)
+        glyphRect.set(cx + 2f, cy, cx + 10f, cy + 6f)
         canvas.drawOval(glyphRect, paint)
 
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 2.1f
+        paint.strokeWidth = 2.3f
         paint.color = tint
-        canvas.drawLine(cx - 5f, cy + 5f, cx - 5f, cy - 10f, paint)
-        canvas.drawLine(cx + 8f, cy + 3f, cx + 8f, cy - 12f, paint)
-        canvas.drawLine(cx - 5f, cy - 10f, cx + 8f, cy - 13f, paint)
-        canvas.drawLine(cx + 8f, cy - 12f, cx + 13f, cy - 7f, paint)
+        canvas.drawLine(cx - 6f, cy + 5f, cx - 6f, cy - 10f, paint)
+        canvas.drawLine(cx + 7f, cy + 3f, cx + 7f, cy - 12f, paint)
+        canvas.drawLine(cx - 6f, cy - 10f, cx + 7f, cy - 13f, paint)
+        canvas.drawLine(cx + 7f, cy - 12f, cx + 12f, cy - 7f, paint)
 
         paint.strokeWidth = 1.35f
         paint.color = 0xFFF5FCFF.toInt()
-        canvas.drawLine(cx - 5f, cy - 9f, cx + 7f, cy - 12f, paint)
+        canvas.drawLine(cx - 5f, cy - 9f, cx + 6f, cy - 12f, paint)
     }
 
     private fun drawEqualizer(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         paint.style = Paint.Style.FILL
         equalizerBars.forEachIndexed { index, bar ->
-            glyphRect.set(cx + bar[0], cy + bar[1], cx + bar[2], cy + bar[3])
-            paint.color = if (index == 1) 0xFFF6FDFF.toInt() else withAlpha(tint, 225)
-            canvas.drawRoundRect(glyphRect, 1.8f, 1.8f, paint)
+            glyphRect.set(cx + bar[0] - 1f, cy + bar[1], cx + bar[2] - 1f, cy + bar[3])
+            paint.color = when (index) {
+                1 -> 0xFFF6FDFF.toInt()
+                2 -> withAlpha(KavvoroPalette.pink, 230)
+                else -> withAlpha(tint, 235)
+            }
+            canvas.drawRoundRect(glyphRect, 1.7f, 1.7f, paint)
         }
-
-        paint.color = KavvoroPalette.pink
-        canvas.drawCircle(cx + 11f, cy - 10f, 2.1f, paint)
-        paint.strokeWidth = 1.5f
-        paint.style = Paint.Style.STROKE
-        glyphRect.set(cx + 7f, cy - 14f, cx + 15f, cy - 6f)
-        paint.color = withAlpha(KavvoroPalette.pink, 180)
-        canvas.drawArc(glyphRect, 215f, 105f, false, paint)
     }
 
     private fun drawHaptics(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 2f
         paint.color = 0xFFEFFBFF.toInt()
-        glyphRect.set(cx - 7f, cy - 12f, cx + 7f, cy + 12f)
-        canvas.drawRoundRect(glyphRect, 3f, 3f, paint)
+        glyphRect.set(cx - 6f, cy - 12f, cx + 6f, cy + 12f)
+        canvas.drawRoundRect(glyphRect, 2.7f, 2.7f, paint)
 
         paint.style = Paint.Style.FILL
         paint.color = tint
-        canvas.drawCircle(cx, cy + 8f, 1.25f, paint)
+        glyphRect.set(cx - 1.3f, cy + 7f, cx + 1.3f, cy + 9.6f)
+        canvas.drawRoundRect(glyphRect, 1.2f, 1.2f, paint)
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 1.8f
-        glyphRect.set(cx - 15f, cy - 7f, cx - 3f, cy + 7f)
-        canvas.drawArc(glyphRect, -65f, 130f, false, paint)
-        glyphRect.set(cx + 3f, cy - 7f, cx + 15f, cy + 7f)
-        canvas.drawArc(glyphRect, 115f, 130f, false, paint)
-        paint.color = withAlpha(tint, 160)
-        paint.strokeWidth = 1.2f
-        glyphRect.set(cx - 19f, cy - 11f, cx - 1f, cy + 11f)
-        canvas.drawArc(glyphRect, -65f, 130f, false, paint)
-        glyphRect.set(cx + 1f, cy - 11f, cx + 19f, cy + 11f)
-        canvas.drawArc(glyphRect, 115f, 130f, false, paint)
+        paint.strokeWidth = 2f
+        glyphPath.rewind()
+        glyphPath.moveTo(cx - 9f, cy - 6f)
+        glyphPath.cubicTo(cx - 13f, cy - 3f, cx - 13f, cy + 3f, cx - 9f, cy + 6f)
+        canvas.drawPath(glyphPath, paint)
+        glyphPath.rewind()
+        glyphPath.moveTo(cx + 9f, cy - 6f)
+        glyphPath.cubicTo(cx + 13f, cy - 3f, cx + 13f, cy + 3f, cx + 9f, cy + 6f)
+        canvas.drawPath(glyphPath, paint)
+        paint.color = withAlpha(tint, 170)
+        glyphPath.rewind()
+        glyphPath.moveTo(cx - 13f, cy - 10f)
+        glyphPath.cubicTo(cx - 18f, cy - 6f, cx - 18f, cy + 6f, cx - 13f, cy + 10f)
+        canvas.drawPath(glyphPath, paint)
+        glyphPath.rewind()
+        glyphPath.moveTo(cx + 13f, cy - 10f)
+        glyphPath.cubicTo(cx + 18f, cy - 6f, cx + 18f, cy + 6f, cx + 13f, cy + 10f)
+        canvas.drawPath(glyphPath, paint)
     }
 
     private fun drawScreenShake(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 2f
         paint.color = 0xFFF4FCFF.toInt()
-        glyphRect.set(cx - 11f, cy - 9f, cx + 11f, cy + 9f)
+        glyphRect.set(cx - 13f, cy - 9f, cx + 13f, cy + 9f)
         canvas.drawRoundRect(glyphRect, 2.5f, 2.5f, paint)
 
         glyphPath.rewind()
-        glyphPath.moveTo(cx - 7f, cy + 1f)
+        glyphPath.moveTo(cx - 8f, cy + 1f)
         glyphPath.lineTo(cx - 3f, cy - 3f)
         glyphPath.lineTo(cx + 1f, cy + 3f)
-        glyphPath.lineTo(cx + 6f, cy - 2f)
+        glyphPath.lineTo(cx + 8f, cy - 4f)
         paint.strokeWidth = 2.4f
         paint.strokeCap = Paint.Cap.ROUND
         paint.color = tint
@@ -242,37 +255,38 @@ object SettingsIconRenderer {
 
         paint.strokeWidth = 1.5f
         paint.color = withAlpha(KavvoroPalette.pink, 220)
-        canvas.drawLine(cx - 15f, cy - 4f, cx - 13f, cy - 4f, paint)
-        canvas.drawLine(cx + 13f, cy + 5f, cx + 15f, cy + 5f, paint)
+        canvas.drawLine(cx - 17f, cy, cx - 15f, cy, paint)
+        canvas.drawLine(cx + 15f, cy, cx + 17f, cy, paint)
     }
 
     private fun drawPerformance(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 1.7f
-        paint.color = withAlpha(tint, 150)
-        canvas.drawLine(cx - 12f, cy + 11f, cx - 8f, cy + 7f, paint)
-        canvas.drawLine(cx - 15f, cy + 4f, cx - 9f, cy + 4f, paint)
-        canvas.drawLine(cx + 9f, cy + 9f, cx + 13f, cy + 9f, paint)
-
         glyphPath.rewind()
-        glyphPath.moveTo(cx + 1f, cy - 13f)
-        glyphPath.cubicTo(cx + 8f, cy - 8f, cx + 8f, cy - 1f, cx + 3f, cy + 6f)
-        glyphPath.lineTo(cx, cy + 10f)
-        glyphPath.lineTo(cx - 2f, cy + 5f)
-        glyphPath.cubicTo(cx - 9f, cy + 1f, cx - 7f, cy - 6f, cx + 1f, cy - 13f)
+        glyphPath.moveTo(cx, cy - 15f)
+        glyphPath.cubicTo(cx + 7f, cy - 9f, cx + 9f, cy - 1f, cx + 6f, cy + 7f)
+        glyphPath.lineTo(cx + 3f, cy + 11f)
+        glyphPath.lineTo(cx - 3f, cy + 11f)
+        glyphPath.lineTo(cx - 6f, cy + 7f)
+        glyphPath.cubicTo(cx - 9f, cy - 1f, cx - 7f, cy - 9f, cx, cy - 15f)
         glyphPath.close()
         paint.style = Paint.Style.FILL
         paint.color = tint
         canvas.drawPath(glyphPath, paint)
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 1.6f
+        paint.color = 0xFFF2FBFF.toInt()
+        canvas.drawPath(glyphPath, paint)
 
+        paint.style = Paint.Style.FILL
         paint.color = 0xFF11172C.toInt()
-        glyphRect.set(cx - 2.2f, cy - 5f, cx + 2.2f, cy - 0.6f)
-        canvas.drawOval(glyphRect, paint)
+        canvas.drawCircle(cx, cy - 3f, 3f, paint)
+        paint.color = 0xFFF5FCFF.toInt()
+        canvas.drawCircle(cx, cy - 3f, 1.2f, paint)
         paint.color = KavvoroPalette.pink
         glyphPath.rewind()
-        glyphPath.moveTo(cx - 3f, cy + 9f)
-        glyphPath.lineTo(cx, cy + 15f)
-        glyphPath.lineTo(cx + 2f, cy + 8f)
+        glyphPath.moveTo(cx - 2f, cy + 11f)
+        glyphPath.lineTo(cx, cy + 16f)
+        glyphPath.lineTo(cx + 2f, cy + 11f)
         glyphPath.close()
         canvas.drawPath(glyphPath, paint)
     }
@@ -291,39 +305,42 @@ object SettingsIconRenderer {
         paint.strokeWidth = 1.25f
         paint.color = withAlpha(tint, 190)
         canvas.drawOval(glyphRect, paint)
-
-        paint.style = Paint.Style.FILL
-        paint.color = KavvoroPalette.pink
-        drawSparkle(canvas, cx + 11f, cy - 10f, 3f, paint)
     }
 
     private fun drawAccount(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         paint.style = Paint.Style.FILL
         paint.color = tint
-        canvas.drawCircle(cx, cy - 5f, 4f, paint)
+        canvas.drawCircle(cx, cy - 6f, 4f, paint)
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 1.5f
+        paint.color = 0xFFF6FBFF.toInt()
+        canvas.drawCircle(cx, cy - 6f, 4f, paint)
 
         glyphPath.rewind()
-        glyphPath.moveTo(cx - 10f, cy + 10f)
-        glyphPath.cubicTo(cx - 9f, cy + 3f, cx - 4f, cy + 1f, cx, cy + 1f)
-        glyphPath.cubicTo(cx + 5f, cy + 1f, cx + 10f, cy + 4f, cx + 10f, cy + 10f)
-        glyphPath.cubicTo(cx + 5f, cy + 14f, cx - 5f, cy + 14f, cx - 10f, cy + 10f)
+        glyphPath.moveTo(cx - 11f, cy + 11f)
+        glyphPath.cubicTo(cx - 10f, cy + 5f, cx - 5f, cy + 2f, cx, cy + 2f)
+        glyphPath.cubicTo(cx + 5f, cy + 2f, cx + 10f, cy + 5f, cx + 11f, cy + 11f)
+        glyphPath.quadTo(cx + 11f, cy + 14f, cx + 8f, cy + 14f)
+        glyphPath.lineTo(cx - 8f, cy + 14f)
+        glyphPath.quadTo(cx - 11f, cy + 14f, cx - 11f, cy + 11f)
         glyphPath.close()
+        paint.style = Paint.Style.FILL
+        paint.color = tint
         canvas.drawPath(glyphPath, paint)
-
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 1f
-        paint.color = withAlpha(0xFFFFFFFF.toInt(), 185)
-        canvas.drawCircle(cx, cy - 5f, 4f, paint)
+        paint.strokeWidth = 1.5f
+        paint.color = 0xFFF6FBFF.toInt()
+        canvas.drawPath(glyphPath, paint)
     }
 
     private fun drawPrivacy(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         glyphPath.rewind()
-        glyphPath.moveTo(cx, cy - 13f)
-        glyphPath.lineTo(cx + 10f, cy - 9f)
-        glyphPath.lineTo(cx + 9f, cy + 1f)
-        glyphPath.cubicTo(cx + 8f, cy + 7f, cx + 4f, cy + 11f, cx, cy + 13f)
-        glyphPath.cubicTo(cx - 4f, cy + 11f, cx - 8f, cy + 7f, cx - 9f, cy + 1f)
-        glyphPath.lineTo(cx - 10f, cy - 9f)
+        glyphPath.moveTo(cx, cy - 14f)
+        glyphPath.lineTo(cx + 11f, cy - 10f)
+        glyphPath.lineTo(cx + 10f, cy + 1f)
+        glyphPath.cubicTo(cx + 9f, cy + 7f, cx + 4f, cy + 12f, cx, cy + 14f)
+        glyphPath.cubicTo(cx - 4f, cy + 12f, cx - 9f, cy + 7f, cx - 10f, cy + 1f)
+        glyphPath.lineTo(cx - 11f, cy - 10f)
         glyphPath.close()
 
         paint.style = Paint.Style.FILL
@@ -336,10 +353,14 @@ object SettingsIconRenderer {
 
         paint.strokeWidth = 1.7f
         paint.color = KavvoroPalette.cyan
-        glyphRect.set(cx - 4f, cy - 2f, cx + 4f, cy + 5f)
+        glyphRect.set(cx - 4f, cy - 2f, cx + 4f, cy + 6f)
         canvas.drawRoundRect(glyphRect, 1.3f, 1.3f, paint)
-        glyphRect.set(cx - 2.5f, cy - 6f, cx + 2.5f, cy + 1f)
-        canvas.drawArc(glyphRect, 180f, 180f, false, paint)
+        glyphPath.rewind()
+        glyphPath.moveTo(cx - 2.5f, cy - 2f)
+        glyphPath.lineTo(cx - 2.5f, cy - 5f)
+        glyphPath.cubicTo(cx - 2.5f, cy - 9f, cx + 2.5f, cy - 9f, cx + 2.5f, cy - 5f)
+        glyphPath.lineTo(cx + 2.5f, cy - 2f)
+        canvas.drawPath(glyphPath, paint)
         paint.style = Paint.Style.FILL
         canvas.drawCircle(cx, cy + 1f, 1.1f, paint)
     }
@@ -349,8 +370,8 @@ object SettingsIconRenderer {
         glyphPath.moveTo(cx - 8f, cy - 12f)
         glyphPath.lineTo(cx + 3f, cy - 12f)
         glyphPath.lineTo(cx + 9f, cy - 6f)
-        glyphPath.lineTo(cx + 9f, cy + 11f)
-        glyphPath.lineTo(cx - 8f, cy + 11f)
+        glyphPath.lineTo(cx + 9f, cy + 12f)
+        glyphPath.lineTo(cx - 9f, cy + 12f)
         glyphPath.close()
 
         paint.style = Paint.Style.FILL
@@ -363,7 +384,7 @@ object SettingsIconRenderer {
         canvas.drawLine(cx + 3f, cy - 12f, cx + 3f, cy - 6f, paint)
         canvas.drawLine(cx + 3f, cy - 6f, cx + 9f, cy - 6f, paint)
 
-        paint.strokeWidth = 1.7f
+        paint.strokeWidth = 1.8f
         paint.color = tint
         canvas.drawLine(cx - 4f, cy - 3f, cx + 2f, cy - 3f, paint)
         canvas.drawLine(cx - 4f, cy + 1f, cx + 1f, cy + 1f, paint)
@@ -379,88 +400,60 @@ object SettingsIconRenderer {
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1.9f
         paint.color = 0xFFFFF8E8.toInt()
-        canvas.drawLine(cx - 9f, cy - 8f, cx + 9f, cy - 8f, paint)
-        canvas.drawLine(cx - 4f, cy - 11f, cx + 4f, cy - 11f, paint)
+        canvas.drawLine(cx - 10f, cy - 9f, cx + 10f, cy - 9f, paint)
+        canvas.drawLine(cx - 4f, cy - 13f, cx + 4f, cy - 13f, paint)
 
         glyphPath.rewind()
-        glyphPath.moveTo(cx - 7f, cy - 6f)
-        glyphPath.lineTo(cx - 5.5f, cy + 11f)
-        glyphPath.lineTo(cx + 5.5f, cy + 11f)
-        glyphPath.lineTo(cx + 7f, cy - 6f)
+        glyphPath.moveTo(cx - 8f, cy - 6f)
+        glyphPath.lineTo(cx - 6f, cy + 11f)
+        glyphPath.lineTo(cx + 6f, cy + 11f)
+        glyphPath.lineTo(cx + 8f, cy - 6f)
+        glyphPath.close()
         paint.color = tint
-        canvas.drawPath(glyphPath, paint)
-        canvas.drawLine(cx - 2.5f, cy - 2f, cx - 2f, cy + 6f, paint)
-        canvas.drawLine(cx + 2.5f, cy - 2f, cx + 2f, cy + 6f, paint)
-
         paint.style = Paint.Style.FILL
+        canvas.drawPath(glyphPath, paint)
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 1.2f
         paint.color = 0xFFFFF8E8.toInt()
-        drawSparkle(canvas, cx + 10f, cy - 10f, 2.7f, paint)
-        paint.color = withAlpha(tint, 210)
-        canvas.drawCircle(cx - 10f, cy + 7f, 1.5f, paint)
+        glyphPath.rewind()
+        glyphPath.moveTo(cx - 8f, cy - 6f)
+        glyphPath.lineTo(cx + 8f, cy - 6f)
+        glyphPath.moveTo(cx - 2.5f, cy - 2f)
+        glyphPath.lineTo(cx - 2f, cy + 6f)
+        glyphPath.moveTo(cx + 2.5f, cy - 2f)
+        glyphPath.lineTo(cx + 2f, cy + 6f)
+        canvas.drawPath(glyphPath, paint)
+
     }
 
     private fun drawAbout(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 1.8f
+        paint.strokeWidth = 2.1f
         paint.color = tint
-        glyphRect.set(cx - 10f, cy - 10f, cx + 10f, cy + 10f)
-        canvas.drawArc(glyphRect, -35f, 285f, false, paint)
+        canvas.drawCircle(cx, cy, 12f, paint)
 
-        glyphPath.rewind()
-        glyphPath.moveTo(cx + 7.3f, cy - 7f)
-        glyphPath.lineTo(cx + 13f, cy - 8f)
-        glyphPath.lineTo(cx + 11f, cy - 2.8f)
-        glyphPath.close()
-        paint.style = Paint.Style.FILL
-        paint.color = tint
-        canvas.drawPath(glyphPath, paint)
-
-        paint.style = Paint.Style.FILL
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 2.1f
+        paint.strokeCap = Paint.Cap.ROUND
         paint.color = 0xFFF7FDFF.toInt()
-        canvas.drawCircle(cx, cy - 4.5f, 1.7f, paint)
-        glyphRect.set(cx - 1.45f, cy - 1.5f, cx + 1.45f, cy + 7f)
-        canvas.drawRoundRect(glyphRect, 1.3f, 1.3f, paint)
-        paint.color = KavvoroPalette.pink
-        drawSparkle(canvas, cx - 11f, cy + 10f, 2.5f, paint)
+        canvas.drawCircle(cx, cy - 4f, 1.35f, paint)
+        canvas.drawLine(cx, cy, cx, cy + 7f, paint)
     }
 
     private fun drawReset(canvas: Canvas, cx: Float, cy: Float, tint: Int, paint: Paint) {
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 2.2f
         paint.color = 0xFFF7FDFF.toInt()
-        glyphRect.set(cx - 10f, cy - 10f, cx + 10f, cy + 10f)
-        canvas.drawArc(glyphRect, 45f, 286f, false, paint)
+        glyphRect.set(cx - 12f, cy - 12f, cx + 12f, cy + 12f)
+        canvas.drawArc(glyphRect, 42f, 285f, false, paint)
 
         glyphPath.rewind()
-        glyphPath.moveTo(cx + 7f, cy - 13f)
-        glyphPath.lineTo(cx + 14f, cy - 11f)
-        glyphPath.lineTo(cx + 10f, cy - 5f)
+        glyphPath.moveTo(cx + 14f, cy - 4f)
+        glyphPath.lineTo(cx + 7f, cy - 10f)
+        glyphPath.lineTo(cx + 12f, cy - 12f)
         glyphPath.close()
         paint.style = Paint.Style.FILL
         paint.color = tint
-        canvas.drawPath(glyphPath, paint)
-
-        paint.color = withAlpha(tint, 90)
-        canvas.drawCircle(cx, cy, 4.4f, paint)
-        paint.style = Paint.Style.STROKE
-        paint.strokeWidth = 1.8f
-        paint.color = tint
-        canvas.drawLine(cx, cy - 2f, cx, cy + 2f, paint)
-        glyphRect.set(cx - 2f, cy - 1f, cx + 2f, cy + 3f)
-        canvas.drawArc(glyphRect, 20f, 140f, false, paint)
-    }
-
-    private fun drawSparkle(canvas: Canvas, cx: Float, cy: Float, radius: Float, paint: Paint) {
-        glyphPath.rewind()
-        glyphPath.moveTo(cx, cy - radius)
-        glyphPath.lineTo(cx + radius * 0.25f, cy - radius * 0.25f)
-        glyphPath.lineTo(cx + radius, cy)
-        glyphPath.lineTo(cx + radius * 0.25f, cy + radius * 0.25f)
-        glyphPath.lineTo(cx, cy + radius)
-        glyphPath.lineTo(cx - radius * 0.25f, cy + radius * 0.25f)
-        glyphPath.lineTo(cx - radius, cy)
-        glyphPath.lineTo(cx - radius * 0.25f, cy - radius * 0.25f)
-        glyphPath.close()
         canvas.drawPath(glyphPath, paint)
     }
 
@@ -479,5 +472,5 @@ object SettingsIconRenderer {
     private fun withAlpha(color: Int, alpha: Int): Int =
         (color and 0x00FFFFFF) or (alpha.coerceIn(0, 255) shl 24)
 
-    private const val ICON_UNITS = 40f
+    private const val ICON_UNITS = 48f
 }

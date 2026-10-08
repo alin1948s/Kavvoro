@@ -129,6 +129,9 @@ def ensure_privacy_profile() -> None:
 def dismiss_blocking_dialogs(width: int, height: int) -> None:
     # Top-left tap clears orientation/age chrome without hitting Settings rows.
     run_adb("shell", "input", "tap", "40", "40")
+    # Touching an immersive screen can reveal Android's transient system bars.
+    # Let them auto-hide before accepting a screenshot as a clean app capture.
+    time.sleep(3.5)
 
 
 def capture_settings_target(name: str, width: int, height: int, max_attempts: int = 6) -> bytes:
