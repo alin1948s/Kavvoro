@@ -492,33 +492,39 @@ class SettingsResponsiveLayoutTest {
         val same800HiDpi = SettingsLayoutCalculator.scale(1600f, 2560f, 2f)
 
         assertEquals(36f, phone.titleSize, 0.5f)
-        assertEquals(13f, phone.tabTextSize, 0.5f)
+        assertEquals(11f, phone.tabTextSize, 0.5f)
         assertEquals(16f, phone.bodySize, 0.5f)
         assertEquals(12f, phone.smallSize, 0.5f)
         assertEquals(42f, phone.iconSize, 0.5f)
-        assertEquals(24f, phone.tabIconSize, 0.5f)
+        assertEquals(30f, phone.tabIconSize, 0.5f)
+        assertTrue("Phone tab icons should visually lead the labels", phone.tabIconSize > phone.tabTextSize * 2f)
 
         assertEquals(40f, tablet600.titleSize, 0.5f)
-        assertEquals(15f, tablet600.tabTextSize, 0.5f)
+        assertEquals(12f, tablet600.tabTextSize, 0.5f)
         assertEquals(18f, tablet600.bodySize, 0.5f)
         assertEquals(14f, tablet600.smallSize, 0.5f)
         assertEquals(46f, tablet600.iconSize, 0.5f)
+        assertEquals(32f, tablet600.tabIconSize, 0.5f)
 
         assertEquals(44f, tablet800.titleSize, 0.5f)
+        assertEquals(13f, tablet800.tabTextSize, 0.5f)
         assertEquals(19f, tablet800.bodySize, 0.5f)
         assertEquals(15f, tablet800.smallSize, 0.5f)
         assertEquals(50f, tablet800.iconSize, 0.5f)
-        assertEquals(28f, tablet800.tabIconSize, 0.5f)
+        assertEquals(34f, tablet800.tabIconSize, 0.5f)
 
         assertEquals(48f, tablet1024.titleSize, 0.5f)
+        assertEquals(14f, tablet1024.tabTextSize, 0.5f)
         assertEquals(20f, tablet1024.bodySize, 0.5f)
         assertEquals(15.5f, tablet1024.smallSize, 0.5f)
         assertEquals(54f, tablet1024.iconSize, 0.5f)
-        assertEquals(30f, tablet1024.tabIconSize, 0.5f)
+        assertEquals(36f, tablet1024.tabIconSize, 0.5f)
 
         assertEquals(tablet800.titleSize * 2f, same800HiDpi.titleSize, 0.5f)
         assertEquals(tablet800.bodySize * 2f, same800HiDpi.bodySize, 0.5f)
         assertEquals(tablet800.iconSize * 2f, same800HiDpi.iconSize, 0.5f)
+        assertEquals(tablet800.tabTextSize * 2f, same800HiDpi.tabTextSize, 0.5f)
+        assertEquals(tablet800.tabIconSize * 2f, same800HiDpi.tabIconSize, 0.5f)
     }
 
     @Test

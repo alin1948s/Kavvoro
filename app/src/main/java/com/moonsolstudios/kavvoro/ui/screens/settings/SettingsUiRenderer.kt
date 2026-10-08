@@ -490,35 +490,40 @@ object SettingsUiRenderer {
             canvas.drawPath(tempPath, paint)
         }
 
-        // 4. Icon & Text
-        val badgeSize = SettingsLayoutCalculator.tabIconSize(viewWidth, dp, viewHeight)
-        val cy = rect.centerY() - (if (isSelected) 1f else 0f) * dp
+        // 4. Centered icon and label share the same vertical rhythm in every tab.
+        val faceTop = rect.top + press
+        val faceBottom = rect.bottom - depth + press
+        val contentCenterY = (faceTop + faceBottom) * 0.5f
 
         textPaint.reset()
         textPaint.isAntiAlias = true
-        textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: if (isSelected) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+        textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
         val tabText = SettingsLayoutCalculator.tabTextSize(viewWidth, dp, viewHeight)
         textPaint.textSize = tabText
-        var labelW = textPaint.measureText(label)
-        val maxLabel = (rect.width() - badgeSize - 18f * dp).coerceAtLeast(8f * dp)
-        if (labelW > maxLabel && labelW > 0f) {
-            textPaint.textSize = (textPaint.textSize * (maxLabel / labelW)).coerceAtLeast(tabText * 0.85f)
-            labelW = textPaint.measureText(label)
+        val maxLabel = (rect.width() - 16f * dp).coerceAtLeast(8f * dp)
+        val labelWidth = textPaint.measureText(label)
+        if (labelWidth > maxLabel && labelWidth > 0f) {
+            textPaint.textSize = (textPaint.textSize * (maxLabel / labelWidth)).coerceAtLeast(9.5f * dp)
         }
-        val totalW = minOf(badgeSize + 6f * dp + labelW, rect.width() - 8f * dp)
-        val startX = rect.centerX() - totalW * 0.5f
+        textPaint.textAlign = Paint.Align.CENTER
+        textPaint.color = if (isSelected) 0xFFFFFFFF.toInt() else 0xB8C8D8E8.toInt()
 
+        val labelHeight = textPaint.descent() - textPaint.ascent()
+        val labelGap = 2.5f * dp
+        val iconSpace = (faceBottom - faceTop - labelGap - labelHeight).coerceAtLeast(0f)
+        val badgeSize = minOf(SettingsLayoutCalculator.tabIconSize(viewWidth, dp, viewHeight), iconSpace)
+        val contentHeight = badgeSize + labelGap + labelHeight
+        val iconTop = contentCenterY - contentHeight * 0.5f
         iconScratchRect.set(
-            startX,
-            cy - badgeSize * 0.5f,
-            startX + badgeSize,
-            cy + badgeSize * 0.5f
+            rect.centerX() - badgeSize * 0.5f,
+            iconTop,
+            rect.centerX() + badgeSize * 0.5f,
+            iconTop + badgeSize
         )
         SettingsIconRenderer.drawSettingsIcon(canvas, iconScratchRect, iconId, accent, isSelected, paint, dp)
 
-        textPaint.textAlign = Paint.Align.LEFT
-        textPaint.color = if (isSelected) 0xFFFFFFFF.toInt() else 0xAAB5C8DC.toInt()
-        canvas.drawText(label, startX + badgeSize + 6f * dp, cy + 4f * dp, textPaint)
+        val labelTop = iconTop + badgeSize + labelGap
+        canvas.drawText(label, rect.centerX(), labelTop - textPaint.ascent(), textPaint)
     }
 
     fun drawSectionLabel(

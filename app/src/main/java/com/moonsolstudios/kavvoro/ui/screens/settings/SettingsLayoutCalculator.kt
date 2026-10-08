@@ -468,11 +468,11 @@ class SettingsLayoutCalculator {
             val bodySize = typeByWidth(width, 16f, 18f, 19f, 20f) * dp
             val smallSize = typeByWidth(width, 12f, 14f, 15f, 15.5f) * dp
             val sectionTitleSize = typeByWidth(width, 14f, 15f, 16f, 17f) * dp
-            val tabTextSize = typeByWidth(width, 13f, 15f, 16f, 17f) * dp
+            val tabTextSize = typeByWidth(width, 11f, 12f, 13f, 14f) * dp
             val backTextSize = typeByWidth(width, 14f, 15f, 16f, 17f) * dp
             val profileTextSize = typeByWidth(width, 13f, 14f, 15f, 15f) * dp
             val iconSize = iconByWidth(width, 42f, 46f, 50f, 54f) * dp
-            val tabIconSize = iconByWidth(width, 24f, 26f, 28f, 30f) * dp
+            val tabIconSize = iconByWidth(width, 30f, 32f, 34f, 36f) * dp
             val chevronSize = iconByWidth(width, 24f, 26f, 28f, 30f) * dp
 
             val height = heightDp(viewHeight, dp)
