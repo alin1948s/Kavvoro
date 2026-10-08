@@ -164,6 +164,21 @@ class SettingsResponsiveLayoutTest {
     }
 
     @Test
+    fun audioSliderThumbStaysClearOfPercentCapsuleAtFullVolume() {
+        for (spec in testMatrix) {
+            val calculator = layoutFor(spec, SettingsTab.AUDIO)
+            val largestCapsuleLeft = calculator.masterButton.right - 44f * spec.density
+            val activeThumbRight = calculator.masterSlider.right + 8.4f * spec.density
+            val clearance = largestCapsuleLeft - activeThumbRight
+
+            assertTrue(
+                "100% thumb must stay clear of the value capsule on ${spec.name} (clearance=$clearance)",
+                clearance >= 4f * spec.density
+            )
+        }
+    }
+
+    @Test
     fun tabletAndDesktopKeepFourTabsInOneRow() {
         val wide = listOf(
             ResolutionTestSpec("720x1280", 720f, 1280f, 1f, LayoutMode.MEDIUM),
