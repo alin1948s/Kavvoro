@@ -7,7 +7,6 @@ import android.graphics.Color
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.RadialGradient
 import android.graphics.Shader
 import android.graphics.Typeface
 import android.text.SpannableString
@@ -303,17 +302,12 @@ internal fun ageGroupForAge(age: Int): AgeGroup = when {
     else -> AgeGroup.ADULT
 }
 
-/** A compact portal-style call to action that stays legible across translated labels. */
+/** A clean beveled call to action that stays legible across translated labels. */
 private class AgeContinueButton(context: Context, private val label: String) : View(context) {
     private val density = resources.displayMetrics.density
     private val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val facePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val accentPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE
-        strokeCap = Paint.Cap.ROUND
-        strokeJoin = Paint.Join.ROUND
-    }
-    private val iconPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND
         strokeJoin = Paint.Join.ROUND
@@ -325,7 +319,6 @@ private class AgeContinueButton(context: Context, private val label: String) : V
     }
     private val shellPath = Path()
     private val facePath = Path()
-    private val iconPath = Path()
 
     init {
         isClickable = true
@@ -387,10 +380,7 @@ private class AgeContinueButton(context: Context, private val label: String) : V
         canvas.drawLine(left + dp(21f), bottom - dp(1.5f), right - dp(21f), bottom - dp(1.5f), accentPaint)
         accentPaint.shader = null
 
-        drawPortalMark(canvas, left + dp(30f), centerY)
-        drawForwardMark(canvas, right - dp(29f), centerY)
-
-        val textMaxWidth = (width - dp(108f)).coerceAtLeast(dp(80f))
+        val textMaxWidth = (width - dp(48f)).coerceAtLeast(dp(80f))
         var textSize = dp(19f)
         textPaint.textSize = textSize
         while (textPaint.measureText(label) > textMaxWidth && textSize > dp(13f)) {
@@ -406,37 +396,6 @@ private class AgeContinueButton(context: Context, private val label: String) : V
         super.onInitializeAccessibilityNodeInfo(info)
         info.className = android.widget.Button::class.java.name
         info.contentDescription = label
-    }
-
-    private fun drawPortalMark(canvas: Canvas, centerX: Float, centerY: Float) {
-        val size = dp(10f)
-        iconPath.reset()
-        iconPath.moveTo(centerX, centerY - size)
-        iconPath.lineTo(centerX + size, centerY)
-        iconPath.lineTo(centerX, centerY + size)
-        iconPath.lineTo(centerX - size, centerY)
-        iconPath.close()
-        iconPaint.strokeWidth = dp(1.4f)
-        iconPaint.color = 0xFF31E8FF.toInt()
-        iconPaint.setShadowLayer(dp(5f), 0f, 0f, 0xAA31E8FF.toInt())
-        canvas.drawPath(iconPath, iconPaint)
-        iconPaint.clearShadowLayer()
-        iconPaint.style = Paint.Style.FILL
-        canvas.drawCircle(centerX, centerY, dp(2.2f), iconPaint)
-        iconPaint.style = Paint.Style.STROKE
-    }
-
-    private fun drawForwardMark(canvas: Canvas, centerX: Float, centerY: Float) {
-        iconPath.reset()
-        iconPath.moveTo(centerX - dp(5f), centerY - dp(6f))
-        iconPath.lineTo(centerX + dp(1f), centerY)
-        iconPath.lineTo(centerX - dp(5f), centerY + dp(6f))
-        iconPath.moveTo(centerX - dp(1f), centerY - dp(6f))
-        iconPath.lineTo(centerX + dp(5f), centerY)
-        iconPath.lineTo(centerX - dp(1f), centerY + dp(6f))
-        iconPaint.color = 0xFF58E9FF.toInt()
-        iconPaint.strokeWidth = dp(1.8f)
-        canvas.drawPath(iconPath, iconPaint)
     }
 
     private fun createBeveledPath(path: Path, left: Float, top: Float, right: Float, bottom: Float, cut: Float) {
@@ -461,20 +420,13 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
         color = Color.rgb(244, 246, 255)
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
-        setShadowLayer(dp(8f), 0f, 0f, 0x8831E8FF.toInt())
     }
     private val adjacentTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFF8995B9.toInt()
         textAlign = Paint.Align.CENTER
         typeface = Typeface.create("sans-serif", Typeface.NORMAL)
     }
-    private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val railPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeWidth = dp(1f) }
-    private val markerPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        strokeCap = Paint.Cap.ROUND
-        strokeWidth = dp(2f)
-    }
-    private var centerGlow: Shader? = null
     private var railShader: Shader? = null
     private var itemExtentPx = dp(70f)
     private var scrollOffsetPx = 0f
@@ -497,11 +449,6 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
         itemExtentPx = min(dp(70f), height * 0.29f).coerceAtLeast(dp(52f))
-        centerGlow = RadialGradient(
-            width / 2f, height / 2f, maxOf(width * 0.44f, dp(60f)),
-            intArrayOf(0x4431E8FF, 0x1A7B43FF, Color.TRANSPARENT),
-            floatArrayOf(0f, 0.58f, 1f), Shader.TileMode.CLAMP
-        )
         railShader = LinearGradient(
             dp(12f), height / 2f, width - dp(12f), height / 2f,
             intArrayOf(0x0031E8FF, 0xB431E8FF.toInt(), 0xB4D93DFF.toInt(), 0x00D93DFF),
@@ -513,15 +460,8 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
         super.onDraw(canvas)
         val centerX = width / 2f
         val centerY = height / 2f
-        val radiusX = width * 0.44f
-        val radiusY = dp(60f)
-        glowPaint.shader = centerGlow
-        canvas.drawOval(centerX - radiusX, centerY - radiusY, centerX + radiusX,
-            centerY + radiusY, glowPaint)
-        glowPaint.shader = null
-
         val gap = itemExtentPx
-        val selectedSize = minOf(dp(76f), height * 0.38f)
+        val selectedSize = minOf(dp(60f), height * 0.34f)
         railPaint.shader = railShader
         canvas.drawLine(dp(14f).toFloat(), centerY - gap * 0.55f,
             width - dp(14f).toFloat(), centerY - gap * 0.55f, railPaint)
@@ -535,7 +475,7 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
             val baselineY = centerY + step * gap - scrollOffsetPx
             val distance = abs(baselineY - centerY) / gap
             if (distance > 2.1f) continue
-            val scale = 1f - 0.62f * distance.coerceAtMost(1f)
+            val scale = 1f - 0.54f * distance.coerceAtMost(1f)
             val textSize = selectedSize * scale
             val focused = distance < 0.48f
             val paint = if (focused) selectedTextPaint else adjacentTextPaint
@@ -549,12 +489,6 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
         }
         selectedTextPaint.alpha = 255
         adjacentTextPaint.alpha = 255
-
-        markerPaint.color = 0xFF31E8FF.toInt()
-        markerPaint.alpha = (210 - abs(scrollOffsetPx / gap) * 50f).toInt().coerceIn(120, 210)
-        val markerX = width * 0.19f
-        canvas.drawLine(markerX, centerY - dp(7f), markerX, centerY + dp(7f), markerPaint)
-        canvas.drawLine(width - markerX, centerY - dp(7f), width - markerX, centerY + dp(7f), markerPaint)
     }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
