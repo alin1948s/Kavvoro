@@ -2536,6 +2536,8 @@ class ChaosGameView(
             tabInfo = SettingsTouchController.tabInfo,
             contentPanel = SettingsTouchController.contentPanel,
             header = header,
+            brandLogo = worldBitmap("kavvoro_logo"),
+            brandMotto = t("SMALL MINDS BIG WORLDS"),
             profileName = settingsProfileLabel(),
             profileOnline = accountState == AccountState.SIGNED_IN,
             breakpoint = settingsBreakpoint()

@@ -451,7 +451,7 @@ class HomeLayoutCalculator {
 
         // Left Logo
         var logoWidth = dp(210f * scaleFactor).coerceIn(dp(170f), dp(240f))
-        val logoHeight = logoWidth / brandAspect.coerceAtLeast(0.1f)
+        var logoHeight = logoWidth / brandAspect.coerceAtLeast(0.1f)
 
         // Right Controls: Settings button
         settingsButtonRect.set(
@@ -474,6 +474,7 @@ class HomeLayoutCalculator {
 
         val (actualStreakW, actualLevelW, actualCoinsW) = if (availableHeaderSpace < requiredChipsSpace) {
             logoWidth = dp(175f * scaleFactor).coerceIn(dp(160f), dp(190f))
+            logoHeight = logoWidth / brandAspect.coerceAtLeast(0.1f)
             chipGap = dp(6f * scaleFactor)
             val compactChipW = ((availableHeaderSpace - chipGap * 2f) / 3f).coerceIn(dp(54f), dp(80f))
             Triple(compactChipW, compactChipW, compactChipW)

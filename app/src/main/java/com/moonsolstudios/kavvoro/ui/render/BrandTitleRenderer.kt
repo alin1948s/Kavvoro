@@ -12,6 +12,7 @@ import kotlin.math.min
  */
 object BrandTitleRenderer {
     const val BRAND_ASPECT = 440f / 110f
+    const val HOME_LOGO_ASPECT = 1415f / 661f
     private const val MIN_TOUCH_TARGET_DP = 48f
     private val boldTypeface: Typeface? = Typeface.create("sans-serif", Typeface.BOLD)
     var customTypeface: Typeface? = null
@@ -45,12 +46,13 @@ object BrandTitleRenderer {
                 .coerceIn(MIN_TOUCH_TARGET_DP * safeDensity, (MIN_TOUCH_TARGET_DP + 6f) * safeDensity)
             val actionGap = 10f * scaleFactor * safeDensity
             var logoWidth = (210f * scaleFactor * safeDensity).coerceIn(170f * safeDensity, 240f * safeDensity)
-            val logoHeight = logoWidth / brandAspect.coerceAtLeast(0.1f)
+            var logoHeight = logoWidth / brandAspect.coerceAtLeast(0.1f)
             val settingsLeft = safeRight - actionButtonSize
             val availableHeaderSpace = (settingsLeft - actionGap) - (safeLeft + logoWidth + actionGap)
             val requiredChipsSpace = (100f + 84f + 92f + 8f * 2f) * scaleFactor * safeDensity
             if (availableHeaderSpace < requiredChipsSpace) {
                 logoWidth = (175f * scaleFactor * safeDensity).coerceIn(160f * safeDensity, 190f * safeDensity)
+                logoHeight = logoWidth / brandAspect.coerceAtLeast(0.1f)
             }
             return LayoutRect(safeLeft, headerTop, safeLeft + logoWidth, headerTop + logoHeight)
         }

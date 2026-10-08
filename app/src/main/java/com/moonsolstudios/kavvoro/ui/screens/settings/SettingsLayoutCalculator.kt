@@ -18,6 +18,10 @@ data class SettingsHeaderMetrics(
     val brandTop: Float,
     val brandHeight: Float,
     val brandMaxWidth: Float,
+    val brandMottoBaseline: Float,
+    val brandMottoSize: Float,
+    val brandMottoBottom: Float,
+    val brandMottoVisible: Boolean,
     val profileLeft: Float,
     val profileTop: Float,
     val profileRight: Float,
@@ -493,8 +497,17 @@ class SettingsLayoutCalculator {
             } else {
                 typeByWidth(width, 36f, 40f, 44f, 48f) + tallBoost
             }) * dp
-            var headerToTitle = (if (compactVertical) 24f else typeByWidth(width, 32f, 36f, 36f, 40f) + tallBoost * 0.4f) * dp
-            var titleToTabs = (if (compactVertical) 18f else typeByWidth(width, 20f, 22f, 22f, 24f)) * dp
+            val shortPhone = portrait && height <= 640f
+            val headerToTitle = when {
+                shortPhone -> 12f * dp
+                compactVertical -> 18f * dp
+                else -> (typeByWidth(width, 24f, 28f, 30f, 32f) + tallBoost * 0.4f) * dp
+            }
+            val titleToTabs = when {
+                shortPhone -> 14f * dp
+                compactVertical -> 18f * dp
+                else -> typeByWidth(width, 20f, 22f, 22f, 24f) * dp
+            }
             var titleToSubtitle = (if (compactVertical) 8f else 10f) * dp
             var subtitleToLine = (if (compactVertical) 8f else 10f) * dp
             var tabHeight = when {
@@ -504,10 +517,10 @@ class SettingsLayoutCalculator {
             } * dp
             var tabGap = 8f * dp
             var tabRowGap = (if (compactVertical) 6f else 8f) * dp
-            var tabsToCard = (if (compactVertical) 18f else typeByWidth(width, 28f, 32f, 36f, 40f)) * dp
-            var cardPadY = (if (compactVertical) 12f else typeByWidth(width, 16f, 18f, 18f, 20f)) * dp
+            var tabsToCard = (if (shortPhone) 12f else if (compactVertical) 18f else typeByWidth(width, 28f, 32f, 36f, 40f)) * dp
+            var cardPadY = (if (shortPhone) 10f else if (compactVertical) 12f else typeByWidth(width, 16f, 18f, 18f, 20f)) * dp
             var rowHeight = (if (compactVertical) 70f else typeByWidth(width, 74f, 86f, 90f, 96f)) * dp
-            var cardToBack = (if (compactVertical) 16f else typeByWidth(width, 20f, 24f, 24f, 28f)) * dp
+            var cardToBack = (if (shortPhone) 12f else if (compactVertical) 16f else typeByWidth(width, 20f, 24f, 24f, 28f)) * dp
             var backHeight = (if (compactVertical) 52f else typeByWidth(width, 56f, 56f, 56f, 60f)) * dp
             var sectionHeaderGap = (if (compactVertical) 8f else 14f) * dp
 
@@ -652,7 +665,24 @@ class SettingsLayoutCalculator {
             val tokens = scale(viewWidth, viewHeight, dp)
             val breakpoint = breakpointFor(viewWidth, dp, viewHeight)
             val padH = horizontalPad(viewWidth, dp, viewHeight)
-            val homeBrand = brandOverride ?: BrandTitleRenderer.placement(viewWidth, viewHeight, dp)
+            val homeBrandBase = brandOverride ?: BrandTitleRenderer.placement(
+                viewWidth,
+                viewHeight,
+                dp,
+                brandAspect = BrandTitleRenderer.HOME_LOGO_ASPECT
+            )
+            val shortPhone = isPortrait(viewWidth, viewHeight) && heightDp(viewHeight, dp) <= 640f
+            val brandScale = if (brandOverride == null && shortPhone) 0.82f else 1f
+            val homeBrand = if (brandScale < 1f) {
+                LayoutRect(
+                    homeBrandBase.left,
+                    homeBrandBase.top,
+                    homeBrandBase.left + homeBrandBase.width() * brandScale,
+                    homeBrandBase.top + homeBrandBase.height() * brandScale
+                )
+            } else {
+                homeBrandBase
+            }
             val brandLeft = homeBrand.left
             // Home ignores the status-bar inset for the wordmark. Settings must use the
             // same origin and size so the logo does not shift down (and steal vertical
@@ -660,6 +690,16 @@ class SettingsLayoutCalculator {
             val brandTop = homeBrand.top
             val brandHeight = homeBrand.height()
             val brandMaxWidth = homeBrand.width()
+            val mottoScale = (heightDp(viewHeight, dp) / 800f).coerceIn(
+                if (viewWidth > viewHeight) 0.75f else 0.72f,
+                1.25f
+            )
+            val brandMottoSize = 8.5f * dp
+            val brandMottoVisible = heightDp(viewHeight, dp) > 640f
+            val brandMottoBottom = brandTop + brandHeight +
+                if (brandMottoVisible) 13f * mottoScale * dp else 0f
+            val brandMottoBaseline = brandTop + brandHeight + 1f * dp +
+                6.5f * mottoScale * dp + brandMottoSize * 0.38f
             val padTop = maxOf(brandTop, safeInsetTop)
             val contentLeft = (viewWidth - contentWidth) * 0.5f
             val contentRight = contentLeft + contentWidth
@@ -673,7 +713,7 @@ class SettingsLayoutCalculator {
             val profileTop = brandTop
             val profileBottom = profileTop + profileHeight
 
-            val headerBottom = maxOf(brandTop + brandHeight, profileBottom)
+            val headerBottom = maxOf(brandMottoBottom, profileBottom)
             val heroGap = tokens.headerToTitle
             val titleSize = tokens.titleSize
             val subtitleSize = tokens.smallSize
@@ -691,6 +731,10 @@ class SettingsLayoutCalculator {
                 brandTop = brandTop,
                 brandHeight = brandHeight,
                 brandMaxWidth = brandMaxWidth,
+                brandMottoBaseline = brandMottoBaseline,
+                brandMottoSize = brandMottoSize,
+                brandMottoBottom = brandMottoBottom,
+                brandMottoVisible = brandMottoVisible,
                 profileLeft = profileLeft,
                 profileTop = profileTop,
                 profileRight = profileRight,

@@ -19,6 +19,8 @@ class SettingsResponsiveLayoutTest {
     )
 
     private val testMatrix = listOf(
+        ResolutionTestSpec("320x568 (Small Phone)", 320f, 568f, 1f, LayoutMode.COMPACT),
+        ResolutionTestSpec("320x720 (Small Phone)", 320f, 720f, 1f, LayoutMode.COMPACT),
         ResolutionTestSpec("360x800 (Compact Phone)", 360f, 800f, 1f, LayoutMode.COMPACT),
         ResolutionTestSpec("375x812 (Mockup Mobile)", 375f, 812f, 1f, LayoutMode.COMPACT),
         ResolutionTestSpec("390x844", 390f, 844f, 1f, LayoutMode.COMPACT),
@@ -210,7 +212,7 @@ class SettingsResponsiveLayoutTest {
             val calc = layoutFor(spec, SettingsTab.SYSTEM)
             val tabsBottom = maxOf(calc.tabAudio.bottom, calc.tabSystem.bottom)
             val gap = calc.contentPanel.top - tabsBottom
-            val minGap = 15f * spec.density
+            val minGap = (if (spec.height / spec.density <= 640f && spec.height > spec.width) 12f else 15f) * spec.density
             val maxGap = 48f * spec.density
             assertTrue(
                 "Gap between tabs and card on ${spec.name} was $gap",
@@ -308,6 +310,7 @@ class SettingsResponsiveLayoutTest {
         assertTrue(phone.subtitleSize >= 10f)
         assertTrue(desktop.subtitleSize >= 10f)
         assertTrue("Title must sit below the brand", phone.titleTop >= phone.brandTop + phone.brandHeight)
+        assertTrue("Title must sit below the Home brand motto", phone.titleTop >= phone.brandMottoBottom)
         assertTrue("Title must sit below the brand on desktop", desktop.titleTop >= desktop.brandTop + desktop.brandHeight)
         assertTrue("Subtitle follows the title", phone.subtitleTop >= phone.titleBaseline)
         assertTrue("Diamond follows the subtitle", phone.dividerY >= phone.subtitleBaseline)
@@ -319,7 +322,12 @@ class SettingsResponsiveLayoutTest {
         assertTrue("Profile stays on the right", phone.profileRight > phone.profileLeft)
         assertTrue("Desktop profile stays on the right", desktop.profileLeft >= 1920f * 0.5f)
         assertTrue("Logo must match Home header top", phone.brandTop >= 12f)
-        val homeBrand = BrandTitleRenderer.placement(375f, 812f, 1f)
+        val homeBrand = BrandTitleRenderer.placement(
+            375f,
+            812f,
+            1f,
+            brandAspect = BrandTitleRenderer.HOME_LOGO_ASPECT
+        )
         assertEquals(homeBrand.top, phone.brandTop, 0.5f)
         assertEquals(homeBrand.height(), phone.brandHeight, 0.5f)
         assertEquals(homeBrand.width(), phone.brandMaxWidth, 0.5f)
@@ -347,13 +355,26 @@ class SettingsResponsiveLayoutTest {
             Triple(1600f, 2560f, 2f)
         )
         for ((width, height, density) in viewports) {
-            val home = BrandTitleRenderer.placement(width, height, density)
+            val home = BrandTitleRenderer.placement(
+                width,
+                height,
+                density,
+                brandAspect = BrandTitleRenderer.HOME_LOGO_ASPECT
+            )
             val contentWidth = SettingsLayoutCalculator.contentWidth(width, density, height)
             val header = SettingsLayoutCalculator.computeHeader(width, contentWidth, density, height)
+            val compactBrandScale = if (height / density <= 640f && height > width) 0.82f else 1f
             assertEquals("brand left ${width}x${height}@${density}", home.left, header.brandLeft, 0.5f)
             assertEquals("brand top ${width}x${height}@${density}", home.top, header.brandTop, 0.5f)
-            assertEquals("brand width ${width}x${height}@${density}", home.width(), header.brandMaxWidth, 0.5f)
-            assertEquals("brand height ${width}x${height}@${density}", home.height(), header.brandHeight, 0.5f)
+            assertEquals("brand width ${width}x${height}@${density}", home.width() * compactBrandScale, header.brandMaxWidth, 0.5f)
+            assertEquals("brand height ${width}x${height}@${density}", home.height() * compactBrandScale, header.brandHeight, 0.5f)
+            assertEquals("motto visibility ${width}x${height}@${density}", height / density > 640f, header.brandMottoVisible)
+            assertEquals(
+                "Home logo aspect ${width}x${height}@${density}",
+                BrandTitleRenderer.HOME_LOGO_ASPECT,
+                header.brandMaxWidth / header.brandHeight,
+                0.01f
+            )
         }
     }
 
@@ -570,7 +591,7 @@ class SettingsResponsiveLayoutTest {
         assertEquals(54f, shortTokens.tabHeight, 0.5f)
         assertEquals(70f, shortTokens.rowHeight, 0.5f)
         assertEquals(52f, shortTokens.backHeight, 0.5f)
-        assertEquals(18f, shortTokens.tabsToCard, 0.5f)
+        assertEquals(12f, shortTokens.tabsToCard, 0.5f)
         assertEquals(28f, normalTokens.tabsToCard, 0.5f)
         assertEquals(32f, SettingsLayoutCalculator.scale(600f, 1024f, 1f).tabsToCard, 0.5f)
         assertEquals(36f, SettingsLayoutCalculator.scale(800f, 1280f, 1f).tabsToCard, 0.5f)

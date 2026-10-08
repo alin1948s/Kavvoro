@@ -1,6 +1,7 @@
 package com.moonsolstudios.kavvoro.ui.screens.settings
 
 import android.graphics.Canvas
+import android.graphics.Bitmap
 import android.graphics.LinearGradient
 import android.graphics.Paint
 import android.graphics.Path
@@ -1064,18 +1065,29 @@ object SettingsUiRenderer {
     ) {
         val vw = if (viewWidth > 0f) viewWidth else rect.width()
         val vh = if (viewHeight > 0f) viewHeight else vw
-        val titleSize = SettingsLayoutCalculator.rowTitleSize(vw, dp, vh)
+        val preferredTitleSize = SettingsLayoutCalculator.rowTitleSize(vw, dp, vh)
         val subtitleSize = SettingsLayoutCalculator.rowSubtitleSize(vw, dp, vh)
         val showSubtitle = rowShowsSubtitle(rect, subtitle, dp)
         val width = maxTextWidth.toInt().coerceAtLeast(1)
 
         val hasCustomFont = AssetResourceManager.oxaniumTypeface != null
-        val titleKey = StaticLayoutKey(title, width, titleSize.toRawBits(), titleColor, false, hasCustomFont)
+        layoutPaint.reset()
+        layoutPaint.isAntiAlias = true
+        layoutPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
+        layoutPaint.textSize = preferredTitleSize
+        val measuredTitleWidth = layoutPaint.measureText(title)
+        val minTitleSize = (if (SettingsLayoutCalculator.widthDp(vw, dp) <= 480f) 12.5f else 14f) * dp
+        val fittedTitleSize = if (measuredTitleWidth > maxTextWidth && measuredTitleWidth > 0f) {
+            (preferredTitleSize * maxTextWidth / measuredTitleWidth).coerceAtLeast(minTitleSize)
+        } else {
+            preferredTitleSize
+        }
+        val titleKey = StaticLayoutKey(title, width, fittedTitleSize.toRawBits(), titleColor, false, hasCustomFont)
         val titleLayout = staticLayoutCache.getOrPut(titleKey) {
             layoutPaint.reset()
             layoutPaint.isAntiAlias = true
             layoutPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
-            layoutPaint.textSize = titleSize
+            layoutPaint.textSize = fittedTitleSize
             layoutPaint.color = titleColor
             layoutPaint.textAlign = Paint.Align.LEFT
             StaticLayout.Builder
@@ -1171,6 +1183,8 @@ object SettingsUiRenderer {
         tabInfo: RectF? = null,
         contentPanel: RectF? = null,
         header: SettingsHeaderMetrics,
+        brandLogo: Bitmap? = null,
+        brandMotto: String = "",
         profileName: String = "",
         profileOnline: Boolean = false,
         breakpoint: SettingsBreakpoint = if (compact) SettingsBreakpoint.MOBILE else SettingsBreakpoint.DESKTOP
@@ -1192,18 +1206,8 @@ object SettingsUiRenderer {
         val subtitleBaseline = header.subtitleBaseline
         val dividerY = header.dividerY
 
-        BrandTitleRenderer.draw(
-            canvas = canvas,
-            x = if (isRtl) right else header.brandLeft,
-            topY = header.brandTop,
-            maxWidth = header.brandMaxWidth,
-            targetHeight = header.brandHeight,
-            isRtl = isRtl,
-            paint = paint,
-            textPaint = textPaint,
-            dp = dp,
-            fitText = fitText
-        )
+        drawBrandLogo(canvas, brandLogo, header, paint, textPaint, dp, fitText, isRtl)
+        drawBrandMotto(canvas, brandMotto, header, dp)
         drawProfileChip(
             canvas = canvas,
             header = header,
@@ -1385,10 +1389,16 @@ object SettingsUiRenderer {
         textPaint.isAntiAlias = true
         textPaint.textAlign = Paint.Align.CENTER
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.create("sans-serif", Typeface.BOLD)
+        val safeTitleWidth = (right - left - 24f * dp).coerceAtLeast(1f * dp)
         textPaint.textSize = titleSize
         textPaint.letterSpacing = 0.05f
-        val titleWidth = textPaint.measureText(title)
-        val lineGap = 16f * dp
+        val measuredTitleWidth = textPaint.measureText(title)
+        val titleScale = if (measuredTitleWidth > safeTitleWidth) safeTitleWidth / measuredTitleWidth else 1f
+        val fittedTitleSize = (titleSize * titleScale).coerceAtLeast(22f * dp)
+        textPaint.textSize = fittedTitleSize
+        val displayTitle = ellipsizeForPaint(title, textPaint, safeTitleWidth)
+        val titleWidth = textPaint.measureText(displayTitle)
+        val lineGap = (16f * dp).coerceAtMost((right - left) * 0.06f)
         val lineY = titleBaseline - titleSize * 0.32f
         val lineLeftEnd = centerX - titleWidth * 0.5f - lineGap
         val lineRightStart = centerX + titleWidth * 0.5f + lineGap
@@ -1442,20 +1452,97 @@ object SettingsUiRenderer {
 
         // Title Under-Glow Pass
         textPaint.color = 0x5045F2FF.toInt()
-        canvas.drawText(title, centerX, titleBaseline + 1.2f * dp, textPaint)
+        canvas.drawText(displayTitle, centerX, titleBaseline + 1.2f * dp, textPaint)
         // Title Crisp Foreground
         textPaint.color = 0xFFFFFFFF.toInt()
-        canvas.drawText(title, centerX, titleBaseline, textPaint)
+        canvas.drawText(displayTitle, centerX, titleBaseline, textPaint)
 
         // Telemetric Subtitle
         textPaint.typeface = Typeface.DEFAULT
+        val safeSubtitleWidth = (right - left - 20f * dp).coerceAtLeast(1f * dp)
         textPaint.textSize = subtitleSize
         textPaint.letterSpacing = if (widthDp <= 480f) 0.12f else 0.16f
         textPaint.color = 0xCCB5D8F0.toInt()
-        canvas.drawText(subtitle, centerX, subtitleBaseline, textPaint)
+        val measuredSubtitleWidth = textPaint.measureText(subtitle)
+        val subtitleScale = if (measuredSubtitleWidth > safeSubtitleWidth) {
+            safeSubtitleWidth / measuredSubtitleWidth
+        } else {
+            1f
+        }
+        textPaint.textSize = (subtitleSize * subtitleScale).coerceAtLeast(9.5f * dp)
+        val displaySubtitle = ellipsizeForPaint(subtitle, textPaint, safeSubtitleWidth)
+        canvas.drawText(displaySubtitle, centerX, subtitleBaseline, textPaint)
         textPaint.letterSpacing = 0f
 
         drawDivider(canvas, left, right, dividerY, centerX, paint, dp)
+    }
+
+    private fun drawBrandLogo(
+        canvas: Canvas,
+        bitmap: Bitmap?,
+        header: SettingsHeaderMetrics,
+        paint: Paint,
+        fallbackTextPaint: Paint,
+        dp: Float,
+        fitText: (String, Float) -> String,
+        isRtl: Boolean
+    ) {
+        if (bitmap == null || bitmap.width <= 0 || bitmap.height <= 0) {
+            BrandTitleRenderer.draw(
+                canvas = canvas,
+                x = header.brandLeft,
+                topY = header.brandTop,
+                maxWidth = header.brandMaxWidth,
+                targetHeight = header.brandHeight,
+                isRtl = isRtl,
+                paint = paint,
+                textPaint = fallbackTextPaint,
+                dp = dp,
+                fitText = fitText
+            )
+            return
+        }
+
+        val sourceAspect = bitmap.width.toFloat() / bitmap.height.toFloat()
+        val targetWidth = minOf(header.brandMaxWidth, header.brandHeight * sourceAspect)
+        val targetHeight = targetWidth / sourceAspect
+        scratchRect.set(
+            header.brandLeft,
+            header.brandTop,
+            header.brandLeft + targetWidth,
+            header.brandTop + targetHeight
+        )
+        paint.reset()
+        paint.isAntiAlias = true
+        paint.isFilterBitmap = true
+        paint.alpha = 255
+        paint.style = Paint.Style.FILL
+        canvas.drawBitmap(bitmap, null, scratchRect, paint)
+    }
+
+    private fun drawBrandMotto(canvas: Canvas, motto: String, header: SettingsHeaderMetrics, dp: Float) {
+        if (!header.brandMottoVisible || motto.isBlank() || header.brandMaxWidth <= 0f) return
+        textPaint.reset()
+        textPaint.isAntiAlias = true
+        textPaint.typeface = AssetResourceManager.oxaniumNormal()
+        textPaint.color = 0xFFEAF5FF.toInt()
+        textPaint.letterSpacing = 0.32f
+        textPaint.textAlign = Paint.Align.CENTER
+        val maxWidth = header.brandMaxWidth
+        val fullMotto = motto.uppercase()
+        textPaint.textSize = header.brandMottoSize
+        val measuredWidth = textPaint.measureText(fullMotto)
+        if (measuredWidth > maxWidth && measuredWidth > 0f) {
+            textPaint.textSize = (header.brandMottoSize * maxWidth / measuredWidth).coerceAtLeast(7f * dp)
+        }
+        val displayMotto = ellipsizeForPaint(fullMotto, textPaint, maxWidth)
+        canvas.drawText(displayMotto, header.brandLeft + maxWidth * 0.5f, header.brandMottoBaseline, textPaint)
+        textPaint.letterSpacing = 0f
+    }
+
+    private fun ellipsizeForPaint(text: CharSequence, paint: Paint, maxWidth: Float): String {
+        layoutPaint.set(paint)
+        return TextUtils.ellipsize(text, layoutPaint, maxWidth, TextUtils.TruncateAt.END).toString()
     }
 
     private fun drawProfileChip(
