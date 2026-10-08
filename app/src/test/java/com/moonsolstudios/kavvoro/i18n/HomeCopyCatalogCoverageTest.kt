@@ -28,7 +28,7 @@ class HomeCopyCatalogCoverageTest {
         "leaderboardSubtitle" to { language -> HomeCopy.leaderboardSubtitle(language) },
         "streak" to { language -> HomeCopy.streak(language) },
         "level" to { language -> HomeCopy.level(language) },
-        "coins" to { language -> HomeCopy.coins(language) },
+        "hype" to { language -> HomeCopy.hype(language) },
         "brandMotto" to { language -> HomeCopy.brandMotto(language) },
         "landscapeWatermark" to { language -> HomeCopy.landscapeWatermark(language) }
     )
@@ -45,7 +45,6 @@ class HomeCopyCatalogCoverageTest {
         "SEE TOP PLAYERS AROUND THE WORLD",
         "STREAK",
         "LEVEL",
-        "COINS",
         "SMALL MINDS BIG WORLDS",
         "DIFFERENT WORLDS. SAME CHAOS.",
         "LEVELS",

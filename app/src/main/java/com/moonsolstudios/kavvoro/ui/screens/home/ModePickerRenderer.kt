@@ -190,7 +190,7 @@ object ModePickerRenderer {
         )
 
         // Mode 2: CHAOS (Glitch Mayhem / Extreme Modifiers)
-        val chaosDetail = "💀 ${t("UNLEASH THE CHAOS").uppercase()}  •  2X ${t("HYPE").uppercase()} 🔥"
+        val chaosDetail = "💀 ${t("UNLEASH THE CHAOS").uppercase()}  •  2X ${t("HYPE").uppercase()}  •  2X ${t("XP").uppercase()} 🔥"
         drawModeCard(
             canvas = canvas,
             rect = menuChaosCard,

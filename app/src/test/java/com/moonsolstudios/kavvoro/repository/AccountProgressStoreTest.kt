@@ -32,6 +32,15 @@ class AccountProgressStoreTest {
     }
 
     @Test
+    fun profileXpCountsAsGameplayProgressWhenSwitchingAccounts() {
+        val guest = mapOf(GameProgressRepository.PROFILE_XP_KEY to 100)
+        val emptyAccount = emptyMap<String, Any>()
+
+        assertEquals(1, AccountProgressStore.gameplayScore(guest))
+        assertTrue(AccountProgressStore.shouldPreserveLocalProgress(guest, emptyAccount))
+    }
+
+    @Test
     fun profileStorageName_isStableAndOpaque() {
         val first = AccountProgressStore.profilePreferencesName("player-a")
         val second = AccountProgressStore.profilePreferencesName("player-a")

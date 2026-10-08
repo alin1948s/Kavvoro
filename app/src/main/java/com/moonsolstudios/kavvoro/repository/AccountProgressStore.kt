@@ -133,15 +133,21 @@ class AccountProgressStore(context: Context) {
 
         internal fun gameplayScore(values: Map<String, *>): Int {
             fun intVal(key: String): Int = (values[key] as? Int) ?: 0
-            val classic = maxOf(intVal(GameProgressRepository.progressKey(GameMode.CLASSIC)), intVal("unlocked_level"))
-            val chaos = intVal(GameProgressRepository.progressKey(GameMode.CHAOS))
-            val highest = intVal("highest_level_classic") + intVal("highest_level_chaos")
-            val streaks = intVal("streak_classic") + intVal("streak_chaos") +
-                intVal(GameProgressRepository.BEST_STREAK_KEY) + intVal("clear_streak")
+            val classic = maxOf(intVal(GameProgressRepository.progressKey(GameMode.CLASSIC)), intVal("unlocked_level")).coerceAtLeast(0).toLong()
+            val chaos = intVal(GameProgressRepository.progressKey(GameMode.CHAOS)).coerceAtLeast(0).toLong()
+            val highest = intVal("highest_level_classic").coerceAtLeast(0).toLong() +
+                intVal("highest_level_chaos").coerceAtLeast(0).toLong()
+            val streaks = intVal("streak_classic").coerceAtLeast(0).toLong() +
+                intVal("streak_chaos").coerceAtLeast(0).toLong() +
+                intVal(GameProgressRepository.BEST_STREAK_KEY).coerceAtLeast(0).toLong() +
+                intVal("clear_streak").coerceAtLeast(0).toLong()
             val skins = values.keys.count { key ->
                 key.startsWith("skin_unlocked_") || key.startsWith("skin_purchased_")
             }
-            return classic + chaos + highest + streaks + skins * 10
+            val experience = intVal(GameProgressRepository.PROFILE_XP_KEY).coerceAtLeast(0).toLong()
+            return (classic + chaos + highest + streaks + skins * 10L + experience / 100L)
+                .coerceAtMost(Int.MAX_VALUE.toLong())
+                .toInt()
         }
 
         internal fun shouldPreserveLocalProgress(

@@ -705,20 +705,20 @@ object HomeMenuRenderer {
             dp = dp
         )
 
-        calculator.coinsChipRect.toRectF(scratch)
+        calculator.hypeChipRect.toRectF(scratch)
         drawStatMetricCard(canvas, scratch, KavvoroPalette.gold, paint, dp)
         drawStatChip3D(
             canvas = canvas,
             rect = scratch,
-            iconBmp = worldBitmap("ic_stat_coin_3d"),
-            label = HomeCopy.coins(context),
+            iconBmp = worldBitmap("ic_stat_hype_3d"),
+            label = HomeCopy.hype(context),
             value = formatHypeAmount(hypeBalance),
             paint = paint,
             dp = dp
         )
 
         if (dailyReady) {
-            calculator.coinsReadyBadgeRect.toRectF(scratchRect2)
+            calculator.hypeReadyBadgeRect.toRectF(scratchRect2)
             drawDailyReadyBadge(canvas, scratchRect2, dp, stateElapsed, t)
         }
 

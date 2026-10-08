@@ -111,9 +111,9 @@ object MissionsCompletionPopupRenderer {
             textPaint.color = withAlpha(KavvoroPalette.gold, opacity)
             val rewardSkinId = mission.rewardSkinId
             val rewardLabel = if (rewardSkinId != null) {
-                "+${mission.rewardCoins} + ${skinName(rewardSkinId).uppercase()}"
+                "+${mission.rewardHype} + ${skinName(rewardSkinId).uppercase()}"
             } else {
-                "+${mission.rewardCoins}"
+                "+${mission.rewardHype}"
             }
             drawFitted(
                 canvas,

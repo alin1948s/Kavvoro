@@ -40,7 +40,7 @@ class HomeLayoutCalculator {
     val statCardRects = Array(4) { LayoutRect() }
     val streakChipRect get() = statCardRects[0]
     val levelChipRect get() = statCardRects[1]
-    val coinsChipRect get() = statCardRects[2]
+    val hypeChipRect get() = statCardRects[2]
 
     // Touch/hit rects: the visual rects above grown to the platform minimum size. Rendering
     // keeps using the visual rects so the reference composition is untouched, while touch
@@ -48,8 +48,8 @@ class HomeLayoutCalculator {
     val settingsTouchRect = LayoutRect()
     val streakChipTouchRect = LayoutRect()
     val levelChipTouchRect = LayoutRect()
-    val coinsChipTouchRect = LayoutRect()
-    val coinsReadyBadgeRect = LayoutRect()
+    val hypeChipTouchRect = LayoutRect()
+    val hypeReadyBadgeRect = LayoutRect()
 
     val heroRect = LayoutRect()
     val portalRect = LayoutRect()
@@ -133,29 +133,29 @@ class HomeLayoutCalculator {
 
         growToTouchTarget(streakChipTouchRect, statCardRects[0], chipGrowthLimit)
         growToTouchTarget(levelChipTouchRect, statCardRects[1], chipGrowthLimit)
-        growToTouchTarget(coinsChipTouchRect, statCardRects[2], chipGrowthLimit)
-        coinsChipTouchRect.bottom = max(coinsChipTouchRect.bottom, coinsReadyBadgeRect.bottom)
+        growToTouchTarget(hypeChipTouchRect, statCardRects[2], chipGrowthLimit)
+        hypeChipTouchRect.bottom = max(hypeChipTouchRect.bottom, hypeReadyBadgeRect.bottom)
     }
 
-    private fun layoutCoinsReadyBadge(scaleFactor: Float) {
-        val coins = statCardRects[2]
-        if (coins.isEmpty()) {
-            coinsReadyBadgeRect.setEmpty()
+    private fun layoutHypeReadyBadge(scaleFactor: Float) {
+        val hype = statCardRects[2]
+        if (hype.isEmpty()) {
+            hypeReadyBadgeRect.setEmpty()
             return
         }
-        val badgeWidth = min(coins.width(), dp(72f * scaleFactor))
+        val badgeWidth = min(hype.width(), dp(72f * scaleFactor))
         val badgeHeight = dp(16f * scaleFactor)
-        val badgeTop = coins.bottom + dp(2f * scaleFactor)
-        coinsReadyBadgeRect.set(
-            coins.centerX() - badgeWidth * 0.5f,
+        val badgeTop = hype.bottom + dp(2f * scaleFactor)
+        hypeReadyBadgeRect.set(
+            hype.centerX() - badgeWidth * 0.5f,
             badgeTop,
-            coins.centerX() + badgeWidth * 0.5f,
+            hype.centerX() + badgeWidth * 0.5f,
             badgeTop + badgeHeight
         )
-        if (coins.top < headerRect.bottom) {
-            headerRect.bottom = max(headerRect.bottom, coinsReadyBadgeRect.bottom)
+        if (hype.top < headerRect.bottom) {
+            headerRect.bottom = max(headerRect.bottom, hypeReadyBadgeRect.bottom)
         }
-        statsRect.bottom = max(statsRect.bottom, coinsReadyBadgeRect.bottom)
+        statsRect.bottom = max(statsRect.bottom, hypeReadyBadgeRect.bottom)
     }
 
     fun calculate(
@@ -242,7 +242,7 @@ class HomeLayoutCalculator {
             brandRect.bottom + dp(13f * scaleFactor)
         )
 
-        // 3 chips: Streak, Level, Coins
+        // 3 chips: Streak, Level, hype
         val availableChipsWidth = (settingsButtonRect.left - actionGap) - (brandRect.right + actionGap)
         val chipGap = dp(6f * scaleFactor)
         val minReadableChipWidth = dp(72f)
@@ -282,7 +282,7 @@ class HomeLayoutCalculator {
 
             statsRect.set(contentRect.left, row2Top, contentRect.right, row2Top + row2Height)
         }
-        layoutCoinsReadyBadge(scaleFactor)
+        layoutHypeReadyBadge(scaleFactor)
 
         // 2. Lower Navigation & Play CTA (Bottom-Up layout)
         val footerHeight = dp(14f * scaleFactor)
@@ -463,27 +463,27 @@ class HomeLayoutCalculator {
         soundButtonRect.set(settingsButtonRect)
 
         // Stat Chips
-        val targetCoinsW = dp(100f * scaleFactor)
+        val targetHypeW = dp(100f * scaleFactor)
         val targetLevelW = dp(84f * scaleFactor)
         val targetStreakW = dp(92f * scaleFactor)
         var chipGap = dp(8f * scaleFactor)
 
         // Compact Header Degradation
         val availableHeaderSpace = (settingsButtonRect.left - actionGap) - (safeLeft + logoWidth + actionGap)
-        val requiredChipsSpace = targetCoinsW + targetLevelW + targetStreakW + chipGap * 2f
+        val requiredChipsSpace = targetHypeW + targetLevelW + targetStreakW + chipGap * 2f
 
-        val (actualStreakW, actualLevelW, actualCoinsW) = if (availableHeaderSpace < requiredChipsSpace) {
+        val (actualStreakW, actualLevelW, actualHypeW) = if (availableHeaderSpace < requiredChipsSpace) {
             logoWidth = dp(175f * scaleFactor).coerceIn(dp(160f), dp(190f))
             logoHeight = logoWidth / brandAspect.coerceAtLeast(0.1f)
             chipGap = dp(6f * scaleFactor)
             val compactChipW = ((availableHeaderSpace - chipGap * 2f) / 3f).coerceIn(dp(54f), dp(80f))
             Triple(compactChipW, compactChipW, compactChipW)
         } else {
-            Triple(targetStreakW, targetLevelW, targetCoinsW)
+            Triple(targetStreakW, targetLevelW, targetHypeW)
         }
 
-        val coinsRight = settingsButtonRect.left - actionGap
-        statCardRects[2].set(coinsRight - actualCoinsW, headerTop, coinsRight, headerTop + actionButtonSize)
+        val hypeRight = settingsButtonRect.left - actionGap
+        statCardRects[2].set(hypeRight - actualHypeW, headerTop, hypeRight, headerTop + actionButtonSize)
 
         val levelRight = statCardRects[2].left - chipGap
         statCardRects[1].set(levelRight - actualLevelW, headerTop, levelRight, headerTop + actionButtonSize)
@@ -497,7 +497,7 @@ class HomeLayoutCalculator {
 
         // 2. Body Viewport
         headerRect.set(safeLeft, headerTop, safeRight, max(brandRect.bottom, settingsButtonRect.bottom))
-        layoutCoinsReadyBadge(scaleFactor)
+        layoutHypeReadyBadge(scaleFactor)
         val headerBottom = headerRect.bottom + dp(12f * scaleFactor)
 
         bodyRect.set(safeLeft, headerBottom, safeRight, safeBottom)

@@ -14,7 +14,7 @@ import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
  * TalkBack virtual accessibility node provider for Kavvoro's SurfaceView/Canvas Home menu.
  *
  * Exposes the PLAY NOW button, Settings gear, the lower navigation cards (Skins, Missions,
- * Leaderboard), and the 3 header stat chips (Streak, Level, Coins).
+ * Leaderboard), and the 3 header stat chips (Streak, Level, hype).
  *
  * Two rules keep this honest:
  *  - nodes are published only while the Home menu surface is the one on screen
@@ -30,13 +30,13 @@ class HomeAccessibilityTouchHelper(
     private val isHomeSurfaceVisible: () -> Boolean,
     private val getStreak: () -> Int,
     private val getLevel: () -> Int,
-    private val getCoinsText: () -> String,
+    private val getHypeText: () -> String,
     private val isDailyCheckReady: () -> Boolean,
     private val onPlayClicked: () -> Unit,
     private val onSettingsClicked: () -> Unit,
     private val onSkinsClicked: () -> Unit,
     private val onMissionsClicked: () -> Unit,
-    private val onCoinsClicked: () -> Unit,
+    private val onHypeClicked: () -> Unit,
     private val onLeaderboardClicked: () -> Unit
 ) : ExploreByTouchHelper(host) {
 
@@ -48,14 +48,14 @@ class HomeAccessibilityTouchHelper(
         const val ID_LEADERBOARD_CARD = 5
         const val ID_STREAK_CHIP = 6
         const val ID_LEVEL_CHIP = 7
-        const val ID_COINS_CHIP = 8
+        const val ID_HYPE_CHIP = 8
 
         /** Focus and explore-by-touch order: header, primary action, then the navigation deck. */
         private val NODE_IDS = intArrayOf(
             ID_SETTINGS,
             ID_STREAK_CHIP,
             ID_LEVEL_CHIP,
-            ID_COINS_CHIP,
+            ID_HYPE_CHIP,
             ID_PLAY_CTA,
             ID_SKINS_CARD,
             ID_MISSIONS_CARD,
@@ -69,7 +69,7 @@ class HomeAccessibilityTouchHelper(
         ID_SETTINGS -> calculator.settingsTouchRect
         ID_STREAK_CHIP -> calculator.streakChipTouchRect
         ID_LEVEL_CHIP -> calculator.levelChipTouchRect
-        ID_COINS_CHIP -> calculator.coinsChipTouchRect
+        ID_HYPE_CHIP -> calculator.hypeChipTouchRect
         ID_PLAY_CTA -> calculator.playCtaRect
         ID_SKINS_CARD -> calculator.skinsCardRect
         ID_MISSIONS_CARD -> calculator.missionsCardRect
@@ -144,9 +144,9 @@ class HomeAccessibilityTouchHelper(
                 node.className = TextView::class.java.name
                 node.isClickable = false
             }
-            ID_COINS_CHIP -> {
+            ID_HYPE_CHIP -> {
                 val bonusState = if (isDailyCheckReady()) "READY" else "CLAIMED"
-                node.contentDescription = "${HomeCopy.coins(context)}: ${getCoinsText()}, ${KavvoroI18n.t(context, "DAILY RIFT BONUS")}: ${KavvoroI18n.t(context, bonusState)}"
+                node.contentDescription = "${HomeCopy.hype(context)}: ${getHypeText()}, ${KavvoroI18n.t(context, "DAILY RIFT BONUS")}: ${KavvoroI18n.t(context, bonusState)}"
                 node.className = Button::class.java.name
                 node.isClickable = true
                 node.addAction(AccessibilityNodeInfoCompat.ACTION_CLICK)
@@ -184,8 +184,8 @@ class HomeAccessibilityTouchHelper(
                     onLeaderboardClicked()
                     return true
                 }
-                ID_COINS_CHIP -> {
-                    onCoinsClicked()
+                ID_HYPE_CHIP -> {
+                    onHypeClicked()
                     return true
                 }
             }

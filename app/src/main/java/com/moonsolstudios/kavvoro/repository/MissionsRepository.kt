@@ -39,7 +39,7 @@ class MissionsRepository(
             putBoolean(claimedKey(missionId), true)
             mission.rewardSkinId?.let { putBoolean(GameProgressRepository.earnedSkinKey(it), true) }
         }
-        MissionClaimReward(coins = mission.rewardCoins, skinId = mission.rewardSkinId)
+        MissionClaimReward(hype = mission.rewardHype, skinId = mission.rewardSkinId)
     }
 
     private fun ensureCurrentDay() {

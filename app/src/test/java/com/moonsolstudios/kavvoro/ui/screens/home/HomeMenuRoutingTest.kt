@@ -8,7 +8,7 @@ import org.junit.Test
 
 class HomeMenuRoutingTest {
     @Test
-    fun missionsOpensItsOwnPageAndCoinsOpensDailyCheck() {
+    fun missionsOpensItsOwnPageAndhypeOpensDailyCheck() {
         val listener = object : HomeMenuActionListener {
             override fun onMenuButtonSelected(button: MenuButton) = Unit
             override fun onDailyRiftClaim() = Unit
@@ -34,8 +34,8 @@ class HomeMenuRoutingTest {
         assertEquals(
             MenuButton.DAILY_RIFT,
             controller.hitTestMenuButton(
-                calculator.coinsChipTouchRect.centerX(),
-                calculator.coinsChipTouchRect.centerY(),
+                calculator.hypeChipTouchRect.centerX(),
+                calculator.hypeChipTouchRect.centerY(),
                 MenuState.MODES,
                 calculator,
                 emptyMap()
@@ -46,8 +46,8 @@ class HomeMenuRoutingTest {
         assertEquals(
             MenuButton.DAILY_RIFT,
             synced.menuButtonAt(
-                calculator.coinsChipTouchRect.centerX(),
-                calculator.coinsChipTouchRect.centerY(),
+                calculator.hypeChipTouchRect.centerX(),
+                calculator.hypeChipTouchRect.centerY(),
                 MenuState.MODES,
                 menuPrivacyButton = RectF(),
                 menuSfxButton = RectF()

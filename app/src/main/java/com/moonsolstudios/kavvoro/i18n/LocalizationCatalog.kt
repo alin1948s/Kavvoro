@@ -30,7 +30,7 @@ object LocalizationCatalog {
         KavvoroLanguage.entries.filterNot { it == KavvoroLanguage.SYSTEM }.toSet()
 
     val allowlistedEnglishValues: Set<String> = setOf(
-        "Kavvoro", "Brainball", "Rift", "RIFT", "HYPE", "Classic", "CLASSIC", "Chaos", "CHAOS",
+        "Kavvoro", "Brainball", "Rift", "RIFT", "HYPE", "XP", "Classic", "CLASSIC", "Chaos", "CHAOS",
         "Google Play", "Firebase", "AdMob", "AURA", "Aura", "MAX AURA", "TUTORIAL", "Tutorial",
         "TRAINING", "Training", "PORTAL BRAINROT", "PORTAL RIFT", "PORTAL", "Portal", "PORTAL IN",
         "PORTAL OUT", "IN", "OUT", "BOOST", "Boost", "CODE", "Code", "START", "Start", "RESET",
@@ -153,6 +153,7 @@ object LocalizationCatalog {
         "HOLD TO PULL. RELEASE TO COAST.",
         "HOLD TO SLOW FOR PRECISION",
         "HYPE",
+        "XP",
         "HYPE BANK",
         "Hold behind the ball to brake.",
         "Hold can dampen the pulse when it gets wild.",

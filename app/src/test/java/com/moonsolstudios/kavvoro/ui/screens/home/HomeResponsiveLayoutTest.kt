@@ -94,11 +94,11 @@ class HomeResponsiveLayoutTest {
             assertTrue("Platform must be horizontally centered on ${spec.name}", abs(platformRect.centerX() - contentRect.centerX()) < 0.1f)
             assertTrue("Character must have positive dimensions on ${spec.name}", charRect.width() > 0f && charRect.height() > 0f)
 
-            val coins = calculator.coinsChipRect
-            val readyBadge = calculator.coinsReadyBadgeRect
-            assertTrue("Coins READY badge must sit below the balance on ${spec.name}", readyBadge.top >= coins.bottom)
-            assertTrue("Coins READY badge must stay within the viewport on ${spec.name}", readyBadge.left >= 0f && readyBadge.right <= calculator.screenWidth)
-            assertTrue("Coins tap target must include its READY badge on ${spec.name}", calculator.coinsChipTouchRect.bottom >= readyBadge.bottom)
+            val hype = calculator.hypeChipRect
+            val readyBadge = calculator.hypeReadyBadgeRect
+            assertTrue("hype READY badge must sit below the balance on ${spec.name}", readyBadge.top >= hype.bottom)
+            assertTrue("hype READY badge must stay within the viewport on ${spec.name}", readyBadge.left >= 0f && readyBadge.right <= calculator.screenWidth)
+            assertTrue("hype tap target must include its READY badge on ${spec.name}", calculator.hypeChipTouchRect.bottom >= readyBadge.bottom)
 
             // 7. Verify Play CTA
             val playRect = calculator.playCtaRect
@@ -135,7 +135,7 @@ class HomeResponsiveLayoutTest {
             assertTrue("Stat card $index should be wide enough for its label", card.width() >= calculator.dp(72f))
         }
         assertTrue("Stat cards should remain distinct", calculator.streakChipRect.right < calculator.levelChipRect.left)
-        assertTrue("Stat cards should remain distinct", calculator.levelChipRect.right < calculator.coinsChipRect.left)
+        assertTrue("Stat cards should remain distinct", calculator.levelChipRect.right < calculator.hypeChipRect.left)
 
         calculator.calculate(320f, 640f, 1f)
         assertTrue("Narrow phone stats should degrade below the logo row", calculator.statsRect.top >= calculator.headerRect.bottom)

@@ -15,7 +15,6 @@ object HomeCopy {
         "SEE TOP PLAYERS AROUND THE WORLD",
         "STREAK",
         "LEVEL",
-        "COINS",
         "SMALL MINDS BIG WORLDS",
         "DIFFERENT WORLDS. SAME CHAOS.",
         "LEVELS",
@@ -59,8 +58,8 @@ object HomeCopy {
     fun level(context: Context): String = KavvoroI18n.t(context, "LEVEL")
     fun level(language: KavvoroLanguage): String = KavvoroI18n.t(language, "LEVEL")
 
-    fun coins(context: Context): String = KavvoroI18n.t(context, "COINS")
-    fun coins(language: KavvoroLanguage): String = KavvoroI18n.t(language, "COINS")
+    fun hype(context: Context): String = KavvoroI18n.t(context, "HYPE")
+    fun hype(language: KavvoroLanguage): String = KavvoroI18n.t(language, "HYPE")
 
     fun brandMotto(context: Context): String = KavvoroI18n.t(context, "SMALL MINDS BIG WORLDS")
     fun brandMotto(language: KavvoroLanguage): String = KavvoroI18n.t(language, "SMALL MINDS BIG WORLDS")

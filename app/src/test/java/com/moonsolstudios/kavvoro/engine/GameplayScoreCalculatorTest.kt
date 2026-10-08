@@ -9,8 +9,17 @@ import org.junit.Test
 class GameplayScoreCalculatorTest {
 
     @Test
-    fun calculateHypeScoreAwardsCorrectBonusForSRankChaos() {
-        val score = GameplayScoreCalculator.calculateHypeScore(
+    fun chaosAwardsExactlyDoubleTheClassicHypeForEquivalentPlay() {
+        val classic = GameplayScoreCalculator.calculateHypeScore(
+            rank = "S",
+            gameMode = GameMode.CLASSIC,
+            seconds = 4.5f,
+            inkUsed = 50f,
+            inkLimit = 100f,
+            streak = 3,
+            maxChain = 2
+        )
+        val chaos = GameplayScoreCalculator.calculateHypeScore(
             rank = "S",
             gameMode = GameMode.CHAOS,
             seconds = 4.5f,
@@ -19,9 +28,8 @@ class GameplayScoreCalculatorTest {
             streak = 3,
             maxChain = 2
         )
-        // 900 (S rank) + 360 (Chaos) + (4.5 * 72 = 324) + (0.5 * 520 = 260) + 3 * 80 (240) + 2 * 120 (240)
-        // Total = 900 + 360 + 324 + 260 + 240 + 240 = 2324
-        assertEquals(2324, score)
+        assertEquals(2_084, classic)
+        assertEquals(classic * 2, chaos)
     }
 
     @Test
@@ -30,6 +38,24 @@ class GameplayScoreCalculatorTest {
         assertEquals(0, GameplayScoreCalculator.calculateStreakMilestoneBonus(4))
         assertEquals(340, GameplayScoreCalculator.calculateStreakMilestoneBonus(5)) // 250 + 5 * 18 = 340
         assertEquals(430, GameplayScoreCalculator.calculateStreakMilestoneBonus(10)) // 250 + 10 * 18 = 430
+        assertEquals(680, GameplayScoreCalculator.calculateStreakMilestoneBonus(5, GameMode.CHAOS))
+    }
+
+    @Test
+    fun chaosRiftBreakRewardIsExactlyDoubleTheClassicReward() {
+        val classic = GameplayScoreCalculator.calculateRiftBreakBonus(
+            rank = "A",
+            riftEnergy = 0.35f,
+            maxChain = 3,
+            gameMode = GameMode.CLASSIC
+        )
+        val chaos = GameplayScoreCalculator.calculateRiftBreakBonus(
+            rank = "A",
+            riftEnergy = 0.35f,
+            maxChain = 3,
+            gameMode = GameMode.CHAOS
+        )
+        assertEquals(classic * 2, chaos)
     }
 
     @Test

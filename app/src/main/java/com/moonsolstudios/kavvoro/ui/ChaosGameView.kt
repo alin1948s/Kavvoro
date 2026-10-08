@@ -41,6 +41,7 @@ import com.moonsolstudios.kavvoro.model.GameState
 import com.moonsolstudios.kavvoro.model.MenuButton
 import com.moonsolstudios.kavvoro.model.MenuState
 import com.moonsolstudios.kavvoro.model.NextReward
+import com.moonsolstudios.kavvoro.model.ProfileExperienceLogic
 import com.moonsolstudios.kavvoro.model.RenderProfile
 import com.moonsolstudios.kavvoro.model.Screen
 import com.moonsolstudios.kavvoro.model.SettingsButton
@@ -243,7 +244,7 @@ class ChaosGameView(
         },
         onReward = { reward ->
             synchronized(lock) {
-                if (reward.coins > 0) progressRepository.addHype(reward.coins)
+                if (reward.hype > 0) progressRepository.addHype(reward.hype)
                 audio.playEvent(SoundEvent.UNLOCK, selectedBallIndex())
                 hapticSequence(
                     HapticFeedbackCompat.confirm to 0L,
@@ -356,14 +357,14 @@ class ChaosGameView(
         calculator = homeLayoutCalculator,
         isHomeSurfaceVisible = { screen == Screen.MENU && menuState == MenuState.MODES },
         getStreak = { bestStreak() },
-        getLevel = { level.index },
-        getCoinsText = { formatHypeAmount(hypeBalance()) },
+        getLevel = { progressRepository.profileLevel() },
+        getHypeText = { formatHypeAmount(hypeBalance()) },
         isDailyCheckReady = { !progressRepository.dailyRiftBonusClaimed() },
         onPlayClicked = { handleMenuButton(MenuButton.PLAY) },
         onSettingsClicked = { handleMenuButton(MenuButton.SETTINGS) },
         onSkinsClicked = { handleMenuButton(MenuButton.COLLECTION) },
         onMissionsClicked = { handleMenuButton(MenuButton.MISSIONS) },
-        onCoinsClicked = { handleMenuButton(MenuButton.DAILY_RIFT) },
+        onHypeClicked = { handleMenuButton(MenuButton.DAILY_RIFT) },
         onLeaderboardClicked = { handleMenuButton(MenuButton.LEADERBOARDS) }
     )
     private val collectionBackButton get() = CollectionTouchController.backButtonRect
@@ -1177,7 +1178,7 @@ class ChaosGameView(
             }
             lastRiftBreakReason = if (lastRiftBreak) riftBreakReason(score) else ""
             lastDailyBonus = claimDailyRiftBonus()
-            lastStreakMilestoneBonus = GameplayScoreCalculator.calculateStreakMilestoneBonus(streak)
+            lastStreakMilestoneBonus = GameplayScoreCalculator.calculateStreakMilestoneBonus(streak, gameMode)
             lastHypeScore = GameplayScoreCalculator.calculateHypeScore(
                 rank = score.rank,
                 gameMode = gameMode,
@@ -1331,7 +1332,7 @@ class ChaosGameView(
             mode = gameMode,
             completedLevel = score.level,
             currentStreak = streak,
-            hypeReward = lastHypeScore
+            hypeReward = (lastHypeScore - lastDailyBonus).coerceAtLeast(0)
         )
         val nextLevel = progression.currentLevel
         val nextBestStreak = progression.bestStreak
@@ -2016,7 +2017,7 @@ class ChaosGameView(
             calculator = homeLayoutCalculator,
             activeMenuButton = activeMenuButton,
             bestStreak = bestStreak(),
-            currentLevel = level.index,
+            currentLevel = progressRepository.profileLevel(),
             hypeBalance = hypeBalance(),
             dailyReady = !dailyRiftBonusClaimed(),
             stateElapsed = stateElapsed,
@@ -3006,7 +3007,7 @@ class ChaosGameView(
             dp = dp(1f),
             lastScore = lastScore,
             lastHypeScore = lastHypeScore,
-            maxChain = maxChain,
+            experienceReward = ProfileExperienceLogic.rewardForWin(gameMode),
             lastRiftBreak = lastRiftBreak,
             lastRiftBreakBonus = lastRiftBreakBonus,
             lastRiftBreakReason = lastRiftBreakReason,

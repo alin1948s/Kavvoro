@@ -110,7 +110,7 @@ class MissionsScreenController(
             activeClaimIndex = touchController.activeClaimIndex,
             dp = dp,
             missionArt = worldBitmap("brainball_main"),
-            coinArt = worldBitmap("ic_stat_coin_3d"),
+            hypeArt = worldBitmap("ic_stat_hype_3d"),
             category = selectedCategory,
             t = t,
             skinName = skinName

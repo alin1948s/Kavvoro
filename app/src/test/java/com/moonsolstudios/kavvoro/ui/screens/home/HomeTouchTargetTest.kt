@@ -93,7 +93,7 @@ class HomeTouchTargetTest {
             val chips = listOf(
                 "streakChipTouchRect" to calculator.streakChipTouchRect,
                 "levelChipTouchRect" to calculator.levelChipTouchRect,
-                "coinsChipTouchRect" to calculator.coinsChipTouchRect
+                "hypeChipTouchRect" to calculator.hypeChipTouchRect
             )
             for ((label, rect) in chips) {
                 // Height is fully corrected; width can only grow into the few dp between chips.
@@ -110,19 +110,19 @@ class HomeTouchTargetTest {
 
             val streak = calculator.streakChipTouchRect
             val level = calculator.levelChipTouchRect
-            val coins = calculator.coinsChipTouchRect
+            val hype = calculator.hypeChipTouchRect
 
             assertFalse(
                 "streak and level touch targets overlap on ${device.name}",
                 streak.intersects(level)
             )
             assertFalse(
-                "level and coins touch targets overlap on ${device.name}",
-                level.intersects(coins)
+                "level and hype touch targets overlap on ${device.name}",
+                level.intersects(hype)
             )
             assertFalse(
-                "streak and coins touch targets overlap on ${device.name}",
-                streak.intersects(coins)
+                "streak and hype touch targets overlap on ${device.name}",
+                streak.intersects(hype)
             )
             // The gear is deliberately allowed to reach over the chips: it is hit-tested first and
             // the chips are read-only, and without that reach it cannot reach 48dp on narrow
@@ -140,7 +140,7 @@ class HomeTouchTargetTest {
                 "settings" to (calculator.settingsButtonRect to calculator.settingsTouchRect),
                 "streak chip" to (calculator.streakChipRect to calculator.streakChipTouchRect),
                 "level chip" to (calculator.levelChipRect to calculator.levelChipTouchRect),
-                "coins chip" to (calculator.coinsChipRect to calculator.coinsChipTouchRect)
+                "hype chip" to (calculator.hypeChipRect to calculator.hypeChipTouchRect)
             )
             for ((label, rects) in pairs) {
                 val (visual, touch) = rects

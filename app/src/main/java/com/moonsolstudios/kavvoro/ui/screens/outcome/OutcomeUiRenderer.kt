@@ -36,7 +36,7 @@ object OutcomeUiRenderer {
         dp: Float,
         lastScore: RunScore?,
         lastHypeScore: Int,
-        maxChain: Int,
+        experienceReward: Int,
         lastRiftBreak: Boolean,
         lastRiftBreakBonus: Int,
         lastRiftBreakReason: String,
@@ -127,7 +127,7 @@ object OutcomeUiRenderer {
                 score = score,
                 accent = accent,
                 lastHypeScore = lastHypeScore,
-                maxChain = maxChain,
+                experienceReward = experienceReward,
                 dp = dp,
                 paint = paint,
                 textPaint = textPaint,
@@ -237,7 +237,7 @@ object OutcomeUiRenderer {
         score: RunScore?,
         accent: Int,
         lastHypeScore: Int,
-        maxChain: Int,
+        experienceReward: Int,
         dp: Float,
         paint: Paint,
         textPaint: Paint,
@@ -286,7 +286,7 @@ object OutcomeUiRenderer {
         val metricWidth = (right - metricLeft) / 3f
         drawResultMetricCell(canvas, metricLeft, top, metricWidth, t("TIME").uppercase(), score?.let { "${"%.1f".format(it.seconds)}s" } ?: "-", true, dp, paint, textPaint, fitText)
         drawResultMetricCell(canvas, metricLeft + metricWidth, top, metricWidth, t("HYPE").uppercase(), lastHypeScore.toString(), true, dp, paint, textPaint, fitText)
-        drawResultMetricCell(canvas, metricLeft + metricWidth * 2f, top, metricWidth, t("CHAIN").uppercase(), "x$maxChain", false, dp, paint, textPaint, fitText)
+        drawResultMetricCell(canvas, metricLeft + metricWidth * 2f, top, metricWidth, t("XP").uppercase(), "+$experienceReward", false, dp, paint, textPaint, fitText)
     }
 
     fun drawResultMetricCell(

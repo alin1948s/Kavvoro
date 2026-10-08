@@ -250,7 +250,7 @@ object DailyRiftRewardRenderer {
         canvas.drawCircle(centerX, centerY, glowRadius, paint)
         paint.shader = null
         scratch.set(centerX - 51f * unit, centerY - 51f * unit, centerX + 51f * unit, centerY + 51f * unit)
-        drawWorldAsset(canvas, "ic_stat_coin_3d", scratch, 255)
+        drawWorldAsset(canvas, "ic_stat_hype_3d", scratch, 255)
 
         val amountX = bounds.left + 158f * unit
         val amountMaxWidth = bounds.right - amountX - 14f * unit
@@ -370,7 +370,7 @@ object DailyRiftRewardRenderer {
         canvas.drawRoundRect(bounds, 16f * unit, 16f * unit, paint)
 
         scratch.set(bounds.left + 11f * unit, bounds.centerY() - 15f * unit, bounds.left + 41f * unit, bounds.centerY() + 15f * unit)
-        drawWorldAsset(canvas, "ic_stat_coin_3d", scratch, 250)
+        drawWorldAsset(canvas, "ic_stat_hype_3d", scratch, 250)
         textPaint.typeface = typeface ?: AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.textSize = 9f * unit

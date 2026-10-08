@@ -10,6 +10,7 @@ import com.moonsolstudios.kavvoro.model.LevelProgression
 import com.moonsolstudios.kavvoro.model.LevelProgressionLogic
 import com.moonsolstudios.kavvoro.model.MissionId
 import com.moonsolstudios.kavvoro.model.NextReward
+import com.moonsolstudios.kavvoro.model.ProfileExperienceLogic
 import com.moonsolstudios.kavvoro.model.UnlockRule
 import com.moonsolstudios.kavvoro.model.UnlockType
 import kotlin.math.max
@@ -55,6 +56,7 @@ class GameProgressRepository(
         const val BEST_STREAK_KEY = "best_streak"
         const val SHARE_COUNT_KEY = "share_count"
         const val HYPE_BANK_KEY = "hype_bank"
+        const val PROFILE_XP_KEY = "profile_xp"
         const val PREMIUM_PRICE_KEY = "premium_price_label"
         const val DAILY_STREAK_KEY = "daily_rift_login_streak"
         const val LAST_CLAIMED_SEED_KEY = "daily_rift_last_claimed_seed"
@@ -130,6 +132,10 @@ class GameProgressRepository(
 
     fun hypeBalance(): Int = prefs.getInt(HYPE_BANK_KEY, prefs.getInt("last_hype", 0)).coerceAtLeast(0)
 
+    fun profileExperiencePoints(): Int = prefs.getInt(PROFILE_XP_KEY, 0).coerceAtLeast(0)
+
+    fun profileLevel(): Int = ProfileExperienceLogic.fromTotalXp(profileExperiencePoints()).level
+
     fun addHype(amount: Int) = synchronized(prefs) {
         val next = (hypeBalance().toLong() + amount.coerceAtLeast(0).toLong())
             .coerceAtMost(Int.MAX_VALUE.toLong())
@@ -160,6 +166,10 @@ class GameProgressRepository(
         )
         val safeStreak = currentStreak.coerceAtLeast(0)
         val safeHypeReward = hypeReward.coerceAtLeast(0)
+        val newProfileXp = ProfileExperienceLogic.addXp(
+            profileExperiencePoints(),
+            ProfileExperienceLogic.rewardForWin(mode)
+        )
         val newHypeBalance = (hypeBalance().toLong() + safeHypeReward.toLong())
             .coerceAtMost(Int.MAX_VALUE.toLong())
             .toInt()
@@ -172,6 +182,7 @@ class GameProgressRepository(
             putInt("clear_streak", safeStreak)
             putInt("last_hype", safeHypeReward)
             putInt(HYPE_BANK_KEY, newHypeBalance)
+            putInt(PROFILE_XP_KEY, newProfileXp)
         }
         progression
     }
@@ -312,7 +323,7 @@ class GameProgressRepository(
 
     fun dailyRiftBonusClaimedAtKey(): String = "${dailyRiftBonusKey()}_claimed_at"
 
-    fun dailyRiftBonusForMode(mode: GameMode): Int = if (mode == GameMode.CHAOS) 420 else 320
+    fun dailyRiftBonusForMode(mode: GameMode): Int = if (mode == GameMode.CHAOS) 640 else 320
 
     fun dailyRiftResetText(): String {
         val remaining = dailyRiftRemainingMillis()
