@@ -126,12 +126,16 @@ class HomeResponsiveLayoutTest {
     }
 
     @Test
-    fun testReferencePhoneHeaderKeepsStatsAlongsideLogo() {
+    fun testReferencePhoneUsesReadableStatCardsBelowBrandRow() {
         val calculator = HomeLayoutCalculator()
         calculator.calculate(1080f, 2400f, 2.625f)
 
-        assertTrue("Reference phone stats should share the logo row", calculator.statsRect.top < calculator.brandRect.bottom)
-        assertTrue("Reference phone stats should fit before the settings button", calculator.statsRect.right < calculator.settingsButtonRect.left)
+        assertTrue("Reference phone stats should use the dedicated row", calculator.statsRect.top >= calculator.headerRect.bottom)
+        calculator.statCardRects.take(3).forEachIndexed { index, card ->
+            assertTrue("Stat card $index should be wide enough for its label", card.width() >= calculator.dp(72f))
+        }
+        assertTrue("Stat cards should remain distinct", calculator.streakChipRect.right < calculator.levelChipRect.left)
+        assertTrue("Stat cards should remain distinct", calculator.levelChipRect.right < calculator.coinsChipRect.left)
 
         calculator.calculate(320f, 640f, 1f)
         assertTrue("Narrow phone stats should degrade below the logo row", calculator.statsRect.top >= calculator.headerRect.bottom)

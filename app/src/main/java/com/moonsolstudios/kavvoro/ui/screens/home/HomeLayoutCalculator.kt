@@ -244,10 +244,11 @@ class HomeLayoutCalculator {
 
         // 3 chips: Streak, Level, Coins
         val availableChipsWidth = (settingsButtonRect.left - actionGap) - (brandRect.right + actionGap)
-        val chipsFitInRow = availableChipsWidth >= dp(145f)
+        val chipGap = dp(6f * scaleFactor)
+        val minReadableChipWidth = dp(72f)
+        val chipsFitInRow = availableChipsWidth >= minReadableChipWidth * 3f + chipGap * 2f
 
         if (chipsFitInRow) {
-            val chipGap = dp(6f * scaleFactor)
             val chipWidth = (availableChipsWidth - chipGap * 2f) / 3f
 
             statCardRects[0].set(brandRect.right + actionGap, chipTop, brandRect.right + actionGap + chipWidth, chipTop + chipHeight)
@@ -263,7 +264,7 @@ class HomeLayoutCalculator {
                 max(brandMottoRect.bottom, chipTop + chipHeight)
             )
         } else {
-            // Narrow screen (<340dp width) - row 1 is logo + settings, row 2 is 3 chips
+            // Keep each stat readable: move the three cards below the brand row when needed.
             headerRect.set(
                 contentRect.left,
                 headerTop,
@@ -271,8 +272,7 @@ class HomeLayoutCalculator {
                 max(brandMottoRect.bottom, settingsButtonRect.bottom)
             )
             val row2Top = headerRect.bottom + dp(6f * scaleFactor)
-            val row2Height = dp(34f * scaleFactor)
-            val chipGap = dp(6f * scaleFactor)
+            val row2Height = dp(42f * scaleFactor)
             val chipWidth = (contentRect.width() - chipGap * 2f) / 3f
 
             statCardRects[0].set(contentRect.left, row2Top, contentRect.left + chipWidth, row2Top + row2Height)

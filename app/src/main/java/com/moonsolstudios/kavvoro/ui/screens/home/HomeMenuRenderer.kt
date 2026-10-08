@@ -36,11 +36,6 @@ object HomeMenuRenderer {
     private val scratchFit = RectF()
     private val scratchRect = RectF()
     private val scratchRect2 = RectF()
-    private val statsDockRect = RectF()
-    private val statsDockShaderRect = RectF()
-    private var statsDockShaderDensity = Float.NaN
-    private var statsDockFillShader: LinearGradient? = null
-    private var statsDockBorderShader: LinearGradient? = null
     private val gearPath = Path()
     private val cardClipPath = Path()
     private val mountainPath = Path()
@@ -136,58 +131,28 @@ object HomeMenuRenderer {
     private fun withAlpha(color: Int, alpha: Int): Int =
         (color and 0x00FFFFFF) or ((alpha.coerceIn(0, 255)) shl 24)
 
-    private fun drawStatsDock(
+    private fun drawStatMetricCard(
         canvas: Canvas,
         rect: RectF,
-        firstDividerX: Float,
-        secondDividerX: Float,
+        accentColor: Int,
         paint: Paint,
         dp: Float
     ) {
         if (rect.isEmpty) return
-        val radius = rect.height() * 0.24f
-        if (statsDockShaderRect.left != rect.left || statsDockShaderRect.top != rect.top ||
-            statsDockShaderRect.right != rect.right || statsDockShaderRect.bottom != rect.bottom ||
-            statsDockShaderDensity != dp
-        ) {
-            statsDockShaderRect.set(rect)
-            statsDockShaderDensity = dp
-            statsDockFillShader = LinearGradient(
-                rect.left, rect.top, rect.right, rect.bottom,
-                intArrayOf(0xEF0A1530.toInt(), 0xF20B1027.toInt(), 0xF21A102C.toInt()),
-                floatArrayOf(0f, 0.55f, 1f),
-                Shader.TileMode.CLAMP
-            )
-            statsDockBorderShader = LinearGradient(
-                rect.left, rect.top, rect.right, rect.bottom,
-                withAlpha(KavvoroPalette.cyan, 190),
-                withAlpha(KavvoroPalette.purple, 190),
-                Shader.TileMode.CLAMP
-            )
-        }
+        val radius = min(rect.height() * 0.24f, 13f * dp)
         paint.reset()
         paint.isAntiAlias = true
         paint.style = Paint.Style.FILL
-        paint.shader = statsDockFillShader
+        paint.color = 0xED09152B.toInt()
         canvas.drawRoundRect(rect, radius, radius, paint)
 
-        paint.shader = null
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1.15f * dp
-        paint.shader = statsDockBorderShader
+        paint.color = withAlpha(accentColor, 170)
         canvas.drawRoundRect(rect, radius, radius, paint)
-        paint.shader = null
-        paint.style = Paint.Style.STROKE
         paint.strokeWidth = 1f * dp
         paint.color = 0x24FFFFFF
         canvas.drawLine(rect.left + radius, rect.top + 1f * dp, rect.right - radius, rect.top + 1f * dp, paint)
-
-        // Dividers sit in the existing layout gaps, keeping the three metrics distinct inside one dock.
-        paint.strokeWidth = 1f * dp
-        paint.color = 0x477DA8D7
-        val verticalInset = (rect.height() * 0.23f).coerceAtLeast(4f * dp)
-        canvas.drawLine(firstDividerX, rect.top + verticalInset, firstDividerX, rect.bottom - verticalInset, paint)
-        canvas.drawLine(secondDividerX, rect.top + verticalInset, secondDividerX, rect.bottom - verticalInset, paint)
     }
 
     private fun drawStatChip3D(
@@ -715,18 +680,9 @@ object HomeMenuRenderer {
         canvas.drawText(HomeCopy.brandMotto(context).uppercase(), scratch.centerX(), scratch.centerY() + textPaint.textSize * 0.38f, textPaint)
         textPaint.letterSpacing = 0f
 
-        // 3. Three Stat Chips (Streak, Level, Coins)
-        statsDockRect.set(
-            calculator.streakChipRect.left,
-            calculator.streakChipRect.top,
-            calculator.coinsChipRect.right,
-            calculator.streakChipRect.bottom
-        )
-        val firstDividerX = (calculator.streakChipRect.right + calculator.levelChipRect.left) * 0.5f
-        val secondDividerX = (calculator.levelChipRect.right + calculator.coinsChipRect.left) * 0.5f
-        drawStatsDock(canvas, statsDockRect, firstDividerX, secondDividerX, paint, dp)
-
+        // 3. Three independently framed stat cards with consistent accent and text alignment.
         calculator.streakChipRect.toRectF(scratch)
+        drawStatMetricCard(canvas, scratch, 0xFFFF8A63.toInt(), paint, dp)
         drawStatChip3D(
             canvas = canvas,
             rect = scratch,
@@ -738,6 +694,7 @@ object HomeMenuRenderer {
         )
 
         calculator.levelChipRect.toRectF(scratch)
+        drawStatMetricCard(canvas, scratch, KavvoroPalette.cyan, paint, dp)
         drawStatChip3D(
             canvas = canvas,
             rect = scratch,
@@ -749,6 +706,7 @@ object HomeMenuRenderer {
         )
 
         calculator.coinsChipRect.toRectF(scratch)
+        drawStatMetricCard(canvas, scratch, KavvoroPalette.gold, paint, dp)
         drawStatChip3D(
             canvas = canvas,
             rect = scratch,
