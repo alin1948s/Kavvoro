@@ -1,5 +1,7 @@
 package com.moonsolstudios.kavvoro.ui.screens.language
 
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
+
 /**
  * Design canvas reference system and metrics for Language Selector V4 — Pixel-Matched Reference.
  * Target reference mockup: 1024 x 1536 (futuristic_romanian_language_selection_ui.png).
@@ -52,7 +54,6 @@ object LanguageReferenceCanvas {
 
     // 6. Visual Calibration & Correction V4.4
     const val TITLE_TARGET_WIDTH_RATIO = 0.38f
-    const val SUBTITLE_TARGET_WIDTH_RATIO = 0.255f
     const val BODY_SCALE_FROM_CURRENT = 1.22f // +20-25% larger text
     const val FOOTER_TEXT_SCALE_FROM_CURRENT = 1.25f
     const val SELECTED_BORDER_PX = 2.0f
@@ -88,8 +89,8 @@ object LanguageSelectorMetrics {
     const val RADIO_SIZE_DP = 20f
     const val RADIO_INNER_DOT_DP = 7f
     const val RADIO_MARGIN_END_DP = 14f
-    const val LANGUAGE_NAME_MIN_SIZE_DP = 16f
-    const val LANGUAGE_NAME_MAX_SIZE_DP = 20f
+    const val LANGUAGE_NAME_MIN_SIZE_DP = 14f
+    const val LANGUAGE_NAME_MAX_SIZE_DP = UiTypography.LANGUAGE_OPTION_DP
     const val LANGUAGE_KICKER_TEXT_SIZE_DP = 12f
     const val CURRENT_STATUS_TEXT_SIZE_DP = 13f
     const val SCROLL_END_CLEARANCE_DP = 8f
@@ -104,7 +105,6 @@ object LanguageSelectorMetrics {
 
     // V4.1 Visual Calibration Constants
     const val TITLE_TARGET_WIDTH_RATIO = LanguageReferenceCanvas.TITLE_TARGET_WIDTH_RATIO
-    const val SUBTITLE_TARGET_WIDTH_RATIO = LanguageReferenceCanvas.SUBTITLE_TARGET_WIDTH_RATIO
     const val BODY_SCALE_FROM_CURRENT = LanguageReferenceCanvas.BODY_SCALE_FROM_CURRENT
     const val FOOTER_TEXT_SCALE_FROM_CURRENT = LanguageReferenceCanvas.FOOTER_TEXT_SCALE_FROM_CURRENT
     const val SELECTED_BORDER_PX = LanguageReferenceCanvas.SELECTED_BORDER_PX
@@ -118,5 +118,5 @@ object LanguageSelectorMetrics {
     const val FRAME_GLOW_RADIUS = LanguageReferenceCanvas.FRAME_GLOW_RADIUS
 
     fun languageNameTextSize(cardHeight: Float, dp: Float): Float =
-        (cardHeight * 0.36f).coerceIn(LANGUAGE_NAME_MIN_SIZE_DP * dp, LANGUAGE_NAME_MAX_SIZE_DP * dp)
+        (cardHeight * 0.29f).coerceIn(LANGUAGE_NAME_MIN_SIZE_DP * dp, LANGUAGE_NAME_MAX_SIZE_DP * dp)
 }

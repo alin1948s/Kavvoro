@@ -19,6 +19,7 @@ import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.BrandTitleRenderer
 import com.moonsolstudios.kavvoro.ui.render.CyberShapeRenderer
 import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
 import kotlin.math.cos
 import kotlin.math.sin
@@ -668,7 +669,9 @@ object SettingsUiRenderer {
         val maxTextWidth = (right - left - leadingSpace - trailingSpace).coerceAtLeast(1f * dp)
         val originalTextWidth = textPaint.measureText(label)
         val labelSize = if (originalTextWidth > maxTextWidth && originalTextWidth > 0f) {
-            (titleSize * maxTextWidth / originalTextWidth).coerceAtLeast(9f * dp)
+            (titleSize * maxTextWidth / originalTextWidth).coerceAtLeast(
+                UiTypography.COMPACT_SECTION_TITLE_DP * dp
+            )
         } else {
             titleSize
         }
@@ -1548,7 +1551,7 @@ object SettingsUiRenderer {
         textPaint.letterSpacing = 0.05f
         val measuredTitleWidth = textPaint.measureText(title)
         val titleScale = if (measuredTitleWidth > safeTitleWidth) safeTitleWidth / measuredTitleWidth else 1f
-        val fittedTitleSize = (titleSize * titleScale).coerceAtLeast(22f * dp)
+        val fittedTitleSize = (titleSize * titleScale).coerceAtLeast(UiTypography.COMPACT_SCREEN_TITLE_DP * dp)
         textPaint.textSize = fittedTitleSize
         val displayTitle = ellipsizeForPaint(title, textPaint, safeTitleWidth)
         val titleWidth = textPaint.measureText(displayTitle)
@@ -1623,7 +1626,9 @@ object SettingsUiRenderer {
         } else {
             1f
         }
-        textPaint.textSize = (subtitleSize * subtitleScale).coerceAtLeast(9.5f * dp)
+        textPaint.textSize = (subtitleSize * subtitleScale).coerceAtLeast(
+            UiTypography.COMPACT_SCREEN_SUBTITLE_DP * dp
+        )
         val displaySubtitle = ellipsizeForPaint(subtitle, textPaint, safeSubtitleWidth)
         canvas.drawText(displaySubtitle, centerX, subtitleBaseline, textPaint)
         textPaint.letterSpacing = 0f

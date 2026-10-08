@@ -12,6 +12,7 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import com.moonsolstudios.kavvoro.model.MenuButton
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -102,14 +103,14 @@ object ModePickerRenderer {
         textPaint.isAntiAlias = true
         textPaint.textAlign = Paint.Align.CENTER
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
-        textPaint.textSize = (if (compact) 8.5f else 10f) * dp
+        textPaint.textSize = UiTypography.eyebrowDp(compact) * dp
         textPaint.color = 0xFF00E5FF.toInt()
         textPaint.letterSpacing = 0.08f
         val pillY = scratchRect.top + (if (compact) 18f else 21f) * dp
         canvas.drawText(fitText(missionTag, scratchRect.width() - 28f * dp), safeCenterX, pillY, textPaint)
 
         // 3. Dominant Title Header: "ALEGE MODUL"
-        textPaint.textSize = (if (compact) 21f else 27f) * dp
+        textPaint.textSize = UiTypography.screenTitleDp(compact) * dp
         textPaint.color = 0xFFFFFFFF.toInt()
         textPaint.letterSpacing = 0.06f
         textPaint.setShadowLayer(10f * dp, 0f, 2f * dp, 0xFF000000.toInt())

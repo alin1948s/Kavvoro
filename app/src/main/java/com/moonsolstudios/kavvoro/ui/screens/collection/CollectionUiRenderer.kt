@@ -15,6 +15,7 @@ import com.moonsolstudios.kavvoro.model.CollectionFilter
 import com.moonsolstudios.kavvoro.model.SkinStyle
 import com.moonsolstudios.kavvoro.model.UnlockType
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import com.moonsolstudios.kavvoro.ui.render.UiWidgetRenderer
 import kotlin.math.cos
 import kotlin.math.min
@@ -121,13 +122,13 @@ object CollectionUiRenderer {
         textPaint.isAntiAlias = true
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.create("sans-serif", Typeface.BOLD)
-        textPaint.textSize = 7.5f * dp
+        textPaint.textSize = UiTypography.EYEBROW_DP * dp
         textPaint.color = 0xFF1DE8C8.toInt()
         val kicker = fitText(t("Brainrot Vault // 50 Meme Legends").uppercase(), (right - left - 28f * dp).coerceAtLeast(50f * dp))
         canvas.drawText("✦ $kicker ✦", left + 14f * dp, top + 14f * dp, textPaint)
 
         // Main title
-        textPaint.textSize = 17f * dp
+        textPaint.textSize = UiTypography.PANEL_TITLE_DP * dp
         textPaint.color = 0xFFF7F4FF.toInt()
         textPaint.setShadowLayer(8f * dp, 0f, 0f, 0x881DE8C8.toInt())
         val titleText = fitText(t("COLLECTION").uppercase(), (restoreButton.left - left - 24f * dp).coerceAtLeast(80f * dp))

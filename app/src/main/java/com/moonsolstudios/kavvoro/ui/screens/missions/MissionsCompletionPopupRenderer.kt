@@ -10,6 +10,7 @@ import android.graphics.Typeface
 import com.moonsolstudios.kavvoro.model.MissionProgress
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
 import kotlin.math.max
 import kotlin.math.min
@@ -82,7 +83,7 @@ object MissionsCompletionPopupRenderer {
         textPaint.isAntiAlias = true
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.DEFAULT_BOLD
         textPaint.textAlign = Paint.Align.LEFT
-        textPaint.textSize = 15f * dp
+        textPaint.textSize = UiTypography.PANEL_TITLE_DP * dp
         textPaint.letterSpacing = 0.02f
         textPaint.color = withAlpha(0xFFFFFFFF.toInt(), opacity)
         drawFitted(canvas, t("MISSIONS COMPLETE").uppercase(), left + 55f * dp, top + 33f * dp, width - 74f * dp, textPaint, 10f * dp)

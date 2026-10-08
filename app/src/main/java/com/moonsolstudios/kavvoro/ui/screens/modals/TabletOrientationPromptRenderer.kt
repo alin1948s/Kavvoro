@@ -11,6 +11,7 @@ import android.graphics.Typeface
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.i18n.KavvoroLanguage
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -138,7 +139,7 @@ object TabletOrientationPromptRenderer {
         // 5. Headline: "ROTATE YOUR SCREEN"
         val titleText = TabletPromptTranslations.getTitle(language)
         textPaint.letterSpacing = 0.05f
-        textPaint.textSize = 21f * dp
+        textPaint.textSize = UiTypography.PANEL_TITLE_DP * dp
         textPaint.color = 0xFFF7F4FF.toInt()
         textPaint.setShadowLayer(8f * dp, 0f, 2f * dp, 0x80000000.toInt())
         canvas.drawText(titleText, cardScratch.centerX(), cardTop + 180f * dp, textPaint)

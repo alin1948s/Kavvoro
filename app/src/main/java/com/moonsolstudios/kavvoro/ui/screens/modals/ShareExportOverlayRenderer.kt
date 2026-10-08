@@ -7,6 +7,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
 import kotlin.math.min
 import kotlin.math.sin
@@ -71,7 +72,7 @@ object ShareExportOverlayRenderer {
 
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.typeface = AssetResourceManager.oxaniumTypeface ?: Typeface.create("sans-serif", Typeface.BOLD)
-        textPaint.textSize = 18f * dp
+        textPaint.textSize = UiTypography.PANEL_TITLE_DP * dp
         textPaint.color = 0xFFF7F4FF.toInt()
         canvas.drawText(t("BUILDING SHORT").uppercase(), left + 70f * dp, top + 31f * dp, textPaint)
         textPaint.textSize = 11f * dp

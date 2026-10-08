@@ -14,6 +14,7 @@ import android.text.TextUtils
 import com.moonsolstudios.kavvoro.i18n.KavvoroLanguage
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.CyberShapeRenderer
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 
 /**
  * AAA Console-grade Procedural Vector Renderer for the Language Selector screen.
@@ -292,7 +293,7 @@ object LanguageSelectorRenderer {
             canvas.drawCircle(radioCx, radioCy, radioR, paint)
         }
 
-        // Language Name Typography (+20-25% larger, weight 400 for inactive, weight 500 for selected)
+        // Language names use a consistent list-label size with selected-state weight for hierarchy.
         val textLeft = flagRect.right + (itemRect.width() * 0.055f)
         val maxTextWidth = (radioCx - radioR - 10f * visualScale) - textLeft
         val textSize = LanguageSelectorMetrics.languageNameTextSize(itemRect.height(), dp)
@@ -580,17 +581,26 @@ object LanguageSelectorRenderer {
         textPaint.letterSpacing = 0.16f
 
         val targetTitleW = vw * LanguageReferenceCanvas.TITLE_TARGET_WIDTH_RATIO
-        var titleSize = 42f * visualScale
+        var titleSize = UiTypography.SCREEN_TITLE_DP * visualScale
         textPaint.textSize = titleSize
         val measuredTitleW = textPaint.measureText(titleStr)
         if (measuredTitleW > 0f) {
-            titleSize = (titleSize * (targetTitleW / measuredTitleW)).coerceIn(28f * visualScale, 56f * visualScale)
+            titleSize = (titleSize * (targetTitleW / measuredTitleW)).coerceIn(
+                UiTypography.COMPACT_SCREEN_TITLE_DP * visualScale,
+                UiTypography.SCREEN_TITLE_DP * visualScale
+            )
             textPaint.textSize = titleSize
         }
         textPaint.color = 0xFFFFFFFF.toInt()
         val titleMetrics = textPaint.fontMetrics
         val titleBaseline = if (titleMetrics != null) titleY - (titleMetrics.ascent + titleMetrics.descent) / 2f else titleY
-        canvas.drawText(titleStr, deck.centerX(), titleBaseline, textPaint)
+        val displayTitle = TextUtils.ellipsize(
+            titleStr,
+            TextPaint(textPaint),
+            deck.width() * 0.9f,
+            TextUtils.TruncateAt.END
+        )?.toString() ?: titleStr
+        canvas.drawText(displayTitle, deck.centerX(), titleBaseline, textPaint)
 
         // ── 3. Separator with Central Neon Diamond: Fixed at SEPARATOR_Y = 0.103f ──
         val divY = vh * LanguageReferenceCanvas.SEPARATOR_Y
@@ -649,18 +659,26 @@ object LanguageSelectorRenderer {
         val subtitleText = t("Select interface language")
         textPaint.typeface = Typeface.create("sans-serif", Typeface.NORMAL)
         textPaint.letterSpacing = 0.035f
-        var subSize = 20.5f * visualScale
+        var subSize = UiTypography.SCREEN_SUBTITLE_DP * visualScale
         textPaint.textSize = subSize
         val measuredSubW = textPaint.measureText(subtitleText)
         val maxSubW = deck.width() * 0.85f
         if (measuredSubW > maxSubW && measuredSubW > 0f) {
-            subSize = (subSize * (maxSubW / measuredSubW)).coerceAtLeast(17.5f * visualScale)
+            subSize = (subSize * (maxSubW / measuredSubW)).coerceAtLeast(
+                UiTypography.COMPACT_SCREEN_SUBTITLE_DP * visualScale
+            )
             textPaint.textSize = subSize
         }
         textPaint.color = 0xE09AB0C4.toInt() // #9AB0C4 at 88% alpha (crisp slate-cyan contrast)
         val subMetrics = textPaint.fontMetrics
         val subBaseline = if (subMetrics != null) subY - (subMetrics.ascent + subMetrics.descent) / 2f else subY
-        canvas.drawText(subtitleText, deck.centerX(), subBaseline, textPaint)
+        val displaySubtitle = TextUtils.ellipsize(
+            subtitleText,
+            TextPaint(textPaint),
+            maxSubW,
+            TextUtils.TruncateAt.END
+        )?.toString() ?: subtitleText
+        canvas.drawText(displaySubtitle, deck.centerX(), subBaseline, textPaint)
         textPaint.letterSpacing = 0f
 
         // ── 5. Language Cards Grid ──

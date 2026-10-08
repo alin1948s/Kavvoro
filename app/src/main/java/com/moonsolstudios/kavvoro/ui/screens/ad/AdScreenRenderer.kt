@@ -8,6 +8,7 @@ import com.moonsolstudios.kavvoro.model.AdAction
 import com.moonsolstudios.kavvoro.model.ButtonId
 import com.moonsolstudios.kavvoro.model.GameMode
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import com.moonsolstudios.kavvoro.ui.render.UiWidgetRenderer
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
 import kotlin.math.min
@@ -67,7 +68,7 @@ object AdScreenRenderer {
         textPaint.color = withAlpha(accent, 235)
         val headerLine = "${t("STREAK PROTECTION").uppercase()}  /  ${gameMode.menuTitle(t)}"
         canvas.drawText(fitText(headerLine, panelWidth - 74f * dp), left + 20f * dp, top + 28f * dp, textPaint)
-        textPaint.textSize = 27f * dp
+        textPaint.textSize = UiTypography.SCREEN_TITLE_DP * dp
         textPaint.color = 0xFFF7F4FF.toInt()
         canvas.drawText(fitText(t("AD CONTINUE").uppercase(), panelWidth - 74f * dp), left + 20f * dp, top + 59f * dp, textPaint)
         textPaint.textSize = 12f * dp

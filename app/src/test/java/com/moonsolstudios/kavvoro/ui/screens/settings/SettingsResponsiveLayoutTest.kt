@@ -3,6 +3,7 @@ package com.moonsolstudios.kavvoro.ui.screens.settings
 import com.moonsolstudios.kavvoro.model.LayoutMode
 import com.moonsolstudios.kavvoro.model.SettingsTab
 import com.moonsolstudios.kavvoro.ui.render.BrandTitleRenderer
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -317,8 +318,8 @@ class SettingsResponsiveLayoutTest {
     fun headerUsesClampSizedTitleWithoutOverlap() {
         val phone = SettingsLayoutCalculator.computeHeader(375f, 343f, 1f, 812f)
         val desktop = SettingsLayoutCalculator.computeHeader(1920f, 1080f, 1f, 1080f)
-        assertEquals(36f, phone.titleSize, 0.5f)
-        assertTrue(desktop.titleSize >= 36f && desktop.titleSize <= 52.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, phone.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, desktop.titleSize, 0.5f)
         assertTrue(phone.subtitleSize >= 10f)
         assertTrue(desktop.subtitleSize >= 10f)
         assertTrue("Title must sit below the brand", phone.titleTop >= phone.brandTop + phone.brandHeight)
@@ -425,17 +426,17 @@ class SettingsResponsiveLayoutTest {
     }
 
     @Test
-    fun xlPortraitComponentsStepUpFromCompactAndMidTablets() {
+    fun xlPortraitBodyAndIconsStepUpWithSharedHeadingScale() {
         val phone = SettingsLayoutCalculator.scale(360f, 800f, 1f)
         val mid = SettingsLayoutCalculator.scale(800f, 1280f, 1f)
         val tablet1024 = SettingsLayoutCalculator.scale(1024f, 1366f, 1f)
         val tablet1200 = SettingsLayoutCalculator.scale(1200f, 1920f, 1f)
         val tablet1600 = SettingsLayoutCalculator.scale(1600f, 2560f, 1f)
-        assertEquals(36f, phone.titleSize, 0.5f)
-        assertEquals(44f, mid.titleSize, 0.5f)
-        assertEquals(48f, tablet1024.titleSize, 0.5f)
-        assertEquals(48f, tablet1200.titleSize, 0.5f)
-        assertEquals(48f, tablet1600.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, phone.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, mid.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, tablet1024.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, tablet1200.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, tablet1600.titleSize, 0.5f)
         assertEquals(16f, phone.bodySize, 0.5f)
         assertEquals(19f, mid.bodySize, 0.5f)
         assertEquals(20f, tablet1024.bodySize, 0.5f)
@@ -477,7 +478,7 @@ class SettingsResponsiveLayoutTest {
         val tokens = SettingsLayoutCalculator.scale(720f, 1280f, 2f)
         assertFalse(tokens.largePortrait)
         assertFalse(tokens.xlPortrait)
-        assertEquals(36f * 2f, tokens.titleSize, 0.5f)
+        assertEquals(UiTypography.COMPACT_SCREEN_TITLE_DP * 2f, tokens.titleSize, 0.5f)
         assertTrue(tokens.compactHeight)
         assertEquals(54f * 2f, tokens.tabHeight, 0.5f)
         assertEquals(70f * 2f, tokens.rowHeight, 0.5f)
@@ -532,14 +533,14 @@ class SettingsResponsiveLayoutTest {
     }
 
     @Test
-    fun typographyFollowsLogicalWidthBandsNotPhysicalPixels() {
+    fun headingsUseSharedScaleWhileContentTypographyFollowsLogicalWidth() {
         val phone = SettingsLayoutCalculator.scale(360f, 800f, 1f)
         val tablet600 = SettingsLayoutCalculator.scale(600f, 1024f, 1f)
         val tablet800 = SettingsLayoutCalculator.scale(800f, 1280f, 1f)
         val tablet1024 = SettingsLayoutCalculator.scale(1024f, 1366f, 1f)
         val same800HiDpi = SettingsLayoutCalculator.scale(1600f, 2560f, 2f)
 
-        assertEquals(36f, phone.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, phone.titleSize, 0.5f)
         assertEquals(11f, phone.tabTextSize, 0.5f)
         assertEquals(16f, phone.bodySize, 0.5f)
         assertEquals(12f, phone.smallSize, 0.5f)
@@ -547,21 +548,21 @@ class SettingsResponsiveLayoutTest {
         assertEquals(30f, phone.tabIconSize, 0.5f)
         assertTrue("Phone tab icons should visually lead the labels", phone.tabIconSize > phone.tabTextSize * 2f)
 
-        assertEquals(40f, tablet600.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, tablet600.titleSize, 0.5f)
         assertEquals(12f, tablet600.tabTextSize, 0.5f)
         assertEquals(18f, tablet600.bodySize, 0.5f)
         assertEquals(14f, tablet600.smallSize, 0.5f)
         assertEquals(46f, tablet600.iconSize, 0.5f)
         assertEquals(32f, tablet600.tabIconSize, 0.5f)
 
-        assertEquals(44f, tablet800.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, tablet800.titleSize, 0.5f)
         assertEquals(13f, tablet800.tabTextSize, 0.5f)
         assertEquals(19f, tablet800.bodySize, 0.5f)
         assertEquals(15f, tablet800.smallSize, 0.5f)
         assertEquals(50f, tablet800.iconSize, 0.5f)
         assertEquals(34f, tablet800.tabIconSize, 0.5f)
 
-        assertEquals(48f, tablet1024.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, tablet1024.titleSize, 0.5f)
         assertEquals(14f, tablet1024.tabTextSize, 0.5f)
         assertEquals(20f, tablet1024.bodySize, 0.5f)
         assertEquals(15.5f, tablet1024.smallSize, 0.5f)
@@ -579,7 +580,7 @@ class SettingsResponsiveLayoutTest {
     fun compactPhoneScaleStaysCloseToCurrent360Layout() {
         val tokens = SettingsLayoutCalculator.scale(360f, 800f, 1f)
         assertFalse(tokens.largePortrait)
-        assertEquals(36f, tokens.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, tokens.titleSize, 0.5f)
         assertEquals(74f, tokens.rowHeight, 0.5f)
         assertEquals(58f, tokens.tabHeight, 0.5f)
         assertEquals(42f, tokens.iconSize, 0.5f)
@@ -595,7 +596,8 @@ class SettingsResponsiveLayoutTest {
 
         assertFalse(normalTokens.compactHeight)
         assertTrue(shortTokens.compactHeight)
-        assertEquals(normalTokens.titleSize, shortTokens.titleSize, 0.5f)
+        assertEquals(UiTypography.SCREEN_TITLE_DP, normalTokens.titleSize, 0.5f)
+        assertEquals(UiTypography.COMPACT_SCREEN_TITLE_DP, shortTokens.titleSize, 0.5f)
         assertEquals(normalTokens.bodySize, shortTokens.bodySize, 0.5f)
         assertEquals(normalTokens.tabTextSize, shortTokens.tabTextSize, 0.5f)
         assertEquals(normalTokens.iconSize, shortTokens.iconSize, 0.5f)
@@ -650,7 +652,11 @@ class SettingsResponsiveLayoutTest {
                 landscapeShort,
                 tokens.compactVertical
             )
-            assertEquals(tokens.titleSize, SettingsLayoutCalculator.scale(spec.width, spec.width * 1.6f, spec.density).titleSize, 0.5f)
+            assertEquals(
+                UiTypography.screenTitleDp(tokens.compactVertical) * spec.density,
+                tokens.titleSize,
+                0.5f
+            )
             for (tab in SettingsTab.values()) {
                 val calc = layoutFor(spec, tab)
                 val gap = calc.backButton.top - calc.contentPanel.bottom

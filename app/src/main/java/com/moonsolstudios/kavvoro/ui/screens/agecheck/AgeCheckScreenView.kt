@@ -10,6 +10,7 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import android.text.SpannableString
 import android.text.Spanned
+import android.text.TextUtils
 import android.text.style.ForegroundColorSpan
 import android.text.style.StyleSpan
 import android.util.AttributeSet
@@ -28,6 +29,7 @@ import com.moonsolstudios.kavvoro.R
 import com.moonsolstudios.kavvoro.i18n.KavvoroI18n
 import com.moonsolstudios.kavvoro.privacy.AgeGroup
 import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
@@ -186,16 +188,17 @@ class AgeCheckScreenView @JvmOverloads constructor(
         val title = TextView(context).apply {
             text = t("AGE CHECK")
             setTextColor(Color.rgb(244, 246, 255))
-            setTextSize(if (compact) 26f else 29f)
+            setTextSize(UiTypography.screenTitleDp(compact))
             letterSpacing = 0.06f
             gravity = Gravity.CENTER
             typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
             maxLines = 1
+            ellipsize = TextUtils.TruncateAt.END
         }
         val subtitle = TextView(context).apply {
             text = t("Enter your age in years.")
             setTextColor(KavvoroPalette.mutedText)
-            setTextSize(16f)
+            setTextSize(UiTypography.screenSubtitleDp(compact))
             gravity = Gravity.CENTER
             maxLines = 2
         }

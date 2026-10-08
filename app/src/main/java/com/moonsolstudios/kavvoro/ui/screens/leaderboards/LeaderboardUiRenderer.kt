@@ -11,6 +11,7 @@ import android.graphics.Shader
 import android.graphics.Typeface
 import com.moonsolstudios.kavvoro.model.BallSkin
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import com.moonsolstudios.kavvoro.ui.render.UiWidgetRenderer
 import kotlin.math.min
 
@@ -89,12 +90,12 @@ object LeaderboardUiRenderer {
         textPaint.isAntiAlias = true
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.typeface = oxaniumBold
-        textPaint.textSize = 7.5f * dp
+        textPaint.textSize = UiTypography.EYEBROW_DP * dp
         textPaint.color = 0xFF1DE8C8.toInt()
         val kicker = fitText(t("Global Hall of Fame // Top Sigmas").uppercase(), (right - left - 28f * dp).coerceAtLeast(50f * dp))
         canvas.drawText("✦ $kicker ✦", left + 14f * dp, top + 14f * dp, textPaint)
 
-        textPaint.textSize = 17f * dp
+        textPaint.textSize = UiTypography.PANEL_TITLE_DP * dp
         textPaint.color = 0xFFF7F4FF.toInt()
         textPaint.setShadowLayer(8f * dp, 0f, 0f, 0x881DE8C8.toInt())
         val titleText = fitText(t("LEADERBOARDS").uppercase(), (backButton.left - left - 18f * dp).coerceAtLeast(80f * dp))

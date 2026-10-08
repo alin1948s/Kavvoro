@@ -4,6 +4,7 @@ import android.graphics.RectF
 import com.moonsolstudios.kavvoro.model.SettingsTab
 import com.moonsolstudios.kavvoro.ui.render.BrandTitleRenderer
 import com.moonsolstudios.kavvoro.ui.render.LayoutRect
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 
 enum class SettingsBreakpoint {
     MOBILE,
@@ -377,6 +378,7 @@ class SettingsLayoutCalculator {
             val titleSize: Float,
             val bodySize: Float,
             val smallSize: Float,
+            val screenSubtitleSize: Float,
             val sectionTitleSize: Float,
             val tabTextSize: Float,
             val backTextSize: Float,
@@ -467,10 +469,13 @@ class SettingsLayoutCalculator {
             val xlPortrait = portrait && width >= XL_PORTRAIT_MIN_DP
             val largePortrait = portrait && width >= MOBILE_MAX_DP
 
-            val titleSize = typeByWidth(width, 36f, 40f, 44f, 48f) * dp
+            val height = heightDp(viewHeight, dp)
+            val compactVertical = compactHeight || (!portrait && height <= 900f)
+            val titleSize = UiTypography.screenTitleDp(compactVertical) * dp
             val bodySize = typeByWidth(width, 16f, 18f, 19f, 20f) * dp
             val smallSize = typeByWidth(width, 12f, 14f, 15f, 15.5f) * dp
-            val sectionTitleSize = typeByWidth(width, 14f, 15f, 16f, 17f) * dp
+            val screenSubtitleSize = UiTypography.screenSubtitleDp(compactVertical) * dp
+            val sectionTitleSize = UiTypography.sectionTitleDp(compactVertical) * dp
             val tabTextSize = typeByWidth(width, 11f, 12f, 13f, 14f) * dp
             val backTextSize = typeByWidth(width, 14f, 15f, 16f, 17f) * dp
             val profileTextSize = typeByWidth(width, 13f, 14f, 15f, 15f) * dp
@@ -478,11 +483,9 @@ class SettingsLayoutCalculator {
             val tabIconSize = iconByWidth(width, 30f, 32f, 34f, 36f) * dp
             val chevronSize = iconByWidth(width, 24f, 26f, 28f, 30f) * dp
 
-            val height = heightDp(viewHeight, dp)
             // Landscape tablets (Pixel Tablet 1280x800dp, 1366x768, …) are wide
             // but short. Keep width-based fonts/icons; compress only vertical
             // rhythm so Back cannot sit on the settings card.
-            val compactVertical = compactHeight || (!portrait && height <= 900f)
             val tallBoost = if (compactVertical || height <= 900f) {
                 0f
             } else {
@@ -524,6 +527,7 @@ class SettingsLayoutCalculator {
                 titleSize = titleSize,
                 bodySize = bodySize,
                 smallSize = smallSize,
+                screenSubtitleSize = screenSubtitleSize,
                 sectionTitleSize = sectionTitleSize,
                 tabTextSize = tabTextSize,
                 backTextSize = backTextSize,
@@ -712,7 +716,7 @@ class SettingsLayoutCalculator {
             val headerBottom = maxOf(brandMottoBottom, profileBottom)
             val heroGap = tokens.headerToTitle
             val titleSize = tokens.titleSize
-            val subtitleSize = tokens.smallSize
+            val subtitleSize = tokens.screenSubtitleSize
             val titleTop = headerBottom + heroGap
             val titleBaseline = titleTop + titleSize
             val subtitleTop = titleBaseline + tokens.titleToSubtitle

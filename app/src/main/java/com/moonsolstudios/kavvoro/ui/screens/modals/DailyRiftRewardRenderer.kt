@@ -8,6 +8,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.Typeface
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import kotlin.math.min
 import kotlin.math.sin
 
@@ -184,7 +185,7 @@ object DailyRiftRewardRenderer {
         textPaint.shader = null
         textPaint.typeface = titleTypeface
         textPaint.textAlign = Paint.Align.LEFT
-        textPaint.textSize = 15f * unit
+        textPaint.textSize = UiTypography.PANEL_TITLE_DP * unit
         textPaint.letterSpacing = 0.05f
         textPaint.color = 0xFFF4F7FD.toInt()
         val badgeWidth = if (claimed) 82f else 0f

@@ -13,6 +13,7 @@ import com.moonsolstudios.kavvoro.model.MissionId
 import com.moonsolstudios.kavvoro.model.MissionProgress
 import com.moonsolstudios.kavvoro.ui.render.AssetResourceManager
 import com.moonsolstudios.kavvoro.ui.render.KavvoroPalette
+import com.moonsolstudios.kavvoro.ui.render.UiTypography
 import com.moonsolstudios.kavvoro.ui.render.withAlpha
 import java.util.Locale
 import kotlin.math.min
@@ -84,12 +85,12 @@ object MissionsUiRenderer {
         textPaint.typeface = AssetResourceManager.spaceGroteskBold()
         textPaint.textAlign = Paint.Align.LEFT
         textPaint.color = 0xFFFFFFFF.toInt()
-        textPaint.textSize = 18f * dp
+        textPaint.textSize = UiTypography.PANEL_TITLE_DP * dp
         drawFitted(canvas, t("MISSIONS & REWARDS").uppercase(), layout.titleRect.toRectF(scratchTextRect), textPaint, 11f * dp)
 
         textPaint.typeface = AssetResourceManager.oxaniumNormal()
         textPaint.color = 0xFFD1D9F2.toInt()
-        textPaint.textSize = 10f * dp
+        textPaint.textSize = UiTypography.SCREEN_SUBTITLE_DP * dp
         textPaint.letterSpacing = 0.035f
         val subtitleKey = if (category == MissionCategory.DAILY) "COMPLETE DAILY MISSIONS & WIN" else "MASTER THE RIFT, EARN REWARDS"
         drawFitted(canvas, t(subtitleKey).uppercase(), layout.subtitleRect.toRectF(scratchTextRect), textPaint, 7f * dp)
