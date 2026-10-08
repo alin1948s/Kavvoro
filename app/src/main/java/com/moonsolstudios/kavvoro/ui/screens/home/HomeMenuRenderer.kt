@@ -47,11 +47,68 @@ object HomeMenuRenderer {
     private val ridgePath = Path()
     private val chevronPath = Path()
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val navTitleMeasurePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val laserPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val badgePaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val GEAR_ANGLE_FACTORS = floatArrayOf(-0.50f, -0.34f, -0.21f, 0.21f, 0.34f, 0.50f)
     private var cachedChevronDrawable: android.graphics.drawable.Drawable? = null
     private var cachedTrophyDrawable: android.graphics.drawable.Drawable? = null
+    private var cachedNavTitleSize = Float.NaN
+    private var cachedNavTitleWidth = Float.NaN
+    private var cachedNavTitleHeight = Float.NaN
+    private var cachedNavTitleDensity = Float.NaN
+    private var cachedNavTitleSkins = ""
+    private var cachedNavTitleMissions = ""
+    private var cachedNavTitleLeaderboard: String? = null
+
+    private fun sharedNavTitleSize(
+        skinsTitle: String,
+        missionsTitle: String,
+        leaderboardTitle: String?,
+        cardWidth: Float,
+        cardHeight: Float,
+        dp: Float
+    ): Float {
+        if (skinsTitle == cachedNavTitleSkins &&
+            missionsTitle == cachedNavTitleMissions &&
+            leaderboardTitle == cachedNavTitleLeaderboard &&
+            cardWidth == cachedNavTitleWidth &&
+            cardHeight == cachedNavTitleHeight &&
+            dp == cachedNavTitleDensity
+        ) return cachedNavTitleSize
+
+        navTitleMeasurePaint.reset()
+        navTitleMeasurePaint.isAntiAlias = true
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            navTitleMeasurePaint.fontVariationSettings = "'wght' 700"
+        }
+        navTitleMeasurePaint.typeface = AssetResourceManager.spaceGroteskBold()
+        navTitleMeasurePaint.isFakeBoldText = true
+        navTitleMeasurePaint.letterSpacing = 0.03f
+
+        val baseSize = (cardHeight * 0.09f).coerceIn(17f * dp, 25f * dp)
+        navTitleMeasurePaint.textSize = baseSize
+        val widestTitle = maxOf(
+            navTitleMeasurePaint.measureText(skinsTitle),
+            navTitleMeasurePaint.measureText(missionsTitle),
+            leaderboardTitle?.let(navTitleMeasurePaint::measureText) ?: 0f
+        )
+        val availableWidth = (cardWidth - 50f * dp).coerceAtLeast(1f * dp)
+        val computedSize = if (widestTitle > availableWidth && widestTitle > 0f) {
+            baseSize * (availableWidth / widestTitle)
+        } else {
+            baseSize
+        }
+
+        cachedNavTitleSkins = skinsTitle
+        cachedNavTitleMissions = missionsTitle
+        cachedNavTitleLeaderboard = leaderboardTitle
+        cachedNavTitleWidth = cardWidth
+        cachedNavTitleHeight = cardHeight
+        cachedNavTitleDensity = dp
+        cachedNavTitleSize = computedSize
+        return computedSize
+    }
 
     private fun chevronDrawable(context: Context): android.graphics.drawable.Drawable? =
         cachedChevronDrawable ?: ContextCompat.getDrawable(context, R.drawable.ic_chevron_right)?.mutate()?.also {
@@ -835,6 +892,7 @@ object HomeMenuRenderer {
         context: Context,
         paint: Paint,
         dp: Float,
+        titleTextSize: Float,
         artBitmap: Bitmap? = null
     ) {
         val radius = 22f * dp
@@ -928,17 +986,10 @@ object HomeMenuRenderer {
         textPaint.typeface = AssetResourceManager.spaceGroteskBold()
         textPaint.isFakeBoldText = true
         textPaint.color = Color.WHITE
-        var cardTitleSize = (rect.height() * 0.09f).coerceIn(17f * dp, 25f * dp)
-        textPaint.textSize = cardTitleSize
+        textPaint.textSize = titleTextSize
         textPaint.letterSpacing = 0.03f
         val chevronSize = 14f * dp
         val titleChevronGap = 8f * dp
-        val maxTitleW = (rect.width() - 28f * dp - chevronSize - titleChevronGap).coerceAtLeast(1f * dp)
-        val measuredTitleW = textPaint.measureText(title)
-        if (measuredTitleW > maxTitleW && measuredTitleW > 0f) {
-            cardTitleSize *= (maxTitleW / measuredTitleW)
-            textPaint.textSize = cardTitleSize
-        }
         val titleWidth = textPaint.measureText(title)
         val titleGroupWidth = titleWidth + titleChevronGap + chevronSize
         val titleGroupLeft = rect.centerX() - titleGroupWidth * 0.5f
@@ -1124,6 +1175,38 @@ object HomeMenuRenderer {
             )
 
             // 7. NAVIGATION CARDS (Localized via drawNavCard)
+            val skinsTitle = HomeCopy.skinsTitle(context)
+            val missionsTitle = HomeCopy.missionsTitle(context)
+            val leaderboardTitle = HomeCopy.leaderboardTitle(context)
+            val leaderboardUsesStandardCard =
+                calculator.landscapeClass == null || calculator.landscapeClass == LandscapeClass.WIDE
+            val sharedTitleWidth = if (leaderboardUsesStandardCard) {
+                minOf(
+                    calculator.skinsCardRect.width(),
+                    calculator.missionsCardRect.width(),
+                    calculator.leaderboardCardRect.width()
+                )
+            } else {
+                minOf(calculator.skinsCardRect.width(), calculator.missionsCardRect.width())
+            }
+            val sharedTitleHeight = if (leaderboardUsesStandardCard) {
+                minOf(
+                    calculator.skinsCardRect.height(),
+                    calculator.missionsCardRect.height(),
+                    calculator.leaderboardCardRect.height()
+                )
+            } else {
+                minOf(calculator.skinsCardRect.height(), calculator.missionsCardRect.height())
+            }
+            val navCardTitleSize = sharedNavTitleSize(
+                skinsTitle = skinsTitle,
+                missionsTitle = missionsTitle,
+                leaderboardTitle = leaderboardTitle.takeIf { leaderboardUsesStandardCard },
+                cardWidth = sharedTitleWidth,
+                cardHeight = sharedTitleHeight,
+                dp = dp
+            )
+
             if (calculator.landscapeClass != null) {
                 // Subtle readability dark scrim behind navigation deck
                 paint.reset()
@@ -1149,7 +1232,7 @@ object HomeMenuRenderer {
             drawNavCard(
                 canvas = canvas,
                 rect = scratch,
-                title = HomeCopy.skinsTitle(context),
+                title = skinsTitle,
                 subtitle = HomeCopy.skinsSubtitle(context),
                 showSubtitle = calculator.showCardSubtitles,
                 iconRes = R.drawable.ic_skins,
@@ -1160,6 +1243,7 @@ object HomeMenuRenderer {
                 context = context,
                 paint = paint,
                 dp = dp,
+                titleTextSize = navCardTitleSize,
                 artBitmap = skinsArtBmp
             )
 
@@ -1169,7 +1253,7 @@ object HomeMenuRenderer {
             drawNavCard(
                 canvas = canvas,
                 rect = scratch,
-                title = HomeCopy.missionsTitle(context),
+                title = missionsTitle,
                 subtitle = HomeCopy.missionsSubtitle(context),
                 showSubtitle = calculator.showCardSubtitles,
                 iconRes = R.drawable.ic_missions,
@@ -1180,6 +1264,7 @@ object HomeMenuRenderer {
                 context = context,
                 paint = paint,
                 dp = dp,
+                titleTextSize = navCardTitleSize,
                 artBitmap = missionsArtBmp
             )
             // 7c. Leaderboard Card (3D trophy artwork + cosmic backdrop)
@@ -1200,7 +1285,7 @@ object HomeMenuRenderer {
                 drawNavCard(
                     canvas = canvas,
                     rect = scratch,
-                    title = HomeCopy.leaderboardTitle(context),
+                    title = leaderboardTitle,
                     subtitle = HomeCopy.leaderboardSubtitle(context),
                     showSubtitle = calculator.showCardSubtitles,
                     iconRes = R.drawable.ic_trophy,
@@ -1211,6 +1296,7 @@ object HomeMenuRenderer {
                     context = context,
                     paint = paint,
                     dp = dp,
+                    titleTextSize = navCardTitleSize,
                     artBitmap = leaderboardArtBmp
                 )
             }
