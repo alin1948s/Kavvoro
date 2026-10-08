@@ -74,6 +74,8 @@ def main() -> None:
         # Pixel Tablet's natural display orientation is landscape; keep the
         # natural rotation so the full-sensor activity receives a landscape config.
         run("shell", "settings", "put", "system", "user_rotation", "0")
+        run("shell", "input", "keyevent", "224")
+        run("shell", "wm", "dismiss-keyguard")
         run("shell", "wm", "size", f"{WIDTH}x{HEIGHT}")
         run("shell", "wm", "density", str(DENSITY))
         wait_for_landscape_viewport()

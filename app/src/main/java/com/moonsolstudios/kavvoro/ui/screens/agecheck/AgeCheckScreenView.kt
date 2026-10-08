@@ -51,6 +51,14 @@ class AgeCheckScreenView @JvmOverloads constructor(
     private var categoryLabel: TextView? = null
     private var picker: AgePickerView? = null
 
+    private data class PortraitMetrics(
+        val compact: Boolean,
+        val scale: Float,
+        val maxWidthDp: Float,
+        val logoWidthDp: Float,
+        val logoHeightDp: Float
+    )
+
     init {
         setBackgroundColor(KavvoroPalette.background)
         setWillNotDraw(false)
@@ -84,8 +92,9 @@ class AgeCheckScreenView @JvmOverloads constructor(
         val landscape = resources.configuration.orientation ==
             android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
             resources.configuration.smallestScreenWidthDp >= 600
-        val body = if (landscape) buildLandscapeLayout() else buildPortraitLayout()
-        val maxWidth = if (landscape) dp(1160f) else dp(620f)
+        val portraitMetrics = if (landscape) null else portraitMetrics()
+        val body = if (landscape) buildLandscapeLayout() else buildPortraitLayout(portraitMetrics!!)
+        val maxWidth = if (landscape) dp(1160f) else dp(portraitMetrics!!.maxWidthDp)
         addView(
             body,
             LayoutParams(minOf(maxWidth, resources.displayMetrics.widthPixels),
@@ -93,32 +102,63 @@ class AgeCheckScreenView @JvmOverloads constructor(
         )
     }
 
-    private fun buildPortraitLayout(): View {
+    private fun portraitMetrics(): PortraitMetrics {
+        val density = resources.displayMetrics.density
+        val widthDp = resources.displayMetrics.widthPixels / density
         val heightDp = resources.configuration.screenHeightDp.takeIf { it > 0 }
             ?: (resources.displayMetrics.heightPixels / resources.displayMetrics.density).roundToInt()
+        val widthScale = (widthDp / 411f).coerceIn(0.8f, 2.5f)
+        // 1080x2400 at 420 dpi is the canonical 411x914 dp composition.
+        // Tablets grow with their available height, while small phones retain
+        // the existing legible minimum instead of shrinking every control.
+        val scale = minOf(widthDp / 411f, heightDp / 914f).coerceIn(1f, 1.5f)
         val compact = heightDp < 840
+        val maxWidthDp = 650f * scale
+        val contentWidthDp = (min(widthDp, maxWidthDp) - 52f * scale).coerceAtLeast(0f)
+        val logoWidthDp = minOf(286f * widthScale, contentWidthDp * 0.82f)
+        return PortraitMetrics(
+            compact = compact,
+            scale = scale,
+            maxWidthDp = maxWidthDp,
+            logoWidthDp = logoWidthDp,
+            logoHeightDp = logoWidthDp * (132f / 286f)
+        )
+    }
+
+    private fun buildPortraitLayout(metrics: PortraitMetrics): View {
+        val compact = metrics.compact
+        val scale = metrics.scale
         val content = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(26f), dp(if (compact) 14f else 22f), dp(26f), dp(if (compact) 14f else 22f))
+            setPadding(
+                dp(26f * scale),
+                dp((if (compact) 14f else 22f) * scale),
+                dp(26f * scale),
+                dp((if (compact) 14f else 22f) * scale)
+            )
         }
         content.addView(Space(context), LinearLayout.LayoutParams(1, 0, 1f))
         content.addView(
             logoImage(),
-            LinearLayout.LayoutParams(dp(if (compact) 250f else 286f), dp(if (compact) 116f else 132f))
+            LinearLayout.LayoutParams(dp(metrics.logoWidthDp), dp(metrics.logoHeightDp))
         )
-        content.addView(setupLabel(), linearParams(height = dp(30f)).apply { topMargin = dp(8f) })
-        content.addView(makeAgeCard(compact), linearParams(height = dp(if (compact) 276f else 320f)).apply {
-            topMargin = dp(if (compact) 16f else 24f)
+        content.addView(setupLabel(scale), linearParams(height = dp(30f * scale)).apply {
+            topMargin = dp(8f * scale)
         })
-        content.addView(continueButton(), linearParams(height = dp(58f)).apply {
-            topMargin = dp(if (compact) 20f else 26f)
+        content.addView(makeAgeCard(compact, scale), linearParams(
+            height = dp((if (compact) 276f else 320f) * scale)
+        ).apply {
+            topMargin = dp((if (compact) 16f else 24f) * scale)
         })
-        content.addView(privacyNote(), linearParams(height = dp(30f)).apply {
-            topMargin = dp(if (compact) 14f else 20f)
+        content.addView(continueButton(scale), linearParams(height = dp(58f * scale)).apply {
+            topMargin = dp((if (compact) 20f else 26f) * scale)
         })
-        content.addView(categoryLine(), linearParams(height = dp(28f)).apply {
-            topMargin = dp(6f)
+        content.addView(privacyNote(scale), linearParams(height = dp(30f * scale)).apply {
+            topMargin = dp((if (compact) 14f else 20f) * scale)
+        })
+        content.addView(categoryLine(scale), linearParams(height = dp(28f * scale)).apply {
+            topMargin = dp(6f * scale)
         })
         content.addView(Space(context), LinearLayout.LayoutParams(1, 0, 1f))
         return content
@@ -162,10 +202,10 @@ class AgeCheckScreenView @JvmOverloads constructor(
         importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_YES
     }
 
-    private fun setupLabel() = TextView(context).apply {
+    private fun setupLabel(scale: Float = 1f) = TextView(context).apply {
         text = t("PLAYER SETUP")
         setTextColor(KavvoroPalette.mutedText)
-        setTextSize(16f)
+        setTextSize(16f * scale)
         letterSpacing = 0.18f
         gravity = Gravity.CENTER
         typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
@@ -173,27 +213,28 @@ class AgeCheckScreenView @JvmOverloads constructor(
         contentDescription = text
     }
 
-    private fun makeAgeCard(compact: Boolean): View {
+    private fun makeAgeCard(compact: Boolean, scale: Float = 1f): View {
         val border = FrameLayout(context).apply {
             background = android.graphics.drawable.GradientDrawable(
                 android.graphics.drawable.GradientDrawable.Orientation.LEFT_RIGHT,
                 intArrayOf(KavvoroPalette.cyan, KavvoroPalette.blue, KavvoroPalette.magenta)
-            ).apply { cornerRadius = dp(22f).toFloat() }
-            elevation = dp(8f).toFloat()
+            ).apply { cornerRadius = dp(22f * scale).toFloat() }
+            elevation = dp(8f * scale).toFloat()
         }
         val panel = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER_HORIZONTAL
-            setPadding(dp(18f), dp(if (compact) 14f else 20f), dp(18f), dp(12f))
+            setPadding(dp(18f * scale), dp((if (compact) 14f else 20f) * scale),
+                dp(18f * scale), dp(12f * scale))
             background = android.graphics.drawable.GradientDrawable().apply {
                 setColor(Color.rgb(8, 15, 40))
-                cornerRadius = dp(21f).toFloat()
+                cornerRadius = dp(21f * scale).toFloat()
             }
         }
         val title = TextView(context).apply {
             text = t("AGE CHECK")
             setTextColor(Color.rgb(244, 246, 255))
-            setTextSize(UiTypography.screenTitleDp(compact))
+            setTextSize(UiTypography.screenTitleDp(compact) * scale)
             letterSpacing = 0.06f
             gravity = Gravity.CENTER
             typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
@@ -207,28 +248,30 @@ class AgeCheckScreenView @JvmOverloads constructor(
             gravity = Gravity.CENTER
             maxLines = 2
         }
-        val agePicker = AgePickerView(context, selectedAge).apply {
-            onAgeChanged = { age ->
+        subtitle.setTextSize(UiTypography.screenSubtitleDp(compact) * scale)
+        panel.addView(title, linearParams(height = dp(40f * scale)))
+        panel.addView(subtitle, linearParams(height = dp(34f * scale)).apply {
+            topMargin = dp(2f * scale)
+        })
+        panel.addView(AgePickerView(context, selectedAge, scale).also { agePicker ->
+            agePicker.onAgeChanged = { age ->
                 selectedAge = age
                 updateCategoryLine()
             }
-        }
-        picker = agePicker
-        panel.addView(title, linearParams(height = dp(40f)))
-        panel.addView(subtitle, linearParams(height = dp(34f)).apply { topMargin = dp(2f) })
-        panel.addView(agePicker, LinearLayout.LayoutParams(
+            picker = agePicker
+        }, LinearLayout.LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f
-        ).apply { topMargin = dp(4f) })
+        ).apply { topMargin = dp(4f * scale) })
         border.addView(panel, LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT
-        ).apply { setMargins(dp(2f), dp(2f), dp(2f), dp(2f)) })
+        ).apply { setMargins(dp(2f * scale), dp(2f * scale), dp(2f * scale), dp(2f * scale)) })
         return border
     }
 
-    private fun continueButton(): View {
+    private fun continueButton(scale: Float = 1f): View {
         val locale = java.util.Locale.forLanguageTag(KavvoroI18n.active(context).code.replace('_', '-'))
-        val button = AgeContinueButton(context, t("CONTINUE").uppercase(locale))
+        val button = AgeContinueButton(context, t("CONTINUE").uppercase(locale), scale)
         button.setOnClickListener {
             button.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
             onConfirm(ageGroupForAge(selectedAge))
@@ -236,17 +279,17 @@ class AgeCheckScreenView @JvmOverloads constructor(
         return button
     }
 
-    private fun privacyNote() = TextView(context).apply {
+    private fun privacyNote(scale: Float = 1f) = TextView(context).apply {
         text = t("Only the age group is saved locally.")
         setTextColor(KavvoroPalette.mutedText)
-        setTextSize(14f)
+        setTextSize(14f * scale)
         gravity = Gravity.CENTER
         maxLines = 2
         contentDescription = text
     }
 
-    private fun categoryLine() = TextView(context).apply {
-        setTextSize(13f)
+    private fun categoryLine(scale: Float = 1f) = TextView(context).apply {
+        setTextSize(13f * scale)
         letterSpacing = 0.05f
         gravity = Gravity.CENTER
         maxLines = 1
@@ -304,7 +347,11 @@ internal fun ageGroupForAge(age: Int): AgeGroup = when {
 }
 
 /** A clean beveled call to action that stays legible across translated labels. */
-private class AgeContinueButton(context: Context, private val label: String) : View(context) {
+private class AgeContinueButton(
+    context: Context,
+    private val label: String,
+    private val layoutScale: Float
+) : View(context) {
     private val density = resources.displayMetrics.density
     private val edgePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
     private val facePaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -412,10 +459,14 @@ private class AgeContinueButton(context: Context, private val label: String) : V
         path.close()
     }
 
-    private fun dp(value: Float): Float = value * density
+    private fun dp(value: Float): Float = value * density * layoutScale
 }
 
-private class AgePickerView(context: Context, initialAge: Int) : View(context) {
+private class AgePickerView(
+    context: Context,
+    initialAge: Int,
+    private val layoutScale: Float
+) : View(context) {
     private val density = resources.displayMetrics.density
     private val selectedTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(244, 246, 255)
@@ -662,5 +713,5 @@ private class AgePickerView(context: Context, initialAge: Int) : View(context) {
 
     private fun accessibilityLabel(): String = "$age. ${KavvoroI18n.t(context, "Enter your age in years.")}"
 
-    private fun dp(value: Float): Float = value * density
+    private fun dp(value: Float): Float = value * density * layoutScale
 }
