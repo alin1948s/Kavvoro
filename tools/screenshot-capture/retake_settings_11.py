@@ -205,6 +205,9 @@ def main() -> None:
                 if name == start_after:
                     skipping = False
                 continue
+            # The game loop renders through a SurfaceView hardware canvas. Stop
+            # it before changing the virtual display to avoid an EGL resize race.
+            run_adb("shell", "am", "force-stop", PACKAGE)
             t0 = time.monotonic()
             run_adb("shell", "wm", "density", str(density))
             run_adb("shell", "wm", "size", f"{width}x{height}")
@@ -228,7 +231,11 @@ def main() -> None:
             )
             time.sleep(2.0)
     finally:
-        restore_emulator_display(lambda *args: run_adb(*args))
+        try:
+            # Restore display settings only after the last SurfaceView is gone.
+            run_adb("shell", "am", "force-stop", PACKAGE)
+        finally:
+            restore_emulator_display(lambda *args: run_adb(*args))
         print("ALL DONE! Emulator restored.", flush=True)
 
 
