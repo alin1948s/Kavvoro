@@ -93,7 +93,10 @@ def main() -> None:
             try:
                 restore_age_profile(original_age_profile)
             finally:
-                run("shell", "rm", "-f", "/sdcard/kavvoro_age_check.xml", "/sdcard/kavvoro_window.xml")
+                try:
+                    run("shell", "rm", "-f", "/sdcard/kavvoro_age_check.xml", "/sdcard/kavvoro_window.xml")
+                finally:
+                    run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
 
 
 if __name__ == "__main__":

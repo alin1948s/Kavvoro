@@ -477,7 +477,7 @@ private class AgePickerView(
     private val adjacentTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = 0xFF8995B9.toInt()
         textAlign = Paint.Align.CENTER
-        typeface = Typeface.create("sans-serif", Typeface.NORMAL)
+        typeface = Typeface.create("sans-serif-light", Typeface.NORMAL)
     }
     private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val railPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { strokeWidth = dp(1f) }
@@ -549,11 +549,7 @@ private class AgePickerView(
             val paint = if (focused) selectedTextPaint else adjacentTextPaint
             paint.textSize = textSize
             paint.alpha = (255 * (1f - 0.47f * distance.coerceAtMost(1.7f))).toInt().coerceIn(35, 255)
-            val tilt = ((baselineY - centerY) / gap * 7f).coerceIn(-12f, 12f)
-            canvas.save()
-            canvas.rotate(tilt, centerX, baselineY)
             canvas.drawText(candidateAge.toString(), centerX, baselineY + textSize * 0.34f, paint)
-            canvas.restore()
         }
         selectedTextPaint.alpha = 255
         adjacentTextPaint.alpha = 255

@@ -35,7 +35,11 @@ def remove_age_profile() -> None:
 
 
 def restore_age_profile(profile: bytes | None) -> None:
+    # Stop MainActivity before touching its SharedPreferences file. Otherwise
+    # its still-open editor can recreate the file after this raw restoration.
+    run("shell", "am", "force-stop", PACKAGE)
     if profile is None:
+        run("shell", "run-as", PACKAGE, "rm", "-f", "shared_prefs/privacy_profile.xml")
         return
     command = (
         f"run-as {PACKAGE} sh -c "
@@ -203,7 +207,10 @@ def main() -> None:
             try:
                 restore_age_profile(original_age_profile)
             finally:
-                run("shell", "rm", "-f", "/sdcard/kavvoro_age_check.xml", "/sdcard/kavvoro_window.xml")
+                try:
+                    run("shell", "rm", "-f", "/sdcard/kavvoro_age_check.xml", "/sdcard/kavvoro_window.xml")
+                finally:
+                    run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
 
 
 if __name__ == "__main__":
