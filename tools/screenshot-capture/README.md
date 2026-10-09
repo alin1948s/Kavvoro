@@ -1,99 +1,99 @@
 # Screenshot capture tools
 
-Acesta este folderul permanent pentru scripturile reproductibile de captură ale
-aplicației.
+`tools/screenshot_matrix.py` is the single source of truth for the approved QA
+matrix: seven portrait profiles and one native tablet landscape profile. All
+device screenshot generators use only those profiles; Play Store asset size
+checks remain separate because they validate a different deliverable.
 
-`capture_support.py` este sursa comună pentru calea SDK-ului Android, package,
-APK și matricea celor 11 profiluri portret. SDK-ul se rezolvă din `ANDROID_HOME` sau
-`ANDROID_SDK_ROOT`, fără căi absolute către o stație de lucru.
+| Profile | Resolution | Density | Use |
+| --- | ---: | ---: | --- |
+| `phone-720x1280-320dpi.png` | 720×1280 | 320 dpi | Compact phone, 360×640 dp |
+| `phone-360x800-160dpi.png` | 360×800 | 160 dpi | Narrow/tall phone |
+| `phone-1080x2400-420dpi.png` | 1080×2400 | 420 dpi | Reference phone, ~411×914 dp |
+| `phone-480x854-160dpi.png` | 480×854 | 160 dpi | Wide/short phone |
+| `tablet-600x1024-160dpi.png` | 600×1024 | 160 dpi | Compact tablet |
+| `tablet-1600x2560-320dpi.png` | 1600×2560 | 320 dpi | 800×1280 dp tablet |
+| `tablet-1536x2048-240dpi.png` | 1536×2048 | 240 dpi | ~1024×1365 dp tablet |
+| `tablet-landscape-1920x1200-240dpi.png` | 1920×1200 | 240 dpi | Native landscape tablet |
 
-Păstrăm aici doar automatizări care pot fi reluate pe alt calculator. Scripturile
-exploratorii de crop/PSD și outputurile lor intermediare nu se versioneză;
-asset-urile Android canonice sunt în `app/src/main/res`, iar master-ele editabile
-sunt în `art/`. Referințele aprobate pentru redesign sunt în
-`docs/ui-redesign/references/`.
+## Full capture
 
-## Captura Age Check
+From PowerShell at the repository root:
 
 ```powershell
-python .\tools\screenshot-capture\retake_age_check_11.py
+.\tools\capture_recommended_screenshots.ps1
 ```
 
-Scriptul capturează setul standard actual în `screenshots/age-check`, în
-portrait pe telefoane și tablete. Captura verifică și nodul accesibil al
-selectorului, ca să nu accepte din greșeală ecranul Home. Pentru a proteja
-datele existente, scriptul salvează temporar doar `privacy_profile.xml`, șterge
-doar această preferință cât timp capturează Age Check și o restaurează la final;
-nu mai execută `pm clear`.
-
-Pentru layout-ul nativ de tabletă landscape, pornește AVD-ul `Pixel_Tablet`, apoi
-selectează-l explicit și rulează:
+The script uses the connected phone emulator (default `emulator-5554`), starts
+`Pixel_Tablet` on `emulator-5556` if needed, installs the existing debug APK,
+captures Age Check and every navigable app page, then validates filenames and
+image dimensions. Override serials or the tablet AVD with parameters when needed:
 
 ```powershell
+.\tools\capture_recommended_screenshots.ps1 -PhoneSerial emulator-5554 -TabletSerial emulator-5556 -TabletAvd Pixel_Tablet
+```
+
+If a run stops on a portrait profile, continue from that profile without
+recapturing earlier ones:
+
+```powershell
+.\tools\capture_recommended_screenshots.ps1 -FromPortraitProfile phone-480x854-160dpi.png
+```
+
+The page captures launch the game once per profile, record the startup sequence,
+and use `ffmpeg` to select the frame where the MoonSol lines meet. This handles
+the variable delay before Android hands off its system splash to the app. The
+runner then reads Home accessibility positions in one hierarchy pass and
+navigates between pages in the same app session. Screen-entry waits are kept
+just above the app's 0.34-second transition animation; the 6-second gameplay
+wait is needed to show the outcome state. `ffmpeg` must be available on `PATH`
+for Launch captures.
+
+The gameplay/outcome pass backs up and restores the app's `shared_prefs`, so
+screenshot work does not change progress. Age Check backs up and restores only
+the age profile. The full PowerShell runner carries each configured display
+profile from Age Check through the app-page captures, avoiding repeated display
+resets, APK installs, and emulator reboots. It resets both emulator displays
+after the run. Run an individual capture script without `--keep-display` to
+restore the emulator immediately.
+
+## Run a capture group manually
+
+```powershell
+$env:ANDROID_SERIAL = "emulator-5554"
+python .\tools\screenshot-capture\retake_age_check_matrix.py
+python .\tools\screenshot-capture\retake_ui_pages_matrix.py --orientation portrait
+
 $env:ANDROID_SERIAL = "emulator-5556"
 python .\tools\screenshot-capture\retake_age_check_landscape.py
-```
-
-Această captură verifică un viewport real landscape de 1920×1200 px la 240 dpi,
-inclusiv nodul accesibil al selectorului. Setările de afișare și preferința de
-vârstă sunt restaurate la final.
-
-## Captura Settings
-
-```powershell
-python .\tools\screenshot-capture\retake_settings_11.py
-```
-
-Scriptul capturează setul standard actual în `screenshots/settings`, pe tab-ul SYSTEM.
-Numele include DPI-ul, de exemplu `phone-360x800-160dpi.png`, `phone-1080x2400-420dpi.png`, `tablet-1600x2560-320dpi.png`.
-
-- telefoane: `360x800@160`, `412x915@160`, `480x854@160`, `720x1280@320`, `1080x2400@420`
-- tablete: `600x1024@160`, `800x1280@160`, `1024x1366@160`, `1200x1920@240`, `1536x2048@240`, `1600x2560@320`
-
-Lansează debug extra `screen=settings` și `tab=system`. Densitatea este per-rezoluție, nu 160 dpi global: telefoanele 360/412/480 rămân 160 dpi (1 px = 1 dp), iar 720/1080/1200/1536/1600 folosesc DPI realist. Altfel 1600×2560 ar fi tratat ca 1600 dp (card centrat, text mic) în loc de ~800 dp cât are un Pixel Tablet.
-
-## Captura Home Screen
-
-```powershell
-python .\tools\screenshot-capture\retake_home_11.py
-```
-
-Scriptul capturează setul standard actual în `screenshots/home`.
-Numele include DPI-ul, de exemplu `phone-360x800-160dpi.png`.
-
-- telefoane: `360x800@160`, `412x915@160`, `480x854@160`, `720x1280@320`, `1080x2400@420`
-- tablete: `600x1024@160`, `800x1280@160`, `1024x1366@160`, `1200x1920@240`, `1536x2048@240`, `1600x2560@320`
-
-Funcționalități și mecanisme de siguranță:
-1. **Bypass automat Age Gate**: Injectează fixture-ul sintetic
-   `fixtures/privacy_profile.xml` în `shared_prefs`. Fixture-ul aparține acestor
-   scripturi și nu trebuie mutat în rădăcina repository-ului.
-2. **Orientare naturală Pixel Tablet**: Configurează `user_rotation = 1` și inversează `wm size` (`{height}x{width}`) pentru randare portrait pe emulator landscape.
-3. **Detecție vizuală în memorie (`exec-out screencap`)**: Elimină I/O lent pe disk și detectează tranziția de la splash (1.45s) direct la Home complet randat.
-4. **Verificare post-captură și retry automat**: Verifică integritatea imaginii, dimensiunile exacte, lipsa ecranelor negre/splash/age-gate și prezența elementelor de UI active (header + footer neon). Dacă verificarea eșuează, relansează automat procesul până la capturarea unui cadru valid.
-5. **Restaurare automată**: Restaurează `wm size` și `wm density` la finalul rulării.
-
-## Captura Missions
-
-```powershell
-python .\tools\screenshot-capture\retake_missions_phone.py
-```
-
-Scriptul capturează ambele categorii Missions la profilul telefon
-`1080×2400@420dpi`: `screenshots/missions/phone-1080x2400-420dpi.png` și
-`screenshots/missions/rift-challenges-phone-1080x2400-420dpi.png`. Lansează
-direct ecranul Missions pe build-ul debug, folosește profilul de confidențialitate
-sintetic și verifică dimensiunea, conținutul și accentele fiecărei categorii.
-Setările de rezoluție și densitate ale emulatorului sunt restaurate la final.
-
-## Captura Home landscape
-
-```powershell
 python .\tools\screenshot-capture\retake_home_landscape.py
+python .\tools\screenshot-capture\retake_ui_pages_matrix.py --orientation landscape
+
+python .\tools\sync_screenshot_views.py
+python .\tools\verify_screenshot_matrix.py
 ```
 
-Scriptul capturează profilul tabletă landscape aprobat de `1920×1200@240dpi`
-în `screenshots/home/tablet-landscape-1920x1200-240dpi.png`. Așteaptă viewport-ul
-landscape, închide promptul Android de ecran complet numai după ce îi detectează
-textul și verifică dimensiunea capturii. Densitatea și orientarea emulatorului
-sunt restaurate la final.
+`retake_home_matrix.py` remains available for a dedicated, verified Home-only
+capture across the same seven portrait profiles. The `retake_settings_matrix.py`,
+`retake_language_matrix.py`, and `retake_missions_matrix.py` wrappers call the
+shared page navigator and use the same canonical profiles.
+
+`localization_visual_matrix.ps1` is a 24-language content pass at the reference
+profile (1080×2400@420 dpi), not an additional device-size matrix. The
+`verify_store_assets.py` checks Play Store marketing dimensions and are likewise
+independent of Android device screenshots.
+
+## Capture policy
+
+- Keep canonical app UI captures in descriptive page subdirectories under
+  `screenshots/by-page/`. The generated `screenshots/by-screensize/` folders
+  contain byte-identical copies grouped by resolution and density.
+- The full capture runner refreshes the by-screen-size copies. After a manual
+  page capture, run `python .\tools\sync_screenshot_views.py` before verifying.
+- The screenshot matrix validator requires exactly the eight approved profiles
+  in each app-page group and checks the PNG dimensions. The full capture script
+  removes stale profile PNGs from managed groups before verification.
+- The app's branded `launch` page is app-page evidence; do not include OS launcher
+  imagery, black transition frames, logs, or temporary files.
+- Keep reusable scripts and fixtures here; do not leave one-off crop scripts,
+  previews, or generated intermediates in the repository.

@@ -5,16 +5,24 @@ from __future__ import annotations
 import subprocess
 import time
 import xml.etree.ElementTree as ET
+import argparse
 from pathlib import Path
 
-from capture_support import ADB, PACKAGE, PROJECT_ROOT, restore_emulator_display
-from retake_home_11 import capture_png, ensure_privacy_profile, verify_home_screen
+from capture_support import (
+    ADB,
+    PACKAGE,
+    PAGE_CAPTURE_ROOT,
+    restore_emulator_display,
+    restore_shared_preferences,
+    snapshot_shared_preferences,
+)
+from retake_home_matrix import capture_png, ensure_privacy_profile, verify_home_screen
 
 
 WIDTH = 1920
 HEIGHT = 1200
 DENSITY = 240
-OUTPUT = PROJECT_ROOT / "screenshots" / "home" / "tablet-landscape-1920x1200-240dpi.png"
+OUTPUT = PAGE_CAPTURE_ROOT / "home" / "tablet-landscape-1920x1200-240dpi.png"
 
 
 def run_adb(*args: str, timeout: float = 30.0) -> subprocess.CompletedProcess[bytes]:
@@ -80,14 +88,20 @@ def dismiss_fullscreen_prompt_if_shown() -> bool:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--display-ready", action="store_true", help="reuse landscape geometry configured by an earlier capture group")
+    parser.add_argument("--keep-display", action="store_true", help="leave landscape geometry active for the next capture group")
+    args = parser.parse_args()
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    run_adb("shell", "settings", "put", "global", "stay_on_while_plugged_in", "3")
-    run_adb("shell", "input", "keyevent", "224")
-    run_adb("shell", "wm", "dismiss-keyguard")
-    run_adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
-    run_adb("shell", "settings", "put", "system", "user_rotation", "1")
-    run_adb("shell", "wm", "size", f"{WIDTH}x{HEIGHT}")
-    run_adb("shell", "wm", "density", str(DENSITY))
+    original_preferences = snapshot_shared_preferences()
+    if not args.display_ready:
+        run_adb("shell", "settings", "put", "global", "stay_on_while_plugged_in", "3")
+        run_adb("shell", "input", "keyevent", "224")
+        run_adb("shell", "wm", "dismiss-keyguard")
+        run_adb("shell", "settings", "put", "system", "accelerometer_rotation", "0")
+        run_adb("shell", "settings", "put", "system", "user_rotation", "1")
+        run_adb("shell", "wm", "size", f"{WIDTH}x{HEIGHT}")
+        run_adb("shell", "wm", "density", str(DENSITY))
 
     try:
         wait_for_landscape_viewport()
@@ -113,7 +127,11 @@ def main() -> None:
             time.sleep(0.3)
         raise RuntimeError(f"Could not capture a valid landscape Home screen: {last_reason}")
     finally:
-        restore_emulator_display(run_adb)
+        try:
+            restore_shared_preferences(original_preferences)
+        finally:
+            if not args.keep_display:
+                restore_emulator_display(run_adb)
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@
 Codul sursă (`app/src/main/java/com/moonsolstudios/kavvoro/`) este împărțit strict pe domenii și pe ecrane:
 
 - `ads/` — `AdBridge`, `AdPolicyController`, `InterstitialAdController`, `RewardedAdController`
-- `audio/` — `KavvoroSoundEngine`, `MusicTransition`, `SelectionPreviewFade`
+- `audio/` — `KavvoroSoundEngine`, `MusicTransition`, `SelectionPreviewFade`, `StartupChimePlayer`
 - `billing/` — `PurchaseBridge`, `PlayBillingController`, `PremiumCatalog`
 - `engine/` — Fizică pură, geometrie, scoruri și generare de nivele (`PhysicsEngine`, `LevelDirector`, `AdvancedLevelDirector`, `GameplayScoreCalculator`, `Geometry`, `ReplayRecorder`)
 - `i18n/` — Infrastructura de localizare (`KavvoroI18n`, `LocalizationCatalog`, `HomeCopy`, `TutorialCopy`, `UiTranslations`) + `i18n/catalog/*Translations.kt` (cele 24 de cataloage de limbă)
@@ -31,6 +31,7 @@ Codul sursă (`app/src/main/java/com/moonsolstudios/kavvoro/`) este împărțit 
   - `tutorial/` — `TutorialCardLayout`, `TutorialInputGate`, `TutorialRenderer`, `TutorialTouchController`
   - `screens/` — **Fiecare ecran are propriul sub-pachet izolat:**
     - `screens/home/` — Ecranul Home + Mode Picker (`HomeLayoutCalculator`, `HomeMenuRenderer`, `HomeMenuTouchController`, `HomeAccessibilityTouchHelper`, `ModePickerLayoutCalculator`, `ModePickerRenderer`, `SciFiCtaButtonRenderer`)
+    - `screens/launch/` — Intro-ul MoonSol afișat la pornire (`LaunchSplashScreenView`)
     - `screens/agecheck/` — Ecranul de selecție a vârstei la prima pornire (`AgeCheckScreenView`)
     - `screens/missions/` — Misiuni zilnice și provocări Rift (`MissionsLayoutCalculator`, `MissionsUiRenderer`, `MissionsTouchController`, `MissionsScreenController`, `MissionsCompletionPopupRenderer`)
     - `screens/gameplay/` — Arena de joc și HUD-ul (`GameplayArenaRenderer`, `GameplayHudRenderer`, `GameplayTouchController`)

@@ -58,7 +58,7 @@ nu surse de design.
   numai `AgeGroup`: 1–12 `CHILD`, 13–17 `TEEN`, 18–120 `ADULT`.
 - Compoziția folosește tokens Home, textul existent localizat și selectorul are
   acțiuni de accesibilitate pentru increment/decrement.
-- Cele 11 capturi portrait sunt actualizate în `screenshots/age-check/`.
+- Cele 11 capturi portrait sunt actualizate în `screenshots/by-page/age-check/`.
   Rămâne verificarea manuală cu TalkBack, text scaling și RTL pe dispozitive
   fizice.
 

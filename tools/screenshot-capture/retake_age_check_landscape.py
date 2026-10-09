@@ -4,9 +4,10 @@ from __future__ import annotations
 
 import subprocess
 import time
+import argparse
 
-from capture_support import ADB, APK, PACKAGE, PROJECT_ROOT, restore_emulator_display
-from retake_age_check_11 import (
+from capture_support import ADB, APK, PACKAGE, PAGE_CAPTURE_ROOT, restore_emulator_display
+from retake_age_check_matrix import (
     backup_age_profile,
     capture_png,
     has_age_picker_accessibility_node,
@@ -22,7 +23,7 @@ from retake_home_landscape import dismiss_fullscreen_prompt_if_shown
 WIDTH = 1920
 HEIGHT = 1200
 DENSITY = 240
-OUTPUT = PROJECT_ROOT / "screenshots" / "age-check" / "tablet-landscape-1920x1200-240dpi.png"
+OUTPUT = PAGE_CAPTURE_ROOT / "age-check" / "tablet-landscape-1920x1200-240dpi.png"
 
 
 def wait_for_landscape_viewport(timeout: float = 20.0) -> None:
@@ -34,7 +35,7 @@ def wait_for_landscape_viewport(timeout: float = 20.0) -> None:
             last_seen = image_size(capture_png())
             if last_seen == (WIDTH, HEIGHT):
                 stable_frames += 1
-                if stable_frames >= 3:
+                if stable_frames >= 2:
                     return
             else:
                 stable_frames = 0
@@ -65,8 +66,13 @@ def wait_for_landscape_age_check(timeout: float = 25.0) -> bytes:
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--keep-display", action="store_true", help="leave the landscape profile active for the next capture group")
+    parser.add_argument("--skip-install", action="store_true", help="use the APK already installed on the emulator")
+    args = parser.parse_args()
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    run("install", "-r", str(APK), timeout=90.0)
+    if not args.skip_install:
+        run("install", "-r", str(APK), timeout=90.0)
     original_age_profile = backup_age_profile()
     remove_age_profile()
     try:
@@ -88,7 +94,8 @@ def main() -> None:
         print(f"PASS {OUTPUT.name} ({WIDTH}x{HEIGHT}@{DENSITY}dpi), {len(screenshot)} bytes")
     finally:
         try:
-            restore_emulator_display(lambda *args: run(*args))
+            if not args.keep_display:
+                restore_emulator_display(lambda *args: run(*args))
         finally:
             try:
                 restore_age_profile(original_age_profile)
@@ -96,7 +103,8 @@ def main() -> None:
                 try:
                     run("shell", "rm", "-f", "/sdcard/kavvoro_age_check.xml", "/sdcard/kavvoro_window.xml")
                 finally:
-                    run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
+                    if not args.keep_display:
+                        run("shell", "am", "start", "-n", f"{PACKAGE}/.MainActivity")
 
 
 if __name__ == "__main__":

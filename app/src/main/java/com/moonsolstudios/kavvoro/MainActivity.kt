@@ -1,5 +1,6 @@
 package com.moonsolstudios.kavvoro
 
+import android.content.SharedPreferences
 import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.os.Build
@@ -14,19 +15,34 @@ import androidx.activity.OnBackPressedCallback
 import com.moonsolstudios.kavvoro.ads.AdBridge
 import com.moonsolstudios.kavvoro.ads.InterstitialAdController
 import com.moonsolstudios.kavvoro.ads.RewardedAdController
+import com.moonsolstudios.kavvoro.audio.StartupChimePlayer
 import com.moonsolstudios.kavvoro.billing.PlayBillingController
 import com.moonsolstudios.kavvoro.playgames.PlayGamesLeaderboardController
 import com.moonsolstudios.kavvoro.playgames.PlayGamesAccountController
 import com.moonsolstudios.kavvoro.privacy.AgeGroup
 import com.moonsolstudios.kavvoro.privacy.AgeProfileStore
 import com.moonsolstudios.kavvoro.privacy.PrivacyAdsController
+import com.moonsolstudios.kavvoro.repository.AccountProgressStore
+import com.moonsolstudios.kavvoro.repository.GameProgressRepository
 import com.moonsolstudios.kavvoro.startup.FirstFrameStartupGate
 import com.moonsolstudios.kavvoro.ui.ChaosGameView
 import com.moonsolstudios.kavvoro.ui.screens.agecheck.AgeCheckScreenView
+import com.moonsolstudios.kavvoro.ui.screens.launch.LaunchSplashScreenView
+import java.util.concurrent.Executors
 
 class MainActivity : ComponentActivity() {
     private var gameView: ChaosGameView? = null
     private var ageCheckView: AgeCheckScreenView? = null
+    private var launchSplashView: LaunchSplashScreenView? = null
+    private var startupChimePlayer: StartupChimePlayer? = null
+    private var startupAudioPreferences: SharedPreferences? = null
+    private var startupAudioLoading = false
+    private var pendingStartupChime = false
+    private val startupAudioExecutor = Executors.newSingleThreadExecutor { task ->
+        Thread(task, "kavvoro-startup-audio").apply { isDaemon = true }
+    }
+    private var launchSplashShowing = false
+    private var splashOnNextResume = false
     private var billingController: PlayBillingController? = null
     private var privacyAdsController: PrivacyAdsController? = null
     private var accountController: PlayGamesAccountController? = null
@@ -55,11 +71,71 @@ class MainActivity : ComponentActivity() {
         hideSystemBars()
 
         val savedAgeGroup = AgeProfileStore.read(this)
-        if (savedAgeGroup == null) {
-            showAgeCheck(AgeCheckScreenView.AGE_OF_ADULTHOOD)
-        } else {
-            startGame(savedAgeGroup)
+        showLaunchSplash {
+            if (savedAgeGroup == null) {
+                showAgeCheck(AgeCheckScreenView.AGE_OF_ADULTHOOD)
+            } else {
+                startGame(savedAgeGroup)
+                gameView?.resumeGame()
+            }
         }
+    }
+
+    private fun showLaunchSplash(onFinished: () -> Unit) {
+        launchSplashShowing = true
+        val view = LaunchSplashScreenView(
+            context = this,
+            onLinesMerge = ::playStartupChime,
+            onFinished = { finishedView ->
+                if (launchSplashView === finishedView) {
+                    launchSplashView = null
+                    launchSplashShowing = false
+                    hideSystemBars()
+                    onFinished()
+                }
+            }
+        )
+        launchSplashView = view
+        setContentView(view)
+        hideSystemBars()
+        prepareStartupAudio()
+    }
+
+    private fun prepareStartupAudio() {
+        if (startupAudioLoading || startupChimePlayer != null) return
+        startupAudioLoading = true
+        startupAudioExecutor.execute {
+            val preferences = AccountProgressStore(applicationContext).activePreferences()
+            val player = StartupChimePlayer(applicationContext)
+            runOnUiThread {
+                startupAudioLoading = false
+                if (isFinishing || isDestroyed) {
+                    player.close()
+                    return@runOnUiThread
+                }
+                startupAudioPreferences = preferences
+                startupChimePlayer = player
+                if (pendingStartupChime) {
+                    pendingStartupChime = false
+                    playStartupChime()
+                }
+            }
+        }
+    }
+
+    private fun playStartupChime() {
+        val preferences = startupAudioPreferences
+        val player = startupChimePlayer
+        if (preferences == null || player == null) {
+            pendingStartupChime = true
+            return
+        }
+        if (preferences.getBoolean(GameProgressRepository.SFX_MUTED_KEY, false)) return
+        val masterVolume = preferences.getInt(GameProgressRepository.SETTINGS_MASTER_VOLUME_KEY, 100)
+            .coerceIn(0, 100) / 100f
+        val sfxVolume = preferences.getInt(GameProgressRepository.SETTINGS_SFX_VOLUME_KEY, 100)
+            .coerceIn(0, 100) / 100f
+        player.play(masterVolume * sfxVolume * STARTUP_CHIME_VOLUME)
     }
 
     private fun showAgeCheck(initialAge: Int) {
@@ -139,7 +215,19 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         hideSystemBars()
-        gameView?.resumeGame()
+        if (splashOnNextResume && gameView != null && AgeProfileStore.read(this) != null) {
+            splashOnNextResume = false
+            gameView?.pauseGame()
+            showLaunchSplash {
+                gameView?.let { view ->
+                    setContentView(view)
+                    hideSystemBars()
+                    view.resumeGame()
+                }
+            }
+        } else if (!launchSplashShowing) {
+            gameView?.resumeGame()
+        }
         if (accountStarted) {
             accountController?.refresh()
         }
@@ -151,6 +239,13 @@ class MainActivity : ComponentActivity() {
         super.onPause()
     }
 
+    override fun onUserLeaveHint() {
+        if (gameView != null && AgeProfileStore.read(this) != null && !isFinishing) {
+            splashOnNextResume = true
+        }
+        super.onUserLeaveHint()
+    }
+
     override fun onDestroy() {
         firstFrameStartupGate.cancel()
         privacyAdsController?.close()
@@ -159,6 +254,11 @@ class MainActivity : ComponentActivity() {
         accountController = null
         billingController?.close()
         billingController = null
+        launchSplashView?.dispose()
+        launchSplashView = null
+        startupChimePlayer?.close()
+        startupChimePlayer = null
+        startupAudioExecutor.shutdown()
         gameView?.releaseGame()
         gameView = null
         ageCheckView = null
@@ -196,4 +296,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private companion object {
+        const val STARTUP_CHIME_VOLUME = 0.55f
+    }
 }

@@ -75,34 +75,43 @@ vertical replays.
 
 ## Screenshots
 
-Reference QA captures include a **1080×2400 px phone profile at 420 dpi** and a
-**1920×1200 px tablet landscape profile at 240 dpi**. The images below are
-checked-in captures from the app; see
+QA screenshots use the eight recommended profiles, from compact phones through
+tablet portrait and native tablet landscape. The app opens with the MoonSol
+brand intro on every launch; Age Check follows only until an age group is saved.
+The images below show the
+1080×2400 px / 420 dpi reference phone profile; see
 [`screenshots/README.md`](screenshots/README.md) and
 [`tools/screenshot-capture/README.md`](tools/screenshot-capture/README.md) for
-the capture policy and repeatable scripts.
+the full page list, capture policy, and repeatable scripts. Regenerate the full
+matrix with `tools/capture_recommended_screenshots.ps1`.
 
 | Home | Mode picker | Language selector | Settings |
 | --- | --- | --- | --- |
-| <img src="screenshots/home/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Home screen at 1080 by 2400 pixels"> | <img src="screenshots/play-mode/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro mode picker at 1080 by 2400 pixels"> | <img src="screenshots/language/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro language selector at 1080 by 2400 pixels"> | <img src="screenshots/settings/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro settings screen at 1080 by 2400 pixels"> |
+| <img src="screenshots/by-page/home/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Home screen at 1080 by 2400 pixels"> | <img src="screenshots/by-page/play-mode/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro mode picker at 1080 by 2400 pixels"> | <img src="screenshots/by-page/language/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro language selector at 1080 by 2400 pixels"> | <img src="screenshots/by-page/settings/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro settings screen at 1080 by 2400 pixels"> |
+
+**App Launch — MoonSol intro:**
+
+<img src="screenshots/by-page/launch/phone-1080x2400-420dpi.png" width="200" alt="MoonSol Studios launch screen at 1080 by 2400 pixels">
+
+[View all eight Launch captures](screenshots/by-page/launch/).
 
 **Missions — phone 1080×2400 px at 420 dpi:**
 
 | Daily Missions | Rift Challenges |
 | --- | --- |
-| <img src="screenshots/missions/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro daily missions at 1080 by 2400 pixels"> | <img src="screenshots/missions/rift-challenges-phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Rift Challenges at 1080 by 2400 pixels"> |
+| <img src="screenshots/by-page/missions/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro daily missions at 1080 by 2400 pixels"> | <img src="screenshots/by-page/missions/rift-challenges-phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Rift Challenges at 1080 by 2400 pixels"> |
 
-**Age Check — 11 portrait profiles plus tablet landscape:**
+**Age Check — seven portrait profiles plus tablet landscape:**
 
 | Phone portrait | Tablet portrait | Tablet landscape |
 | --- | --- | --- |
-| <img src="screenshots/age-check/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Age Check on a phone at 1080 by 2400 pixels"> | <img src="screenshots/age-check/tablet-1600x2560-320dpi.png" width="200" alt="Kavvoro Age Check on a tablet at 1600 by 2560 pixels"> | <img src="screenshots/age-check/tablet-landscape-1920x1200-240dpi.png" width="320" alt="Kavvoro Age Check in native tablet landscape at 1920 by 1200 pixels"> |
+| <img src="screenshots/by-page/age-check/phone-1080x2400-420dpi.png" width="200" alt="Kavvoro Age Check on a phone at 1080 by 2400 pixels"> | <img src="screenshots/by-page/age-check/tablet-1600x2560-320dpi.png" width="200" alt="Kavvoro Age Check on a tablet at 1600 by 2560 pixels"> | <img src="screenshots/by-page/age-check/tablet-landscape-1920x1200-240dpi.png" width="320" alt="Kavvoro Age Check in native tablet landscape at 1920 by 1200 pixels"> |
 
-[View all 12 Age Check device captures](screenshots/age-check/).
+[View all eight Age Check captures](screenshots/by-page/age-check/).
 
 **Home landscape, tablet 1920×1200 px at 240 dpi:**
 
-<img src="screenshots/home/tablet-landscape-1920x1200-240dpi.png" width="600" alt="Kavvoro Home screen in tablet landscape at 1920 by 1200 pixels">
+<img src="screenshots/by-page/home/tablet-landscape-1920x1200-240dpi.png" width="600" alt="Kavvoro Home screen in tablet landscape at 1920 by 1200 pixels">
 
 ## Repository Structure
 
@@ -116,7 +125,7 @@ Kavvoro/
 ├── art/                  editable/source artwork
 ├── docs/                 current docs plus explicitly archived plans/specs
 ├── gradle/               Gradle wrapper support
-├── screenshots/          curated QA evidence grouped by screen/flow
+├── screenshots/          curated QA evidence grouped by page and screen size
 ├── store-assets/         canonical Play Store source assets
 ├── tools/                repeatable generators, validators, and capture tools
 ├── web/                  hosted project support files
@@ -144,7 +153,7 @@ match the directory.
 | `engine` | physics, level generation, scoring, and gameplay rules |
 | `repository` | canonical catalog/progress persistence access |
 | `i18n` | language selection, `i18n/catalog/*Translations.kt` catalogs, formatting, and translated copy |
-| `ui/screens/<screen>` | isolated per-screen UI (`home`, `agecheck`, `missions`, `gameplay`, `outcome`, `collection`, `leaderboards`, `settings`, `language`, `ad`, `modals`) |
+| `ui/screens/<screen>` | isolated per-screen UI (`home`, `launch`, `agecheck`, `missions`, `gameplay`, `outcome`, `collection`, `leaderboards`, `settings`, `language`, `ad`, `modals`) |
 | `ui/layout` | shared locale-aware layout policy |
 | `ui/render` | shared Canvas primitives, brand header, and resource caching |
 | `ui/controller` | shared game-loop director and adaptive quality controller |
@@ -195,7 +204,7 @@ Use these placement rules:
    snake-case names. If a raw resource is resolved dynamically, update
    `app/src/main/res/raw/keep.xml` and its validator/test.
 7. Put repeatable developer automation in `tools/`, with its fixtures and a
-   README beside it. Put accepted visual evidence in a named `screenshots/`
+   README beside it. Put accepted visual evidence in `screenshots/by-page/`
    subfolder; never leave exploratory captures or dumps at root.
 8. Put current operational documentation directly in `docs/`; move superseded
    plans/specifications to `docs/archive/` and label them historical.

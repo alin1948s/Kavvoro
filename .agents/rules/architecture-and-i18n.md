@@ -6,7 +6,7 @@ description: Mandatory Kavvoro architecture, per-screen modularization, and 24-l
 # Kavvoro Architecture & i18n Rules
 
 1. **Per-Screen Modularity (`ui/screens/<screen>/`)**:
-   - Every UI screen belongs in its dedicated package under `app/src/main/java/com/moonsolstudios/kavvoro/ui/screens/` (`home`, `gameplay`, `outcome`, `collection`, `leaderboards`, `settings`, `language`, `ad`, `modals`) or `ui/tutorial/`.
+   - Every UI screen belongs in its dedicated package under `app/src/main/java/com/moonsolstudios/kavvoro/ui/screens/` (`home`, `launch`, `agecheck`, `missions`, `gameplay`, `outcome`, `collection`, `leaderboards`, `settings`, `language`, `ad`, `modals`) or `ui/tutorial/`.
    - Files in `ui/screens/<screen>/` (Renderers, TouchControllers, LayoutCalculators, Helpers) MUST NEVER import from another `ui/screens/<other>/` package, and shared layers (`ui/render/`, `ui/layout/`, `ui/controller/`, `ui/tutorial/`) MUST NEVER import upward from `ui/screens/*`.
    - `ChaosGameView.kt` MUST NOT allocate screen button `RectF` fields (only its single `private val scratch = RectF()`). All screen touch/layout rects belong in their screen's `*TouchController` or `*LayoutCalculator`.
    - `ChaosGameView.kt` must stay below `3,350` lines. Never add new screen rendering or layout calculation blocks directly inside `ChaosGameView.kt`.

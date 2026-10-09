@@ -1,8 +1,8 @@
 <resources>
     <style name="Theme.OneLineChaos" parent="@style/OneLineChaosBase">
         <item name="android:windowSplashScreenBackground">@color/chaos_splash_black</item>
-        <!-- Keep the Android 12 system splash icon transparent; the first game frame owns the branding. -->
-        <item name="android:windowSplashScreenAnimatedIcon">@drawable/transparent_splash_foreground</item>
+        <!-- Keep the MoonSol mark visible from Android's system splash into the app intro. -->
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/moonsol_studios_mark</item>
         <item name="android:windowSplashScreenIconBackgroundColor">@color/chaos_splash_black</item>
     </style>
 </resources>
